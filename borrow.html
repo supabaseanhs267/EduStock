@@ -11,786 +11,201 @@
     
     <!-- QR Scanner Library -->
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <!-- Tesseract.js for OCR -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <style>
-        /* ============================================================
-           RESET & BASE
-           ============================================================ */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        :root {
-            --primary: #4F46E5;
-            --primary-dark: #4338CA;
-            --primary-light: #818CF8;
-            --primary-bg: #EEF2FF;
-            --success: #10B981;
-            --success-bg: #ECFDF5;
-            --warning: #F59E0B;
-            --warning-bg: #FFFBEB;
-            --danger: #EF4444;
-            --danger-bg: #FEF2F2;
-            --gray-50: #F9FAFB;
-            --gray-100: #F3F4F6;
-            --gray-200: #E5E7EB;
-            --gray-300: #D1D5DB;
-            --gray-400: #9CA3AF;
-            --gray-500: #6B7280;
-            --gray-600: #4B5563;
-            --gray-700: #374151;
-            --gray-800: #1F2937;
-            --gray-900: #111827;
-            --radius: 16px;
-            --radius-sm: 10px;
-            --shadow: 0 2px 8px rgba(0,0,0,0.08);
-            --shadow-md: 0 4px 16px rgba(0,0,0,0.12);
-            --nav-height: 60px;
-            --safe-bottom: env(safe-area-inset-bottom, 0px);
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--gray-50);
-            color: var(--gray-800);
-            padding: 0 0 calc(var(--nav-height) + 16px) 0;
-            min-height: 100vh;
-        }
-
-        .app-container {
-            max-width: 480px;
-            margin: 0 auto;
-            padding: 16px 16px 24px;
-        }
-
-        /* ============================================================
-           HEADER
-           ============================================================ */
-        .app-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 8px 0 16px;
-            border-bottom: 1px solid var(--gray-200);
-            margin-bottom: 16px;
-        }
-
-        .app-header .greeting h2 {
-            font-size: 20px;
-            font-weight: 700;
-            color: var(--gray-900);
-        }
-
-        .app-header .greeting p {
-            font-size: 13px;
-            color: var(--gray-500);
-            margin-top: 0px;
-        }
-
-        .app-header .header-actions {
-            display: flex;
-            gap: 8px;
-        }
-
-        .app-header .header-actions button {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            border: 1px solid var(--gray-200);
-            background: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--gray-600);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-            font-size: 16px;
-        }
-
-        .app-header .header-actions button:hover {
-            border-color: var(--primary);
-            color: var(--primary);
-        }
-
-        .app-header .header-actions .badge-dot {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            width: 8px;
-            height: 8px;
-            background: var(--danger);
-            border-radius: 50%;
-            border: 2px solid white;
-        }
-
-        /* ============================================================
-           STEP INDICATOR
-           ============================================================ */
-        .step-indicator {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
-            position: relative;
-            padding: 0 10px;
-        }
-
-        .step-indicator::before {
-            content: '';
-            position: absolute;
-            top: 18px;
-            left: 40px;
-            right: 40px;
-            height: 2px;
-            background: var(--gray-200);
-            z-index: 0;
-        }
-
-        .step {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            z-index: 1;
-            flex: 1;
-        }
-
-        .step .step-number {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background: var(--gray-200);
-            color: var(--gray-500);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 14px;
-            transition: all 0.3s ease;
-            border: 2px solid transparent;
-        }
-
-        .step.active .step-number {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 4px var(--primary-bg);
-        }
-
-        .step.completed .step-number {
-            background: var(--success);
-            color: white;
-            border-color: var(--success);
-        }
-
-        .step .step-label {
-            font-size: 9px;
-            color: var(--gray-400);
-            margin-top: 4px;
-            font-weight: 500;
-            text-align: center;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-        }
-
-        .step.active .step-label {
-            color: var(--primary);
-            font-weight: 600;
-        }
-
-        .step.completed .step-label {
-            color: var(--success);
-        }
-
-        /* ============================================================
-           SEARCH / SCAN SECTION
-           ============================================================ */
-        .search-section {
-            background: white;
-            border-radius: var(--radius-sm);
-            border: 1px solid var(--gray-200);
-            padding: 16px;
-            margin-bottom: 16px;
-            box-shadow: var(--shadow);
-        }
-
-        .search-section .section-title {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--gray-700);
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .search-section .section-title i {
-            color: var(--primary);
-        }
-
-        .search-section .search-hint {
-            font-size: 11px;
-            color: var(--gray-400);
-            margin-bottom: 8px;
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        .search-section .search-hint span {
-            background: var(--gray-100);
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 10px;
-            color: var(--gray-600);
-        }
-
-        .search-input-group {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .search-input-group input {
-            flex: 1;
-            padding: 10px 14px;
-            border: 1px solid var(--gray-200);
-            border-radius: var(--radius-sm);
-            font-family: 'Inter', sans-serif;
-            font-size: 14px;
-            background: white;
-            transition: all 0.3s ease;
-            min-width: 120px;
-        }
-
-        .search-input-group input:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px var(--primary-bg);
-        }
-
-        .search-input-group button {
-            padding: 10px 16px;
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: var(--radius-sm);
-            font-weight: 600;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            white-space: nowrap;
-        }
-
-        .search-input-group button:active {
-            transform: scale(0.95);
-        }
-
-        .search-input-group button.secondary {
-            background: var(--gray-100);
-            color: var(--gray-700);
-        }
-
-        .search-input-group button.scan-btn {
-            background: var(--success);
-            color: white;
-        }
-
-        .search-input-group button.scan-btn:active {
-            transform: scale(0.95);
-        }
-
-        /* ============================================================
-           QR SCANNER CONTAINER
-           ============================================================ */
-        .qr-scanner-container {
+        /* ... (keep all your existing styles) ... */
+        
+        /* Additional styles for ID Scanner */
+        .camera-container {
             display: none;
             margin-top: 12px;
             padding: 12px;
             background: var(--gray-900);
             border-radius: var(--radius-sm);
             position: relative;
+            text-align: center;
         }
 
-        .qr-scanner-container.active {
+        .camera-container.active {
             display: block;
             animation: fadeIn 0.3s ease;
         }
 
-        .qr-scanner-container #qr-reader {
+        .camera-container video {
             width: 100%;
-            max-width: 400px;
-            margin: 0 auto;
+            border-radius: var(--radius-sm);
+            max-height: 350px;
+            object-fit: cover;
+            background: #000;
         }
 
-        .qr-scanner-container .qr-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+        .camera-container .camera-controls {
             display: flex;
-            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
             justify-content: center;
-            pointer-events: none;
+            flex-wrap: wrap;
         }
 
-        .qr-scanner-container .qr-overlay .scan-frame {
-            width: 200px;
-            height: 200px;
-            border: 2px solid rgba(255, 255, 255, 0.5);
-            border-radius: 8px;
-            box-shadow: 0 0 0 4000px rgba(0, 0, 0, 0.3);
-        }
-
-        .qr-scanner-container .qr-close-btn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: rgba(255, 255, 255, 0.2);
+        .camera-container .camera-controls button {
+            padding: 10px 20px;
             border: none;
-            color: white;
-            font-size: 20px;
-            padding: 8px 12px;
-            border-radius: 50%;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 14px;
             cursor: pointer;
-            z-index: 10;
+            flex: 1;
+            min-width: 100px;
         }
 
-        .qr-scanner-container .qr-status {
+        .camera-container .camera-controls .capture-btn {
+            background: var(--success);
+            color: white;
+        }
+
+        .camera-container .camera-controls .close-btn {
+            background: var(--danger);
+            color: white;
+        }
+
+        .camera-container .camera-status {
             color: white;
             text-align: center;
             padding: 8px;
             font-size: 12px;
             background: rgba(0, 0, 0, 0.5);
             border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+            margin-top: 8px;
         }
 
-        /* ============================================================
-           RESULTS LIST
-           ============================================================ */
-        .results-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
+        .ocr-result {
+            background: white;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--gray-200);
+            padding: 12px;
             margin-top: 10px;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-
-        .result-item {
-            background: white;
-            border: 1px solid var(--gray-200);
-            border-radius: var(--radius-sm);
-            padding: 12px 14px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .result-item:active {
-            transform: scale(0.98);
-        }
-
-        .result-item.selected {
-            border-color: var(--primary);
-            background: var(--primary-bg);
-        }
-
-        .result-item .info .name {
-            font-weight: 600;
-            font-size: 14px;
-            color: var(--gray-800);
-        }
-
-        .result-item .info .details {
-            font-size: 12px;
-            color: var(--gray-500);
-        }
-
-        .result-item .status-badge {
-            font-size: 11px;
-            font-weight: 600;
-            padding: 2px 10px;
-            border-radius: 12px;
-        }
-
-        .result-item .status-badge.available {
-            background: var(--success-bg);
-            color: var(--success);
-        }
-
-        .result-item .status-badge.borrowed {
-            background: var(--warning-bg);
-            color: var(--warning);
-        }
-
-        .result-item .status-badge.damaged {
-            background: var(--danger-bg);
-            color: var(--danger);
-        }
-
-        /* ============================================================
-           SELECTED INFO
-           ============================================================ */
-        .selected-info {
-            background: var(--primary-bg);
-            border-radius: var(--radius-sm);
-            padding: 12px 16px;
-            margin-bottom: 16px;
-            border: 1px solid var(--primary);
             display: none;
         }
 
-        .selected-info.show {
+        .ocr-result.show {
             display: block;
             animation: fadeIn 0.3s ease;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .selected-info .label {
-            font-size: 11px;
-            color: var(--gray-500);
-            text-transform: uppercase;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-        }
-
-        .selected-info .value {
-            font-size: 15px;
-            font-weight: 600;
-            color: var(--gray-800);
-        }
-
-        .selected-info .sub {
+        .ocr-result .ocr-field {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
             font-size: 13px;
-            color: var(--gray-500);
-        }
-
-        /* ============================================================
-           CONFIRM SECTION
-           ============================================================ */
-        .confirm-section {
-            background: white;
-            border-radius: var(--radius-sm);
-            border: 1px solid var(--gray-200);
-            padding: 16px;
-            box-shadow: var(--shadow);
-            display: none;
-        }
-
-        .confirm-section.show {
-            display: block;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .confirm-section .confirm-title {
-            font-size: 16px;
-            font-weight: 700;
-            color: var(--gray-900);
-            margin-bottom: 12px;
-        }
-
-        .confirm-section .confirm-title i {
-            color: var(--success);
-            margin-right: 8px;
-        }
-
-        .confirm-section .info-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 6px 0;
-            font-size: 14px;
             border-bottom: 1px solid var(--gray-100);
         }
 
-        .confirm-section .info-row:last-child {
+        .ocr-result .ocr-field:last-child {
             border-bottom: none;
         }
 
-        .confirm-section .info-row .label {
+        .ocr-result .ocr-field .label {
             color: var(--gray-500);
         }
 
-        .confirm-section .info-row .value {
+        .ocr-result .ocr-field .value {
             font-weight: 500;
             color: var(--gray-800);
         }
 
-        .confirm-section .form-group {
-            margin-top: 12px;
+        .ocr-result .ocr-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            justify-content: flex-end;
+            flex-wrap: wrap;
         }
 
-        .confirm-section .form-group label {
-            display: block;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--gray-700);
-            margin-bottom: 4px;
-        }
-
-        .confirm-section .form-group input,
-        .confirm-section .form-group select {
-            width: 100%;
-            padding: 10px 14px;
-            border: 1px solid var(--gray-200);
+        .ocr-result .ocr-actions button {
+            padding: 6px 16px;
+            border: none;
             border-radius: var(--radius-sm);
-            font-family: 'Inter', sans-serif;
-            font-size: 14px;
-            background: white;
-            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
         }
 
-        .confirm-section .form-group input:focus,
-        .confirm-section .form-group select:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px var(--primary-bg);
-        }
-
-        .confirm-section .btn-confirm {
-            width: 100%;
-            padding: 12px;
+        .ocr-result .ocr-actions .confirm-btn {
             background: var(--success);
             color: white;
-            border: none;
-            border-radius: var(--radius-sm);
-            font-weight: 600;
-            font-size: 15px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-top: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
         }
 
-        .confirm-section .btn-confirm:active {
-            transform: scale(0.95);
+        .ocr-result .ocr-actions .retry-btn {
+            background: var(--gray-100);
+            color: var(--gray-700);
         }
 
-        .confirm-section .btn-confirm:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        /* ============================================================
-           EMPTY STATE
-           ============================================================ */
-        .empty-state {
-            text-align: center;
-            padding: 30px 20px;
-            color: var(--gray-500);
-        }
-
-        .empty-state i {
-            font-size: 36px;
-            color: var(--gray-300);
-            margin-bottom: 8px;
-            display: block;
-        }
-
-        /* ============================================================
-           TOAST
-           ============================================================ */
-        .toast {
-            position: fixed;
-            bottom: calc(var(--nav-height) + 16px);
-            left: 16px;
-            right: 16px;
-            max-width: 400px;
-            margin: 0 auto;
-            padding: 12px 16px;
-            border-radius: var(--radius-sm);
-            color: white;
-            font-weight: 500;
-            font-size: 13px;
-            box-shadow: var(--shadow-md);
-            z-index: 1000;
-            animation: slideUp 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .toast.hidden {
+        /* Loading Overlay */
+        .spinner-overlay {
             display: none;
-        }
-
-        .toast.success { background: var(--success); }
-        .toast.error { background: var(--danger); }
-        .toast.warning { background: var(--warning); }
-        .toast.info { background: var(--primary); }
-
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .toast .close-toast {
-            background: none;
-            border: none;
-            color: white;
-            cursor: pointer;
-            font-size: 16px;
-            margin-left: auto;
-            opacity: 0.7;
-        }
-
-        /* ============================================================
-           BOTTOM NAVIGATION
-           ============================================================ */
-        .bottom-nav {
             position: fixed;
-            bottom: 0;
+            top: 0;
             left: 0;
             right: 0;
-            background: white;
-            border-top: 1px solid var(--gray-200);
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            padding: 4px 0 calc(4px + var(--safe-bottom, 0px));
-            z-index: 100;
-            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
-            max-width: 480px;
-            margin: 0 auto;
-            height: var(--nav-height);
-        }
-
-        .bottom-nav .nav-item {
-            display: flex;
-            flex-direction: column;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 300;
             align-items: center;
             justify-content: center;
-            gap: 2px;
-            padding: 4px 10px;
-            border: none;
-            background: none;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            color: var(--gray-400);
-            font-family: 'Inter', sans-serif;
-            position: relative;
-            min-width: 44px;
-            flex: 1;
-            height: 100%;
-        }
-
-        .bottom-nav .nav-item i {
-            font-size: 20px;
-            transition: all 0.2s ease;
-            line-height: 1;
-        }
-
-        .bottom-nav .nav-item span {
-            font-size: 10px;
-            font-weight: 500;
-            transition: all 0.2s ease;
-            line-height: 1.2;
-        }
-
-        .bottom-nav .nav-item.active {
-            color: var(--primary);
-        }
-
-        .bottom-nav .nav-item.active i {
-            transform: translateY(-2px);
-            color: var(--primary);
-        }
-
-        .bottom-nav .nav-item.active span {
-            color: var(--primary);
-        }
-
-        .bottom-nav .nav-item .nav-badge {
-            position: absolute;
-            top: 2px;
-            right: 6px;
-            background: var(--danger);
+            flex-direction: column;
+            gap: 16px;
             color: white;
-            font-size: 9px;
-            font-weight: 700;
-            padding: 1px 6px;
-            border-radius: 10px;
-            min-width: 16px;
+        }
+
+        .spinner-overlay.active {
+            display: flex;
+        }
+
+        .spinner-overlay .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .spinner-overlay .spinner-text {
+            font-size: 14px;
+            font-weight: 500;
             text-align: center;
-            line-height: 1.4;
-        }
-
-        .bottom-nav .nav-item:active {
-            transform: scale(0.92);
+            padding: 0 20px;
         }
 
         @media (max-width: 420px) {
-            .bottom-nav {
-                height: 56px;
+            .camera-container video {
+                max-height: 250px;
             }
-            .bottom-nav .nav-item {
-                padding: 2px 6px;
-                min-width: 36px;
-            }
-            .bottom-nav .nav-item i {
-                font-size: 18px;
-            }
-            .bottom-nav .nav-item span {
-                font-size: 9px;
-            }
-            .bottom-nav .nav-item .nav-badge {
-                font-size: 8px;
-                padding: 1px 5px;
-                min-width: 14px;
-                top: 0;
-                right: 4px;
-            }
-        }
-
-        @media (max-width: 360px) {
-            .bottom-nav {
-                height: 50px;
-            }
-            .bottom-nav .nav-item i {
-                font-size: 16px;
-            }
-            .bottom-nav .nav-item span {
-                font-size: 8px;
-            }
-            .bottom-nav .nav-item {
-                padding: 2px 4px;
-                min-width: 32px;
-            }
-        }
-
-        @media (max-width: 420px) {
-            .search-input-group input {
-                min-width: 80px;
-                font-size: 13px;
-            }
-            .search-input-group button {
+            .camera-container .camera-controls button {
                 font-size: 12px;
                 padding: 8px 12px;
-            }
-            .qr-scanner-container #qr-reader {
-                width: 100%;
-            }
-            .qr-scanner-container .qr-overlay .scan-frame {
-                width: 150px;
-                height: 150px;
+                min-width: 80px;
             }
         }
     </style>
 </head>
 <body>
+
+    <!-- ============================================================
+    LOADING OVERLAY
+    ============================================================ -->
+    <div class="spinner-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <div class="spinner-text" id="loadingText">Processing ID card...</div>
+    </div>
 
     <!-- ============================================================
     APP CONTAINER
@@ -843,16 +258,34 @@
                     <span>👤 Name</span>
                     <span>📚 Grade</span>
                     <span>📁 Section</span>
-                    <span>📷 Scan QR</span>
+                    <span>📷 Scan ID</span>
+                    <span>📱 Scan QR</span>
                 </div>
 
                 <!-- Search + Scan Buttons -->
                 <div class="search-input-group">
                     <input type="text" id="studentSearch" placeholder="Search by LRN, Name, Grade, Section..." />
                     <button onclick="searchStudents()"><i class="fas fa-search"></i></button>
-                    <button class="scan-btn" onclick="toggleStudentScanner()">
+                    <button class="scan-btn" onclick="toggleIDScanner()" title="Scan ID Card">
+                        <i class="fas fa-camera"></i>
+                    </button>
+                    <button class="scan-btn" onclick="toggleStudentScanner()" title="Scan QR Code">
                         <i class="fas fa-qrcode"></i>
                     </button>
+                </div>
+
+                <!-- Camera for ID Scanning -->
+                <div class="camera-container" id="cameraContainer">
+                    <video id="video" autoplay playsinline></video>
+                    <div class="camera-controls">
+                        <button class="capture-btn" onclick="captureID()">
+                            <i class="fas fa-camera"></i> Capture ID
+                        </button>
+                        <button class="close-btn" onclick="closeIDScanner()">
+                            <i class="fas fa-times"></i> Close
+                        </button>
+                    </div>
+                    <div class="camera-status">📷 Position the student ID card clearly in the frame</div>
                 </div>
 
                 <!-- QR Scanner for Student -->
@@ -862,10 +295,34 @@
                     <div class="qr-status">📷 Position the student's ID QR code in the frame</div>
                 </div>
 
+                <!-- OCR Results -->
+                <div class="ocr-result" id="ocrResult">
+                    <div class="ocr-field">
+                        <span class="label">👤 Name</span>
+                        <span class="value" id="ocrName">-</span>
+                    </div>
+                    <div class="ocr-field">
+                        <span class="label">📋 LRN</span>
+                        <span class="value" id="ocrLRN">-</span>
+                    </div>
+                    <div class="ocr-field">
+                        <span class="label">📚 Grade</span>
+                        <span class="value" id="ocrGrade">-</span>
+                    </div>
+                    <div class="ocr-field">
+                        <span class="label">📁 Section</span>
+                        <span class="value" id="ocrSection">-</span>
+                    </div>
+                    <div class="ocr-actions">
+                        <button class="retry-btn" onclick="retryOCR()">🔄 Retry</button>
+                        <button class="confirm-btn" onclick="confirmOCR()">✅ Confirm & Use</button>
+                    </div>
+                </div>
+
                 <div class="results-list" id="studentResults">
                     <div class="empty-state">
                         <i class="fas fa-search"></i>
-                        <p>Search by LRN, Name, Grade, or Section<br>or scan the student's ID QR code</p>
+                        <p>Search by LRN, Name, Grade, or Section<br>or scan the student ID card</p>
                     </div>
                 </div>
             </div>
@@ -892,7 +349,7 @@
                     <span>🔢 Model</span>
                     <span>🔍 Serial</span>
                     <span>📂 Category</span>
-                    <span>📷 Scan QR</span>
+                    <span>📱 Scan QR</span>
                 </div>
 
                 <!-- Search + Scan Buttons -->
@@ -1048,6 +505,11 @@
         let isStudentScanning = false;
         let isAssetScanning = false;
 
+        // Camera state
+        let stream = null;
+        let capturedImageData = null;
+        let ocrData = null;
+
         // ============================================================
         // TOAST FUNCTION
         // ============================================================
@@ -1156,17 +618,14 @@
         // STEP NAVIGATION
         // ============================================================
         function goToStep(step) {
-            // Hide all content
             document.getElementById('step1Content').style.display = 'none';
             document.getElementById('step2Content').style.display = 'none';
             document.getElementById('step3Content').style.display = 'none';
 
-            // Show selected content
             if (step === 1) document.getElementById('step1Content').style.display = 'block';
             if (step === 2) document.getElementById('step2Content').style.display = 'block';
             if (step === 3) document.getElementById('step3Content').style.display = 'block';
 
-            // Update step indicators
             document.querySelectorAll('.step').forEach(el => {
                 el.classList.remove('active', 'completed');
             });
@@ -1179,7 +638,244 @@
         }
 
         // ============================================================
-        // QR SCANNER FUNCTIONS
+        // ID SCANNER (Camera + OCR)
+        // ============================================================
+        async function toggleIDScanner() {
+            const container = document.getElementById('cameraContainer');
+            if (container.classList.contains('active')) {
+                closeIDScanner();
+            } else {
+                // Close QR scanner if open
+                if (document.getElementById('studentScanner').classList.contains('active')) {
+                    toggleStudentScanner();
+                }
+                container.classList.add('active');
+                await startCamera();
+            }
+        }
+
+        async function startCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment', width: { ideal: 400 } }
+                });
+                document.getElementById('video').srcObject = stream;
+                await document.getElementById('video').play();
+                document.querySelector('.camera-status').textContent = '📷 Position the student ID card clearly in the frame';
+                console.log('📷 Camera started');
+            } catch (err) {
+                console.error('Camera error:', err);
+                showToast('❌ Unable to access camera. Please allow camera permissions.', 'error');
+                closeIDScanner();
+            }
+        }
+
+        function closeIDScanner() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            document.getElementById('video').srcObject = null;
+            document.getElementById('cameraContainer').classList.remove('active');
+            document.getElementById('ocrResult').classList.remove('show');
+            capturedImageData = null;
+            ocrData = null;
+            console.log('📷 Camera closed');
+        }
+
+        async function captureID() {
+            const video = document.getElementById('video');
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth || 400;
+            canvas.height = video.videoHeight || 300;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            document.getElementById('loadingOverlay').classList.add('active');
+            document.getElementById('loadingText').textContent = '📷 Processing ID card...';
+
+            try {
+                const imageData = canvas.toDataURL('image/jpeg', 0.9);
+                capturedImageData = imageData;
+
+                document.getElementById('loadingText').textContent = '🔍 Reading text from ID...';
+
+                const result = await Tesseract.recognize(
+                    imageData,
+                    'eng',
+                    {
+                        logger: m => {
+                            if (m.status === 'recognizing text') {
+                                document.getElementById('loadingText').textContent =
+                                    `🔍 Reading text... ${Math.round(m.progress * 100)}%`;
+                            }
+                        }
+                    }
+                );
+
+                const text = result.data.text;
+                console.log('OCR Text:', text);
+
+                const parsed = parseIDText(text);
+
+                if (parsed.lrn || parsed.name) {
+                    ocrData = parsed;
+                    showOCRResults(parsed);
+                    showToast('✅ ID card processed! Verify the extracted information.', 'success');
+                } else {
+                    showToast('❌ Could not extract information. Please try again or enter manually.', 'error');
+                }
+
+            } catch (err) {
+                console.error('OCR Error:', err);
+                showToast('❌ Error processing ID card: ' + err.message, 'error');
+            }
+
+            document.getElementById('loadingOverlay').classList.remove('active');
+        }
+
+        function parseIDText(text) {
+            const result = { name: '', lrn: '', grade: '', section: '' };
+
+            // Find LRN (12 digits)
+            const lrnMatch = text.match(/\b(\d{12})\b/);
+            if (lrnMatch) {
+                result.lrn = lrnMatch[1];
+            }
+
+            // Find Grade (Grade 7-10)
+            const gradeMatch = text.match(/(Grade\s*[7-10]|Grade\s*7|Grade\s*8|Grade\s*9|Grade\s*10)/i);
+            if (gradeMatch) {
+                result.grade = gradeMatch[1].trim();
+            }
+
+            // Find Section
+            const sectionMatch = text.match(/Section\s*([A-Za-z0-9]+)|Sec\.?\s*([A-Za-z0-9]+)/i);
+            if (sectionMatch) {
+                result.section = sectionMatch[1] || sectionMatch[2] || '';
+            }
+
+            // Find Name
+            const namePatterns = [
+                /Name:\s*([A-Za-z\s\.]+)/i,
+                /Name\s*([A-Za-z\s\.]+)/i,
+                /([A-Z][a-z]+\s+[A-Z][a-z]+\s+[A-Z][a-z]+)/,
+                /([A-Z][a-z]+\s+[A-Z][a-z]+)/
+            ];
+
+            for (const pattern of namePatterns) {
+                const match = text.match(pattern);
+                if (match) {
+                    result.name = match[1].trim();
+                    break;
+                }
+            }
+
+            if (!result.name) {
+                const lines = text.split('\n').filter(line => line.trim().length > 0);
+                for (const line of lines) {
+                    const trimmed = line.trim();
+                    if (trimmed.split(' ').length >= 2 && trimmed.split(' ').length <= 4) {
+                        if (!/^[A-Z\s]+$/.test(trimmed) && !/\d/.test(trimmed)) {
+                            result.name = trimmed;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (result.name) {
+                result.name = result.name.replace(/[^A-Za-z\s\.]/g, '').trim();
+            }
+            if (!result.name) result.name = 'Unknown';
+
+            return result;
+        }
+
+        function showOCRResults(data) {
+            document.getElementById('ocrName').textContent = data.name || 'Not found';
+            document.getElementById('ocrLRN').textContent = data.lrn || 'Not found';
+            document.getElementById('ocrGrade').textContent = data.grade || 'Not found';
+            document.getElementById('ocrSection').textContent = data.section || 'Not found';
+            document.getElementById('ocrResult').classList.add('show');
+
+            if (data.lrn) {
+                document.getElementById('studentSearch').value = data.lrn;
+                searchStudents();
+            }
+        }
+
+        function retryOCR() {
+            document.getElementById('ocrResult').classList.remove('show');
+            ocrData = null;
+            document.querySelector('.camera-status').textContent = '📷 Position the student ID card clearly in the frame';
+            showToast('🔄 Retake photo of the ID card', 'info');
+        }
+
+        async function confirmOCR() {
+            if (!ocrData) {
+                showToast('❌ No OCR data to confirm.', 'error');
+                return;
+            }
+
+            if (!ocrData.lrn) {
+                showToast('❌ LRN not found. Please enter manually.', 'error');
+                return;
+            }
+
+            try {
+                const { data: existing, error } = await _supabase
+                    .from('students')
+                    .select('*')
+                    .eq('lrn', ocrData.lrn)
+                    .limit(1);
+
+                if (error) throw error;
+
+                if (existing && existing.length > 0) {
+                    selectedStudent = existing[0];
+                    document.getElementById('selectedStudentName').textContent = selectedStudent.full_name;
+                    document.getElementById('selectedStudentDetails').textContent =
+                        `LRN: ${selectedStudent.lrn} · ${selectedStudent.grade_level} ${selectedStudent.section || ''}`;
+                    document.getElementById('selectedStudent').classList.add('show');
+                    showToast(`✅ Student found: ${selectedStudent.full_name}`, 'success');
+                } else {
+                    const newStudent = {
+                        lrn: ocrData.lrn,
+                        full_name: ocrData.name || 'Unknown',
+                        grade_level: ocrData.grade || 'Not specified',
+                        section: ocrData.section || ''
+                    };
+
+                    const { data: created, error: createError } = await _supabase
+                        .from('students')
+                        .insert([newStudent])
+                        .select()
+                        .single();
+
+                    if (createError) throw createError;
+
+                    selectedStudent = created;
+                    document.getElementById('selectedStudentName').textContent = selectedStudent.full_name;
+                    document.getElementById('selectedStudentDetails').textContent =
+                        `LRN: ${selectedStudent.lrn} · ${selectedStudent.grade_level} ${selectedStudent.section || ''}`;
+                    document.getElementById('selectedStudent').classList.add('show');
+                    showToast(`✅ New student added: ${selectedStudent.full_name}`, 'success');
+                }
+
+                closeIDScanner();
+                document.getElementById('ocrResult').classList.remove('show');
+                goToStep(2);
+                document.getElementById('assetSearch').focus();
+
+            } catch (error) {
+                console.error('Error saving student:', error);
+                showToast('❌ Error saving student: ' + error.message, 'error');
+            }
+        }
+
+        // ============================================================
+        // QR SCANNER FUNCTIONS (Keep your existing ones)
         // ============================================================
         function toggleStudentScanner() {
             const container = document.getElementById('studentScanner');
@@ -1187,6 +883,10 @@
                 stopStudentScanner();
                 container.classList.remove('active');
             } else {
+                // Close ID scanner if open
+                if (document.getElementById('cameraContainer').classList.contains('active')) {
+                    closeIDScanner();
+                }
                 container.classList.add('active');
                 startStudentScanner();
             }
@@ -1278,7 +978,6 @@
         }
 
         function onScanError(err) {
-            // Silent fail - keeps scanning
             console.debug('Scan error:', err);
         }
 
@@ -1287,24 +986,19 @@
         // ============================================================
         async function onStudentScanSuccess(decodedText) {
             try {
-                // Stop scanner
                 stopStudentScanner();
                 document.getElementById('studentScanner').classList.remove('active');
 
                 showToast('📷 QR code scanned! Looking up student...', 'info');
 
-                // Try to parse as JSON first
                 let searchQuery = decodedText;
                 try {
                     const data = JSON.parse(decodedText);
-                    // If it's JSON, try to find LRN or ID
                     searchQuery = data.lrn || data.id || data.student_id || decodedText;
                 } catch (e) {
-                    // Not JSON, use as is
                     searchQuery = decodedText;
                 }
 
-                // Search for student by LRN or ID
                 const { data: results, error } = await _supabase
                     .from('students')
                     .select('*')
@@ -1315,7 +1009,6 @@
 
                 if (results && results.length > 0) {
                     const student = results[0];
-                    // Select the student automatically
                     students = [student];
                     selectedStudent = student;
                     document.getElementById('selectedStudentName').textContent = student.full_name;
@@ -1323,14 +1016,12 @@
                         `LRN: ${student.lrn} · ${student.grade_level} ${student.section || ''}`;
                     document.getElementById('selectedStudent').classList.add('show');
 
-                    // Go to step 2
                     goToStep(2);
                     document.getElementById('assetSearch').focus();
 
                     showToast(`✅ Student found: ${student.full_name}`, 'success');
                 } else {
-                    showToast(`❌ No student found with LRN: ${searchQuery}. Please try again or add the student manually.`, 'error');
-                    // Auto-fill the search field with the scanned value
+                    showToast(`❌ No student found. Please try again or add manually.`, 'error');
                     document.getElementById('studentSearch').value = searchQuery;
                 }
 
@@ -1345,24 +1036,19 @@
         // ============================================================
         async function onAssetScanSuccess(decodedText) {
             try {
-                // Stop scanner
                 stopAssetScanner();
                 document.getElementById('assetScanner').classList.remove('active');
 
                 showToast('📷 QR code scanned! Looking up asset...', 'info');
 
-                // Try to parse as JSON first
                 let searchQuery = decodedText;
                 try {
                     const data = JSON.parse(decodedText);
-                    // If it's JSON, try to find ID or name
                     searchQuery = data.id || data.asset_id || data.name || decodedText;
                 } catch (e) {
-                    // Not JSON, use as is
                     searchQuery = decodedText;
                 }
 
-                // Search for asset by ID or name
                 const { data: results, error } = await _supabase
                     .from('assets')
                     .select(`
@@ -1384,7 +1070,6 @@
                         return;
                     }
 
-                    // Select the asset automatically
                     assets = [asset];
                     selectedAsset = asset;
                     document.getElementById('selectedAssetName').textContent = asset.name;
@@ -1392,10 +1077,8 @@
                         `Available: ${asset.available_quantity} / ${asset.total_quantity} · ${asset.locations?.name || 'N/A'}`;
                     document.getElementById('selectedAsset').classList.add('show');
 
-                    // Go to step 3
                     goToStep(3);
 
-                    // Fill confirm section
                     document.getElementById('confirmStudent').textContent = selectedStudent.full_name;
                     document.getElementById('confirmAsset').textContent = asset.name;
                     document.getElementById('confirmAvailable').textContent =
@@ -1410,7 +1093,7 @@
 
                     showToast(`✅ Asset found: ${asset.name}`, 'success');
                 } else {
-                    showToast(`❌ No asset found. Please try again or add the asset manually.`, 'error');
+                    showToast(`❌ No asset found. Please try again or add manually.`, 'error');
                     document.getElementById('assetSearch').value = searchQuery;
                 }
 
@@ -1680,11 +1363,12 @@
                     document.getElementById('selectedAsset').classList.remove('show');
                     document.getElementById('studentSearch').value = '';
                     document.getElementById('assetSearch').value = '';
+                    document.getElementById('ocrResult').classList.remove('show');
 
                     document.getElementById('studentResults').innerHTML = `
                         <div class="empty-state">
                             <i class="fas fa-search"></i>
-                            <p>Search by LRN, Name, Grade, or Section<br>or scan the student's ID QR code</p>
+                            <p>Search by LRN, Name, Grade, or Section<br>or scan the student ID card</p>
                         </div>
                     `;
                     document.getElementById('assetResults').innerHTML = `
@@ -1732,10 +1416,10 @@
             document.getElementById('borrowReturnDate').value = date.toISOString().split('T')[0];
 
             console.log('📦 EduStock - Borrow Page Loaded');
+            console.log('📷 ID Scanner: Take photo of student ID, extract LRN, Name, Grade');
             console.log('🔍 Student Search: LRN, Name, Grade, Section');
             console.log('🔍 Asset Search: Name, Brand, Model, Serial, Category');
-            console.log('📷 QR Scanning: Student ID and Asset QR codes');
-            console.log('💡 Click the QR button to scan student ID or asset QR codes');
+            console.log('📱 QR Scanning: Student ID QR and Asset QR codes');
         }
 
         document.addEventListener('DOMContentLoaded', init);
