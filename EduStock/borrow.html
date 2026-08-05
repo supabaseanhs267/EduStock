@@ -1,0 +1,1745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>EduStock - Borrow</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="nav.css" />
+    
+    <!-- QR Scanner Library -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        /* ============================================================
+           RESET & BASE
+           ============================================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #4F46E5;
+            --primary-dark: #4338CA;
+            --primary-light: #818CF8;
+            --primary-bg: #EEF2FF;
+            --success: #10B981;
+            --success-bg: #ECFDF5;
+            --warning: #F59E0B;
+            --warning-bg: #FFFBEB;
+            --danger: #EF4444;
+            --danger-bg: #FEF2F2;
+            --gray-50: #F9FAFB;
+            --gray-100: #F3F4F6;
+            --gray-200: #E5E7EB;
+            --gray-300: #D1D5DB;
+            --gray-400: #9CA3AF;
+            --gray-500: #6B7280;
+            --gray-600: #4B5563;
+            --gray-700: #374151;
+            --gray-800: #1F2937;
+            --gray-900: #111827;
+            --radius: 16px;
+            --radius-sm: 10px;
+            --shadow: 0 2px 8px rgba(0,0,0,0.08);
+            --shadow-md: 0 4px 16px rgba(0,0,0,0.12);
+            --nav-height: 60px;
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-800);
+            padding: 0 0 calc(var(--nav-height) + 16px) 0;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 16px 16px 24px;
+        }
+
+        /* ============================================================
+           HEADER
+           ============================================================ */
+        .app-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 0 16px;
+            border-bottom: 1px solid var(--gray-200);
+            margin-bottom: 16px;
+        }
+
+        .app-header .greeting h2 {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        .app-header .greeting p {
+            font-size: 13px;
+            color: var(--gray-500);
+            margin-top: 0px;
+        }
+
+        .app-header .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .app-header .header-actions button {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 1px solid var(--gray-200);
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gray-600);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            font-size: 16px;
+        }
+
+        .app-header .header-actions button:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .app-header .header-actions .badge-dot {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 8px;
+            height: 8px;
+            background: var(--danger);
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+
+        /* ============================================================
+           STEP INDICATOR
+           ============================================================ */
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            position: relative;
+            padding: 0 10px;
+        }
+
+        .step-indicator::before {
+            content: '';
+            position: absolute;
+            top: 18px;
+            left: 40px;
+            right: 40px;
+            height: 2px;
+            background: var(--gray-200);
+            z-index: 0;
+        }
+
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 1;
+            flex: 1;
+        }
+
+        .step .step-number {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--gray-200);
+            color: var(--gray-500);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .step.active .step-number {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px var(--primary-bg);
+        }
+
+        .step.completed .step-number {
+            background: var(--success);
+            color: white;
+            border-color: var(--success);
+        }
+
+        .step .step-label {
+            font-size: 9px;
+            color: var(--gray-400);
+            margin-top: 4px;
+            font-weight: 500;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .step.active .step-label {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .step.completed .step-label {
+            color: var(--success);
+        }
+
+        /* ============================================================
+           SEARCH / SCAN SECTION
+           ============================================================ */
+        .search-section {
+            background: white;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--gray-200);
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow);
+        }
+
+        .search-section .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .search-section .section-title i {
+            color: var(--primary);
+        }
+
+        .search-section .search-hint {
+            font-size: 11px;
+            color: var(--gray-400);
+            margin-bottom: 8px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .search-section .search-hint span {
+            background: var(--gray-100);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            color: var(--gray-600);
+        }
+
+        .search-input-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .search-input-group input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            background: white;
+            transition: all 0.3s ease;
+            min-width: 120px;
+        }
+
+        .search-input-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-bg);
+        }
+
+        .search-input-group button {
+            padding: 10px 16px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .search-input-group button:active {
+            transform: scale(0.95);
+        }
+
+        .search-input-group button.secondary {
+            background: var(--gray-100);
+            color: var(--gray-700);
+        }
+
+        .search-input-group button.scan-btn {
+            background: var(--success);
+            color: white;
+        }
+
+        .search-input-group button.scan-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* ============================================================
+           QR SCANNER CONTAINER
+           ============================================================ */
+        .qr-scanner-container {
+            display: none;
+            margin-top: 12px;
+            padding: 12px;
+            background: var(--gray-900);
+            border-radius: var(--radius-sm);
+            position: relative;
+        }
+
+        .qr-scanner-container.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .qr-scanner-container #qr-reader {
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .qr-scanner-container .qr-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+
+        .qr-scanner-container .qr-overlay .scan-frame {
+            width: 200px;
+            height: 200px;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 8px;
+            box-shadow: 0 0 0 4000px rgba(0, 0, 0, 0.3);
+        }
+
+        .qr-scanner-container .qr-close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 20px;
+            padding: 8px 12px;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .qr-scanner-container .qr-status {
+            color: white;
+            text-align: center;
+            padding: 8px;
+            font-size: 12px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+        }
+
+        /* ============================================================
+           RESULTS LIST
+           ============================================================ */
+        .results-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .result-item {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            padding: 12px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .result-item:active {
+            transform: scale(0.98);
+        }
+
+        .result-item.selected {
+            border-color: var(--primary);
+            background: var(--primary-bg);
+        }
+
+        .result-item .info .name {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--gray-800);
+        }
+
+        .result-item .info .details {
+            font-size: 12px;
+            color: var(--gray-500);
+        }
+
+        .result-item .status-badge {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 10px;
+            border-radius: 12px;
+        }
+
+        .result-item .status-badge.available {
+            background: var(--success-bg);
+            color: var(--success);
+        }
+
+        .result-item .status-badge.borrowed {
+            background: var(--warning-bg);
+            color: var(--warning);
+        }
+
+        .result-item .status-badge.damaged {
+            background: var(--danger-bg);
+            color: var(--danger);
+        }
+
+        /* ============================================================
+           SELECTED INFO
+           ============================================================ */
+        .selected-info {
+            background: var(--primary-bg);
+            border-radius: var(--radius-sm);
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            border: 1px solid var(--primary);
+            display: none;
+        }
+
+        .selected-info.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .selected-info .label {
+            font-size: 11px;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .selected-info .value {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        .selected-info .sub {
+            font-size: 13px;
+            color: var(--gray-500);
+        }
+
+        /* ============================================================
+           CONFIRM SECTION
+           ============================================================ */
+        .confirm-section {
+            background: white;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--gray-200);
+            padding: 16px;
+            box-shadow: var(--shadow);
+            display: none;
+        }
+
+        .confirm-section.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .confirm-section .confirm-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 12px;
+        }
+
+        .confirm-section .confirm-title i {
+            color: var(--success);
+            margin-right: 8px;
+        }
+
+        .confirm-section .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            font-size: 14px;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .confirm-section .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .confirm-section .info-row .label {
+            color: var(--gray-500);
+        }
+
+        .confirm-section .info-row .value {
+            font-weight: 500;
+            color: var(--gray-800);
+        }
+
+        .confirm-section .form-group {
+            margin-top: 12px;
+        }
+
+        .confirm-section .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: 4px;
+        }
+
+        .confirm-section .form-group input,
+        .confirm-section .form-group select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            background: white;
+            transition: all 0.3s ease;
+        }
+
+        .confirm-section .form-group input:focus,
+        .confirm-section .form-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-bg);
+        }
+
+        .confirm-section .btn-confirm {
+            width: 100%;
+            padding: 12px;
+            background: var(--success);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .confirm-section .btn-confirm:active {
+            transform: scale(0.95);
+        }
+
+        .confirm-section .btn-confirm:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* ============================================================
+           EMPTY STATE
+           ============================================================ */
+        .empty-state {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--gray-500);
+        }
+
+        .empty-state i {
+            font-size: 36px;
+            color: var(--gray-300);
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        /* ============================================================
+           TOAST
+           ============================================================ */
+        .toast {
+            position: fixed;
+            bottom: calc(var(--nav-height) + 16px);
+            left: 16px;
+            right: 16px;
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            color: white;
+            font-weight: 500;
+            font-size: 13px;
+            box-shadow: var(--shadow-md);
+            z-index: 1000;
+            animation: slideUp 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toast.hidden {
+            display: none;
+        }
+
+        .toast.success { background: var(--success); }
+        .toast.error { background: var(--danger); }
+        .toast.warning { background: var(--warning); }
+        .toast.info { background: var(--primary); }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .toast .close-toast {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            margin-left: auto;
+            opacity: 0.7;
+        }
+
+        /* ============================================================
+           BOTTOM NAVIGATION
+           ============================================================ */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 4px 0 calc(4px + var(--safe-bottom, 0px));
+            z-index: 100;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+            max-width: 480px;
+            margin: 0 auto;
+            height: var(--nav-height);
+        }
+
+        .bottom-nav .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            padding: 4px 10px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--gray-400);
+            font-family: 'Inter', sans-serif;
+            position: relative;
+            min-width: 44px;
+            flex: 1;
+            height: 100%;
+        }
+
+        .bottom-nav .nav-item i {
+            font-size: 20px;
+            transition: all 0.2s ease;
+            line-height: 1;
+        }
+
+        .bottom-nav .nav-item span {
+            font-size: 10px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            line-height: 1.2;
+        }
+
+        .bottom-nav .nav-item.active {
+            color: var(--primary);
+        }
+
+        .bottom-nav .nav-item.active i {
+            transform: translateY(-2px);
+            color: var(--primary);
+        }
+
+        .bottom-nav .nav-item.active span {
+            color: var(--primary);
+        }
+
+        .bottom-nav .nav-item .nav-badge {
+            position: absolute;
+            top: 2px;
+            right: 6px;
+            background: var(--danger);
+            color: white;
+            font-size: 9px;
+            font-weight: 700;
+            padding: 1px 6px;
+            border-radius: 10px;
+            min-width: 16px;
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        .bottom-nav .nav-item:active {
+            transform: scale(0.92);
+        }
+
+        @media (max-width: 420px) {
+            .bottom-nav {
+                height: 56px;
+            }
+            .bottom-nav .nav-item {
+                padding: 2px 6px;
+                min-width: 36px;
+            }
+            .bottom-nav .nav-item i {
+                font-size: 18px;
+            }
+            .bottom-nav .nav-item span {
+                font-size: 9px;
+            }
+            .bottom-nav .nav-item .nav-badge {
+                font-size: 8px;
+                padding: 1px 5px;
+                min-width: 14px;
+                top: 0;
+                right: 4px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .bottom-nav {
+                height: 50px;
+            }
+            .bottom-nav .nav-item i {
+                font-size: 16px;
+            }
+            .bottom-nav .nav-item span {
+                font-size: 8px;
+            }
+            .bottom-nav .nav-item {
+                padding: 2px 4px;
+                min-width: 32px;
+            }
+        }
+
+        @media (max-width: 420px) {
+            .search-input-group input {
+                min-width: 80px;
+                font-size: 13px;
+            }
+            .search-input-group button {
+                font-size: 12px;
+                padding: 8px 12px;
+            }
+            .qr-scanner-container #qr-reader {
+                width: 100%;
+            }
+            .qr-scanner-container .qr-overlay .scan-frame {
+                width: 150px;
+                height: 150px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ============================================================
+    APP CONTAINER
+    ============================================================ -->
+    <div class="app-container">
+
+        <!-- ===== HEADER ===== -->
+        <header class="app-header">
+            <div class="greeting">
+                <h2 id="userGreeting">Welcome back! 👋</h2>
+                <p id="userRole">Admin · Alitagtag NHS</p>
+            </div>
+            <div class="header-actions">
+                <button id="notificationBtn" title="Notifications">
+                    <i class="fas fa-bell"></i>
+                    <span class="badge-dot"></span>
+                </button>
+                <button id="logoutBtn" title="Logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- ===== STEP INDICATOR ===== -->
+        <div class="step-indicator">
+            <div class="step active" id="step1">
+                <div class="step-number">1</div>
+                <div class="step-label">Student</div>
+            </div>
+            <div class="step" id="step2">
+                <div class="step-number">2</div>
+                <div class="step-label">Asset</div>
+            </div>
+            <div class="step" id="step3">
+                <div class="step-number">3</div>
+                <div class="step-label">Confirm</div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+        STEP 1: FIND STUDENT
+        ============================================================ -->
+        <div id="step1Content">
+            <div class="search-section">
+                <div class="section-title">
+                    <i class="fas fa-user-graduate"></i> Find Student
+                </div>
+                <div class="search-hint">
+                    <span>📋 LRN</span>
+                    <span>👤 Name</span>
+                    <span>📚 Grade</span>
+                    <span>📁 Section</span>
+                    <span>📷 Scan QR</span>
+                </div>
+
+                <!-- Search + Scan Buttons -->
+                <div class="search-input-group">
+                    <input type="text" id="studentSearch" placeholder="Search by LRN, Name, Grade, Section..." />
+                    <button onclick="searchStudents()"><i class="fas fa-search"></i></button>
+                    <button class="scan-btn" onclick="toggleStudentScanner()">
+                        <i class="fas fa-qrcode"></i>
+                    </button>
+                </div>
+
+                <!-- QR Scanner for Student -->
+                <div class="qr-scanner-container" id="studentScanner">
+                    <button class="qr-close-btn" onclick="toggleStudentScanner()">&times;</button>
+                    <div id="studentQrReader"></div>
+                    <div class="qr-status">📷 Position the student's ID QR code in the frame</div>
+                </div>
+
+                <div class="results-list" id="studentResults">
+                    <div class="empty-state">
+                        <i class="fas fa-search"></i>
+                        <p>Search by LRN, Name, Grade, or Section<br>or scan the student's ID QR code</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Selected Student Info -->
+            <div class="selected-info" id="selectedStudent">
+                <div class="label">Selected Student</div>
+                <div class="value" id="selectedStudentName">-</div>
+                <div class="sub" id="selectedStudentDetails">LRN: - · Grade: -</div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+        STEP 2: FIND ASSET
+        ============================================================ -->
+        <div id="step2Content" style="display:none;">
+            <div class="search-section">
+                <div class="section-title">
+                    <i class="fas fa-boxes"></i> Find Asset
+                </div>
+                <div class="search-hint">
+                    <span>📦 Name</span>
+                    <span>🏷️ Brand</span>
+                    <span>🔢 Model</span>
+                    <span>🔍 Serial</span>
+                    <span>📂 Category</span>
+                    <span>📷 Scan QR</span>
+                </div>
+
+                <!-- Search + Scan Buttons -->
+                <div class="search-input-group">
+                    <input type="text" id="assetSearch" placeholder="Search by Name, Brand, Model, Serial, Category..." />
+                    <button onclick="searchAssets()"><i class="fas fa-search"></i></button>
+                    <button class="scan-btn" onclick="toggleAssetScanner()">
+                        <i class="fas fa-qrcode"></i>
+                    </button>
+                </div>
+
+                <!-- QR Scanner for Asset -->
+                <div class="qr-scanner-container" id="assetScanner">
+                    <button class="qr-close-btn" onclick="toggleAssetScanner()">&times;</button>
+                    <div id="assetQrReader"></div>
+                    <div class="qr-status">📷 Position the asset's QR code in the frame</div>
+                </div>
+
+                <div class="results-list" id="assetResults">
+                    <div class="empty-state">
+                        <i class="fas fa-search"></i>
+                        <p>Search by Name, Brand, Model, Serial, Category<br>or scan the asset's QR code</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Selected Asset Info -->
+            <div class="selected-info" id="selectedAsset">
+                <div class="label">Selected Asset</div>
+                <div class="value" id="selectedAssetName">-</div>
+                <div class="sub" id="selectedAssetDetails">Available: - / -</div>
+            </div>
+
+            <!-- Back button -->
+            <button class="search-input-group" style="width:100%;margin-top:8px;" onclick="goToStep(1)">
+                <button class="secondary" style="width:100%;padding:10px;background:var(--gray-100);border:none;border-radius:var(--radius-sm);font-weight:500;cursor:pointer;">
+                    <i class="fas fa-arrow-left"></i> Back to Student
+                </button>
+            </button>
+        </div>
+
+        <!-- ============================================================
+        STEP 3: CONFIRM BORROWING
+        ============================================================ -->
+        <div id="step3Content" style="display:none;">
+            <div class="confirm-section show">
+                <div class="confirm-title">
+                    <i class="fas fa-check-circle"></i> Confirm Borrowing
+                </div>
+
+                <div class="info-row">
+                    <span class="label">Student</span>
+                    <span class="value" id="confirmStudent">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Asset</span>
+                    <span class="value" id="confirmAsset">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Available</span>
+                    <span class="value" id="confirmAvailable">-</span>
+                </div>
+
+                <div class="form-group">
+                    <label>Quantity <span style="color:var(--danger);">*</span></label>
+                    <input type="number" id="borrowQty" value="1" min="1" />
+                </div>
+
+                <div class="form-group">
+                    <label>Expected Return Date <span style="color:var(--danger);">*</span></label>
+                    <input type="date" id="borrowReturnDate" />
+                </div>
+
+                <div class="form-group">
+                    <label>Purpose</label>
+                    <select id="borrowPurpose">
+                        <option value="Class Activity">Class Activity</option>
+                        <option value="Project">Project</option>
+                        <option value="Laboratory">Laboratory</option>
+                        <option value="Research">Research</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Remarks</label>
+                    <input type="text" id="borrowRemarks" placeholder="Optional remarks..." />
+                </div>
+
+                <button class="btn-confirm" onclick="confirmBorrow()">
+                    <i class="fas fa-check"></i> Confirm Borrow
+                </button>
+
+                <!-- Back button -->
+                <button onclick="goToStep(2)" style="width:100%;padding:10px;margin-top:8px;background:var(--gray-100);border:none;border-radius:var(--radius-sm);font-weight:500;cursor:pointer;">
+                    <i class="fas fa-arrow-left"></i> Back to Asset
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ============================================================
+    BOTTOM NAVIGATION
+    ============================================================ -->
+    <nav class="bottom-nav">
+        <button class="nav-item" data-page="dashboard" onclick="window.location.href='dashboard.html'">
+            <i class="fas fa-th-large"></i>
+            <span>Home</span>
+        </button>
+        <button class="nav-item" data-page="assets" onclick="window.location.href='assets.html'">
+            <i class="fas fa-boxes"></i>
+            <span>Assets</span>
+        </button>
+        <button class="nav-item active" data-page="borrow">
+            <i class="fas fa-hand-holding"></i>
+            <span>Borrow</span>
+        </button>
+        <button class="nav-item" data-page="return" onclick="window.location.href='return.html'">
+            <i class="fas fa-undo-alt"></i>
+            <span>Return</span>
+        </button>
+        <button class="nav-item" data-page="students" onclick="window.location.href='students.html'">
+            <i class="fas fa-users"></i>
+            <span>Students</span>
+        </button>
+        <button class="nav-item" data-page="settings" onclick="window.location.href='settings.html'">
+            <i class="fas fa-cog"></i>
+            <span>Settings</span>
+        </button>
+    </nav>
+
+    <!-- ============================================================
+    SCRIPTS
+    ============================================================ -->
+    <script>
+        // ============================================================
+        // SUPABASE CONFIGURATION
+        // ============================================================
+        const _SUPABASE_URL = 'https://zvbbnwawvbmxfygvkyaq.supabase.co';
+        const _SUPABASE_ANON_KEY = 'sb_publishable_LQd5C3G15qa-svzIDMadAw_ErT3Usmd';
+        const _supabase = window.supabase.createClient(_SUPABASE_URL, _SUPABASE_ANON_KEY);
+
+        // ============================================================
+        // STATE
+        // ============================================================
+        let selectedStudent = null;
+        let selectedAsset = null;
+        let students = [];
+        let assets = [];
+        let studentScanner = null;
+        let assetScanner = null;
+        let isStudentScanning = false;
+        let isAssetScanning = false;
+
+        // ============================================================
+        // TOAST FUNCTION
+        // ============================================================
+        function showToast(text, type = 'info') {
+            let toast = document.getElementById('globalToast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'globalToast';
+                toast.className = 'toast hidden';
+                toast.innerHTML = `
+                    <i class="fas fa-info-circle"></i>
+                    <span id="toastMessage">Toast message</span>
+                    <button class="close-toast">&times;</button>
+                `;
+                document.body.appendChild(toast);
+
+                toast.querySelector('.close-toast').addEventListener('click', function() {
+                    toast.classList.add('hidden');
+                    clearTimeout(toast._timeout);
+                });
+            }
+
+            const messageEl = document.getElementById('toastMessage');
+            const icon = toast.querySelector('i');
+            const icons = {
+                success: 'fa-check-circle',
+                error: 'fa-exclamation-circle',
+                warning: 'fa-exclamation-triangle',
+                info: 'fa-info-circle'
+            };
+
+            toast.className = `toast ${type}`;
+            messageEl.textContent = text;
+            icon.className = `fas ${icons[type] || icons.info}`;
+
+            clearTimeout(toast._timeout);
+            toast._timeout = setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 4000);
+        }
+
+        // ============================================================
+        // LOAD USER SESSION
+        // ============================================================
+        function loadUserSession() {
+            try {
+                const session = JSON.parse(localStorage.getItem('edustock_session'));
+                if (session && session.profile) {
+                    const name = session.profile.full_name || 'User';
+                    const role = session.profile.role || 'Staff';
+
+                    document.getElementById('userGreeting').textContent = `Welcome back, ${name}! 👋`;
+                    document.getElementById('userRole').textContent =
+                        `${role.charAt(0).toUpperCase() + role.slice(1)} · Alitagtag NHS`;
+                }
+            } catch (e) {
+                console.error('Session error:', e);
+            }
+        }
+
+        // ============================================================
+        // CHECK AUTH
+        // ============================================================
+        async function checkAuth() {
+            const session = JSON.parse(localStorage.getItem('edustock_session'));
+            if (!session) {
+                window.location.href = 'login.html';
+                return false;
+            }
+
+            try {
+                const { data, error } = await _supabase.auth.getUser();
+                if (error || !data.user) {
+                    localStorage.removeItem('edustock_session');
+                    window.location.href = 'login.html';
+                    return false;
+                }
+                return true;
+            } catch (e) {
+                console.error('Auth check error:', e);
+                return false;
+            }
+        }
+
+        // ============================================================
+        // LOGOUT
+        // ============================================================
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.removeItem('edustock_session');
+                showToast('👋 Logged out successfully!', 'success');
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 1000);
+            }
+        });
+
+        // ============================================================
+        // NOTIFICATIONS
+        // ============================================================
+        document.getElementById('notificationBtn').addEventListener('click', function() {
+            showToast('🔔 You have 3 unread notifications', 'warning');
+        });
+
+        // ============================================================
+        // STEP NAVIGATION
+        // ============================================================
+        function goToStep(step) {
+            // Hide all content
+            document.getElementById('step1Content').style.display = 'none';
+            document.getElementById('step2Content').style.display = 'none';
+            document.getElementById('step3Content').style.display = 'none';
+
+            // Show selected content
+            if (step === 1) document.getElementById('step1Content').style.display = 'block';
+            if (step === 2) document.getElementById('step2Content').style.display = 'block';
+            if (step === 3) document.getElementById('step3Content').style.display = 'block';
+
+            // Update step indicators
+            document.querySelectorAll('.step').forEach(el => {
+                el.classList.remove('active', 'completed');
+            });
+
+            for (let i = 1; i <= 3; i++) {
+                const el = document.getElementById('step' + i);
+                if (i < step) el.classList.add('completed');
+                if (i === step) el.classList.add('active');
+            }
+        }
+
+        // ============================================================
+        // QR SCANNER FUNCTIONS
+        // ============================================================
+        function toggleStudentScanner() {
+            const container = document.getElementById('studentScanner');
+            if (container.classList.contains('active')) {
+                stopStudentScanner();
+                container.classList.remove('active');
+            } else {
+                container.classList.add('active');
+                startStudentScanner();
+            }
+        }
+
+        function toggleAssetScanner() {
+            const container = document.getElementById('assetScanner');
+            if (container.classList.contains('active')) {
+                stopAssetScanner();
+                container.classList.remove('active');
+            } else {
+                container.classList.add('active');
+                startAssetScanner();
+            }
+        }
+
+        function startStudentScanner() {
+            if (studentScanner) {
+                studentScanner.clear();
+                studentScanner = null;
+            }
+
+            studentScanner = new Html5Qrcode("studentQrReader");
+            const config = {
+                fps: 10,
+                qrbox: { width: 200, height: 200 },
+                aspectRatio: 1.0
+            };
+
+            studentScanner.start({ facingMode: "environment" },
+                config,
+                onStudentScanSuccess,
+                onScanError
+            ).then(() => {
+                isStudentScanning = true;
+                console.log('📷 Student QR Scanner started');
+            }).catch(err => {
+                console.error('Failed to start student scanner:', err);
+                showToast('❌ Unable to access camera. Please allow camera permissions.', 'error');
+                document.getElementById('studentScanner').classList.remove('active');
+            });
+        }
+
+        function startAssetScanner() {
+            if (assetScanner) {
+                assetScanner.clear();
+                assetScanner = null;
+            }
+
+            assetScanner = new Html5Qrcode("assetQrReader");
+            const config = {
+                fps: 10,
+                qrbox: { width: 200, height: 200 },
+                aspectRatio: 1.0
+            };
+
+            assetScanner.start({ facingMode: "environment" },
+                config,
+                onAssetScanSuccess,
+                onScanError
+            ).then(() => {
+                isAssetScanning = true;
+                console.log('📷 Asset QR Scanner started');
+            }).catch(err => {
+                console.error('Failed to start asset scanner:', err);
+                showToast('❌ Unable to access camera. Please allow camera permissions.', 'error');
+                document.getElementById('assetScanner').classList.remove('active');
+            });
+        }
+
+        function stopStudentScanner() {
+            if (studentScanner && isStudentScanning) {
+                studentScanner.stop().then(() => {
+                    studentScanner.clear();
+                    isStudentScanning = false;
+                    console.log('📷 Student QR Scanner stopped');
+                }).catch(err => console.error('Error stopping student scanner:', err));
+            }
+        }
+
+        function stopAssetScanner() {
+            if (assetScanner && isAssetScanning) {
+                assetScanner.stop().then(() => {
+                    assetScanner.clear();
+                    isAssetScanning = false;
+                    console.log('📷 Asset QR Scanner stopped');
+                }).catch(err => console.error('Error stopping asset scanner:', err));
+            }
+        }
+
+        function onScanError(err) {
+            // Silent fail - keeps scanning
+            console.debug('Scan error:', err);
+        }
+
+        // ============================================================
+        // QR SCAN SUCCESS - STUDENT
+        // ============================================================
+        async function onStudentScanSuccess(decodedText) {
+            try {
+                // Stop scanner
+                stopStudentScanner();
+                document.getElementById('studentScanner').classList.remove('active');
+
+                showToast('📷 QR code scanned! Looking up student...', 'info');
+
+                // Try to parse as JSON first
+                let searchQuery = decodedText;
+                try {
+                    const data = JSON.parse(decodedText);
+                    // If it's JSON, try to find LRN or ID
+                    searchQuery = data.lrn || data.id || data.student_id || decodedText;
+                } catch (e) {
+                    // Not JSON, use as is
+                    searchQuery = decodedText;
+                }
+
+                // Search for student by LRN or ID
+                const { data: results, error } = await _supabase
+                    .from('students')
+                    .select('*')
+                    .or(`lrn.ilike.%${searchQuery}%,id.eq.${searchQuery}`)
+                    .limit(1);
+
+                if (error) throw error;
+
+                if (results && results.length > 0) {
+                    const student = results[0];
+                    // Select the student automatically
+                    students = [student];
+                    selectedStudent = student;
+                    document.getElementById('selectedStudentName').textContent = student.full_name;
+                    document.getElementById('selectedStudentDetails').textContent =
+                        `LRN: ${student.lrn} · ${student.grade_level} ${student.section || ''}`;
+                    document.getElementById('selectedStudent').classList.add('show');
+
+                    // Go to step 2
+                    goToStep(2);
+                    document.getElementById('assetSearch').focus();
+
+                    showToast(`✅ Student found: ${student.full_name}`, 'success');
+                } else {
+                    showToast(`❌ No student found with LRN: ${searchQuery}. Please try again or add the student manually.`, 'error');
+                    // Auto-fill the search field with the scanned value
+                    document.getElementById('studentSearch').value = searchQuery;
+                }
+
+            } catch (error) {
+                console.error('Student scan error:', error);
+                showToast('❌ Error processing QR code: ' + error.message, 'error');
+            }
+        }
+
+        // ============================================================
+        // QR SCAN SUCCESS - ASSET
+        // ============================================================
+        async function onAssetScanSuccess(decodedText) {
+            try {
+                // Stop scanner
+                stopAssetScanner();
+                document.getElementById('assetScanner').classList.remove('active');
+
+                showToast('📷 QR code scanned! Looking up asset...', 'info');
+
+                // Try to parse as JSON first
+                let searchQuery = decodedText;
+                try {
+                    const data = JSON.parse(decodedText);
+                    // If it's JSON, try to find ID or name
+                    searchQuery = data.id || data.asset_id || data.name || decodedText;
+                } catch (e) {
+                    // Not JSON, use as is
+                    searchQuery = decodedText;
+                }
+
+                // Search for asset by ID or name
+                const { data: results, error } = await _supabase
+                    .from('assets')
+                    .select(`
+                        *,
+                        categories!inner(name),
+                        brands!inner(name),
+                        locations!inner(name)
+                    `)
+                    .or(`asset_id.ilike.%${searchQuery}%,name.ilike.%${searchQuery}%,id.eq.${searchQuery}`)
+                    .limit(1);
+
+                if (error) throw error;
+
+                if (results && results.length > 0) {
+                    const asset = results[0];
+
+                    if (asset.available_quantity <= 0) {
+                        showToast('❌ This asset is currently not available.', 'error');
+                        return;
+                    }
+
+                    // Select the asset automatically
+                    assets = [asset];
+                    selectedAsset = asset;
+                    document.getElementById('selectedAssetName').textContent = asset.name;
+                    document.getElementById('selectedAssetDetails').textContent =
+                        `Available: ${asset.available_quantity} / ${asset.total_quantity} · ${asset.locations?.name || 'N/A'}`;
+                    document.getElementById('selectedAsset').classList.add('show');
+
+                    // Go to step 3
+                    goToStep(3);
+
+                    // Fill confirm section
+                    document.getElementById('confirmStudent').textContent = selectedStudent.full_name;
+                    document.getElementById('confirmAsset').textContent = asset.name;
+                    document.getElementById('confirmAvailable').textContent =
+                        `${asset.available_quantity} / ${asset.total_quantity} available`;
+
+                    document.getElementById('borrowQty').max = asset.available_quantity;
+                    document.getElementById('borrowQty').value = 1;
+
+                    const date = new Date();
+                    date.setDate(date.getDate() + 7);
+                    document.getElementById('borrowReturnDate').value = date.toISOString().split('T')[0];
+
+                    showToast(`✅ Asset found: ${asset.name}`, 'success');
+                } else {
+                    showToast(`❌ No asset found. Please try again or add the asset manually.`, 'error');
+                    document.getElementById('assetSearch').value = searchQuery;
+                }
+
+            } catch (error) {
+                console.error('Asset scan error:', error);
+                showToast('❌ Error processing QR code: ' + error.message, 'error');
+            }
+        }
+
+        // ============================================================
+        // SEARCH STUDENTS
+        // ============================================================
+        async function searchStudents() {
+            const query = document.getElementById('studentSearch').value.trim();
+
+            if (!query) {
+                document.getElementById('studentResults').innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-search"></i>
+                        <p>Search by LRN, Name, Grade, or Section</p>
+                    </div>
+                `;
+                return;
+            }
+
+            try {
+                const { data, error } = await _supabase
+                    .from('students')
+                    .select('*')
+                    .or(`lrn.ilike.%${query}%,full_name.ilike.%${query}%,grade_level.ilike.%${query}%,section.ilike.%${query}%`)
+                    .order('full_name')
+                    .limit(20);
+
+                if (error) throw error;
+
+                students = data || [];
+
+                const container = document.getElementById('studentResults');
+
+                if (students.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-user-slash"></i>
+                            <p>No students found. Try a different search.</p>
+                            <p style="font-size:12px;color:var(--gray-400);margin-top:4px;">💡 Search by LRN, Name, Grade, or Section</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = students.map(s => `
+                    <div class="result-item" onclick="selectStudent(${s.id})">
+                        <div class="info">
+                            <div class="name">${s.full_name}</div>
+                            <div class="details">LRN: ${s.lrn} · ${s.grade_level} ${s.section || ''}</div>
+                        </div>
+                        <span class="status-badge available">Select</span>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error('Search students error:', error);
+                showToast('Error searching students', 'error');
+            }
+        }
+
+        // ============================================================
+        // SELECT STUDENT
+        // ============================================================
+        function selectStudent(id) {
+            selectedStudent = students.find(s => s.id === id);
+            if (!selectedStudent) return;
+
+            document.getElementById('selectedStudentName').textContent = selectedStudent.full_name;
+            document.getElementById('selectedStudentDetails').textContent =
+                `LRN: ${selectedStudent.lrn} · ${selectedStudent.grade_level} ${selectedStudent.section || ''}`;
+            document.getElementById('selectedStudent').classList.add('show');
+
+            goToStep(2);
+            document.getElementById('assetSearch').focus();
+
+            showToast(`✅ Student selected: ${selectedStudent.full_name}`, 'success');
+        }
+
+        // ============================================================
+        // SEARCH ASSETS
+        // ============================================================
+        async function searchAssets() {
+            const query = document.getElementById('assetSearch').value.trim();
+
+            if (!query) {
+                document.getElementById('assetResults').innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-search"></i>
+                        <p>Search by Name, Brand, Model, Serial, or Category</p>
+                    </div>
+                `;
+                return;
+            }
+
+            try {
+                const { data, error } = await _supabase
+                    .from('assets')
+                    .select(`
+                        *,
+                        categories!inner(name),
+                        brands!inner(name),
+                        locations!inner(name)
+                    `)
+                    .or(`
+                        name.ilike.%${query}%,
+                        model.ilike.%${query}%,
+                        serial_number.ilike.%${query}%,
+                        categories.name.ilike.%${query}%,
+                        brands.name.ilike.%${query}%
+                    `)
+                    .order('name')
+                    .limit(20);
+
+                if (error) throw error;
+
+                assets = data || [];
+
+                const container = document.getElementById('assetResults');
+
+                if (assets.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-box-open"></i>
+                            <p>No assets found. Try a different search.</p>
+                            <p style="font-size:12px;color:var(--gray-400);margin-top:4px;">💡 Search by Name, Brand, Model, Serial, or Category</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = assets.map(a => {
+                    const status = a.available_quantity > 0 ? 'available' : 'borrowed';
+                    const statusText = a.available_quantity > 0 ? `${a.available_quantity} available` : 'All borrowed';
+                    return `
+                        <div class="result-item" onclick="selectAsset(${a.id})">
+                            <div class="info">
+                                <div class="name">${a.name}</div>
+                                <div class="details">${a.brands?.name || 'N/A'} · ${a.categories?.name || 'N/A'} · ${a.locations?.name || 'N/A'}</div>
+                            </div>
+                            <span class="status-badge ${status}">${statusText}</span>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (error) {
+                console.error('Search assets error:', error);
+                showToast('Error searching assets', 'error');
+            }
+        }
+
+        // ============================================================
+        // SELECT ASSET
+        // ============================================================
+        function selectAsset(id) {
+            selectedAsset = assets.find(a => a.id === id);
+            if (!selectedAsset) return;
+
+            if (selectedAsset.available_quantity <= 0) {
+                showToast('❌ This asset is currently not available.', 'error');
+                return;
+            }
+
+            document.getElementById('selectedAssetName').textContent = selectedAsset.name;
+            document.getElementById('selectedAssetDetails').textContent =
+                `Available: ${selectedAsset.available_quantity} / ${selectedAsset.total_quantity} · ${selectedAsset.locations?.name || 'N/A'}`;
+            document.getElementById('selectedAsset').classList.add('show');
+
+            goToStep(3);
+
+            document.getElementById('confirmStudent').textContent = selectedStudent.full_name;
+            document.getElementById('confirmAsset').textContent = selectedAsset.name;
+            document.getElementById('confirmAvailable').textContent =
+                `${selectedAsset.available_quantity} / ${selectedAsset.total_quantity} available`;
+
+            document.getElementById('borrowQty').max = selectedAsset.available_quantity;
+            document.getElementById('borrowQty').value = 1;
+
+            const date = new Date();
+            date.setDate(date.getDate() + 7);
+            document.getElementById('borrowReturnDate').value = date.toISOString().split('T')[0];
+
+            showToast(`✅ Asset selected: ${selectedAsset.name}`, 'success');
+        }
+
+        // ============================================================
+        // CONFIRM BORROW
+        // ============================================================
+        async function confirmBorrow() {
+            if (!selectedStudent || !selectedAsset) {
+                showToast('❌ Please select both student and asset.', 'error');
+                return;
+            }
+
+            const qty = parseInt(document.getElementById('borrowQty').value);
+            const returnDate = document.getElementById('borrowReturnDate').value;
+            const purpose = document.getElementById('borrowPurpose').value;
+            const remarks = document.getElementById('borrowRemarks').value.trim();
+
+            if (!qty || qty < 1) {
+                showToast('❌ Please enter a valid quantity.', 'error');
+                return;
+            }
+
+            if (qty > selectedAsset.available_quantity) {
+                showToast(`❌ Only ${selectedAsset.available_quantity} available.`, 'error');
+                return;
+            }
+
+            if (!returnDate) {
+                showToast('❌ Please select a return date.', 'error');
+                return;
+            }
+
+            const session = JSON.parse(localStorage.getItem('edustock_session'));
+            const staffId = session?.user?.id || null;
+
+            const today = new Date();
+            const dateStr = today.toISOString().split('T')[0];
+            const transId = `BR-${dateStr}-${String(Date.now()).slice(-4)}`;
+
+            const btn = document.querySelector('.btn-confirm');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+            try {
+                const { data: transaction, error: transError } = await _supabase
+                    .from('borrowing_transactions')
+                    .insert([{
+                        transaction_id: transId,
+                        student_id: selectedStudent.id,
+                        asset_id: selectedAsset.id,
+                        quantity: qty,
+                        expected_return_date: returnDate,
+                        purpose: purpose,
+                        status: 'Borrowed',
+                        staff_id: staffId,
+                        remarks: remarks
+                    }])
+                    .select()
+                    .single();
+
+                if (transError) throw transError;
+
+                const newAvailable = selectedAsset.available_quantity - qty;
+                const { error: updateError } = await _supabase
+                    .from('assets')
+                    .update({ available_quantity: newAvailable })
+                    .eq('id', selectedAsset.id);
+
+                if (updateError) throw updateError;
+
+                showToast(`✅ Borrowing confirmed! ${selectedAsset.name} borrowed by ${selectedStudent.full_name}`, 'success');
+
+                setTimeout(() => {
+                    selectedStudent = null;
+                    selectedAsset = null;
+                    students = [];
+                    assets = [];
+
+                    document.getElementById('selectedStudent').classList.remove('show');
+                    document.getElementById('selectedAsset').classList.remove('show');
+                    document.getElementById('studentSearch').value = '';
+                    document.getElementById('assetSearch').value = '';
+
+                    document.getElementById('studentResults').innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-search"></i>
+                            <p>Search by LRN, Name, Grade, or Section<br>or scan the student's ID QR code</p>
+                        </div>
+                    `;
+                    document.getElementById('assetResults').innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-search"></i>
+                            <p>Search by Name, Brand, Model, Serial, Category<br>or scan the asset's QR code</p>
+                        </div>
+                    `;
+
+                    goToStep(1);
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-check"></i> Confirm Borrow';
+                }, 2000);
+
+            } catch (error) {
+                console.error('Borrow error:', error);
+                showToast('❌ Error processing borrowing: ' + error.message, 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-check"></i> Confirm Borrow';
+            }
+        }
+
+        // ============================================================
+        // ENTER KEY SUPPORT
+        // ============================================================
+        document.getElementById('studentSearch').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') searchStudents();
+        });
+
+        document.getElementById('assetSearch').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') searchAssets();
+        });
+
+        // ============================================================
+        // INIT
+        // ============================================================
+        async function init() {
+            const isAuth = await checkAuth();
+            if (!isAuth) return;
+
+            loadUserSession();
+
+            const date = new Date();
+            date.setDate(date.getDate() + 7);
+            document.getElementById('borrowReturnDate').value = date.toISOString().split('T')[0];
+
+            console.log('📦 EduStock - Borrow Page Loaded');
+            console.log('🔍 Student Search: LRN, Name, Grade, Section');
+            console.log('🔍 Asset Search: Name, Brand, Model, Serial, Category');
+            console.log('📷 QR Scanning: Student ID and Asset QR codes');
+            console.log('💡 Click the QR button to scan student ID or asset QR codes');
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+
+</body>
+</html>

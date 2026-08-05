@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>EduStock - Settings</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="nav.css" />
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --primary: #4F46E5; --primary-bg: #EEF2FF;
+            --success: #10B981; --success-bg: #ECFDF5;
+            --warning: #F59E0B; --warning-bg: #FFFBEB;
+            --danger: #EF4444; --danger-bg: #FEF2F2;
+            --gray-50: #F9FAFB; --gray-100: #F3F4F6; --gray-200: #E5E7EB;
+            --gray-400: #9CA3AF; --gray-500: #6B7280; --gray-600: #4B5563;
+            --gray-700: #374151; --gray-800: #1F2937; --gray-900: #111827;
+            --radius: 16px; --radius-sm: 10px;
+            --shadow: 0 2px 8px rgba(0,0,0,0.08);
+            --shadow-md: 0 4px 16px rgba(0,0,0,0.12);
+            --nav-height: 60px;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-800);
+            padding: 0 0 calc(var(--nav-height) + 16px) 0;
+            min-height: 100vh;
+        }
+        
+        .app-container {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 16px 16px 24px;
+        }
+        
+        .app-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 0 16px;
+            border-bottom: 1px solid var(--gray-200);
+            margin-bottom: 16px;
+        }
+        
+        .app-header .back-btn {
+            background: none; border: none; font-size: 20px; color: var(--gray-500);
+            cursor: pointer; padding: 4px;
+        }
+        
+        .app-header h2 { font-size: 20px; font-weight: 700; color: var(--gray-900); }
+        .app-header h2 i { color: var(--primary); margin-right: 8px; }
+        .app-header .role-badge {
+            font-size: 11px; padding: 4px 12px; border-radius: 12px;
+            background: var(--primary-bg); color: var(--primary); font-weight: 600;
+        }
+        
+        .settings-section {
+            background: white; border-radius: var(--radius-sm); border: 1px solid var(--gray-200);
+            padding: 16px; margin-bottom: 14px;
+        }
+        .settings-section .section-title {
+            font-size: 13px; font-weight: 600; color: var(--gray-700); margin-bottom: 10px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .settings-section .section-title i { color: var(--primary); }
+        
+        .settings-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 0; border-bottom: 1px solid var(--gray-100);
+        }
+        .settings-item:last-child { border-bottom: none; }
+        .settings-item .info .label { font-size: 14px; font-weight: 500; color: var(--gray-800); }
+        .settings-item .info .desc { font-size: 12px; color: var(--gray-400); }
+        .settings-item .action-btn {
+            background: none; border: none; color: var(--gray-400); font-size: 16px; cursor: pointer;
+        }
+        .settings-item .action-btn:hover { color: var(--primary); }
+        .settings-item .toggle {
+            width: 44px; height: 24px; background: var(--gray-200); border-radius: 12px;
+            position: relative; cursor: pointer; transition: all 0.3s ease;
+        }
+        .settings-item .toggle.on { background: var(--primary); }
+        .settings-item .toggle .thumb {
+            width: 20px; height: 20px; background: white; border-radius: 50%;
+            position: absolute; top: 2px; left: 2px; transition: all 0.3s ease;
+            box-shadow: var(--shadow);
+        }
+        .settings-item .toggle.on .thumb { left: 22px; }
+        
+        .btn-danger {
+            width: 100%; padding: 12px; background: var(--danger); color: white; border: none;
+            border-radius: var(--radius-sm); font-weight: 600; font-size: 14px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-danger:active { transform: scale(0.95); }
+        
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5); z-index: 200; align-items: flex-end; justify-content: center;
+            padding: 0 16px calc(var(--nav-height) + 16px);
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: white; border-radius: var(--radius) var(--radius) 0 0;
+            width: 100%; max-width: 480px; max-height: 85vh; overflow-y: auto;
+            padding: 20px 20px 32px; animation: modalSlideUp 0.3s ease;
+        }
+        @keyframes modalSlideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--gray-200); }
+        .modal-header h3 { font-size: 18px; font-weight: 700; }
+        .modal-header .close-btn { background: none; border: none; font-size: 24px; color: var(--gray-400); cursor: pointer; }
+        .modal .form-group { margin-bottom: 14px; }
+        .modal .form-group label { display: block; font-size: 13px; font-weight: 600; color: var(--gray-700); margin-bottom: 4px; }
+        .modal .form-group label .required { color: var(--danger); }
+        .modal .form-group input, .modal .form-group select {
+            width: 100%; padding: 10px 14px; border: 1px solid var(--gray-200); border-radius: var(--radius-sm);
+            font-family: 'Inter', sans-serif; font-size: 14px; background: white;
+        }
+        .modal .form-group input:focus, .modal .form-group select:focus { outline: none; border-color: var(--primary); }
+        .modal .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--gray-200); }
+        .modal .btn-primary { background: var(--primary); color: white; border: none; padding: 10px 24px; border-radius: var(--radius-sm); font-weight: 600; font-size: 14px; cursor: pointer; }
+        .modal .btn-secondary { background: var(--gray-100); color: var(--gray-700); border: 1px solid var(--gray-200); padding: 10px 20px; border-radius: var(--radius-sm); font-weight: 500; font-size: 14px; cursor: pointer; }
+        
+        .toast {
+            position: fixed; bottom: calc(var(--nav-height) + 16px); left: 16px; right: 16px;
+            max-width: 400px; margin: 0 auto; padding: 12px 16px; border-radius: var(--radius-sm);
+            color: white; font-weight: 500; font-size: 13px; box-shadow: var(--shadow-md);
+            z-index: 1000; animation: slideUp 0.3s ease; display: flex; align-items: center; gap: 10px;
+        }
+        .toast.hidden { display: none; }
+        .toast.success { background: var(--success); }
+        .toast.error { background: var(--danger); }
+        .toast.warning { background: var(--warning); }
+        .toast.info { background: var(--primary); }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .toast .close-toast { background: none; border: none; color: white; cursor: pointer; font-size: 16px; margin-left: auto; opacity: 0.7; }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <header class="app-header">
+            <button class="back-btn" onclick="window.location.href='dashboard.html'"><i class="fas fa-arrow-left"></i></button>
+            <h2><i class="fas fa-cog"></i>Settings</h2>
+            <span class="role-badge" id="userRoleBadge">Admin</span>
+        </header>
+
+        <div class="settings-section" id="userManagementSection">
+            <div class="section-title"><i class="fas fa-users-cog"></i> User Management</div>
+            <div class="settings-item">
+                <div class="info">
+                    <div class="label">Staff Accounts</div>
+                    <div class="desc">Manage staff users</div>
+                </div>
+                <button class="action-btn" onclick="openStaffModal()"><i class="fas fa-chevron-right"></i></button>
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <div class="section-title"><i class="fas fa-tags"></i> Categories</div>
+            <div class="settings-item">
+                <div class="info">
+                    <div class="label">Manage Categories</div>
+                    <div class="desc">Add, edit, or remove asset categories</div>
+                </div>
+                <button class="action-btn" onclick="showToast('📋 Category management coming soon!', 'info')"><i class="fas fa-chevron-right"></i></button>
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <div class="section-title"><i class="fas fa-tag"></i> Brands</div>
+            <div class="settings-item">
+                <div class="info">
+                    <div class="label">Manage Brands</div>
+                    <div class="desc">Add, edit, or remove asset brands</div>
+                </div>
+                <button class="action-btn" onclick="showToast('📋 Brand management coming soon!', 'info')"><i class="fas fa-chevron-right"></i></button>
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <div class="section-title"><i class="fas fa-map-marker-alt"></i> Locations</div>
+            <div class="settings-item">
+                <div class="info">
+                    <div class="label">Manage Locations</div>
+                    <div class="desc">Add, edit, or remove storage locations</div>
+                </div>
+                <button class="action-btn" onclick="showToast('📋 Location management coming soon!', 'info')"><i class="fas fa-chevron-right"></i></button>
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <div class="section-title"><i class="fas fa-bell"></i> Notifications</div>
+            <div class="settings-item">
+                <div class="info">
+                    <div class="label">Overdue Alerts</div>
+                    <div class="desc">Get notified when assets are overdue</div>
+                </div>
+                <div class="toggle on" onclick="toggleSwitch(this)"><span class="thumb"></span></div>
+            </div>
+            <div class="settings-item">
+                <div class="info">
+                    <div class="label">Low Stock Alerts</div>
+                    <div class="desc">Get notified when inventory is low</div>
+                </div>
+                <div class="toggle on" onclick="toggleSwitch(this)"><span class="thumb"></span></div>
+            </div>
+            <div class="settings-item">
+                <div class="info">
+                    <div class="label">Maintenance Reminders</div>
+                    <div class="desc">Get reminded when maintenance is due</div>
+                </div>
+                <div class="toggle" onclick="toggleSwitch(this)"><span class="thumb"></span></div>
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <div class="section-title"><i class="fas fa-info-circle"></i> About</div>
+            <div class="settings-item">
+                <div class="info"><div class="label">Version</div><div class="desc">v1.0.0</div></div>
+            </div>
+            <div class="settings-item">
+                <div class="info"><div class="label">School</div><div class="desc">Alitagtag National High School</div></div>
+            </div>
+            <div class="settings-item">
+                <div class="info"><div class="label">Data Storage</div><div class="desc">Local Storage (Demo)</div></div>
+            </div>
+        </div>
+
+        <div class="settings-section" style="border-color:var(--danger);">
+            <div class="section-title" style="color:var(--danger);"><i class="fas fa-exclamation-triangle"></i> Danger Zone</div>
+            <button class="btn-danger" onclick="clearAllData()"><i class="fas fa-trash"></i> Clear All Data</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="staffModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-user-plus"></i> Add Staff</h3>
+                <button class="close-btn" onclick="closeStaffModal()">&times;</button>
+            </div>
+            <form id="staffForm" onsubmit="saveStaff(event)">
+                <div class="form-group">
+                    <label>Full Name <span class="required">*</span></label>
+                    <input type="text" id="staffName" placeholder="Full name" required />
+                </div>
+                <div class="form-group">
+                    <label>Email <span class="required">*</span></label>
+                    <input type="email" id="staffEmail" placeholder="staff@edustock.com" required />
+                </div>
+                <div class="form-group">
+                    <label>Password <span class="required">*</span></label>
+                    <input type="password" id="staffPassword" placeholder="Password" required />
+                </div>
+                <div class="form-group">
+                    <label>Role</label>
+                    <select id="staffRole">
+                        <option value="staff">Staff</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="closeStaffModal()">Cancel</button>
+                    <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Add Staff</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <button class="nav-item" data-page="dashboard"><i class="fas fa-th-large"></i><span>Home</span></button>
+        <button class="nav-item" data-page="assets"><i class="fas fa-boxes"></i><span>Assets</span></button>
+        <button class="nav-item" data-page="borrow"><i class="fas fa-hand-holding"></i><span>Borrow</span></button>
+        <button class="nav-item" data-page="return"><i class="fas fa-undo-alt"></i><span>Return</span></button>
+        <button class="nav-item" data-page="students"><i class="fas fa-users"></i><span>Students</span></button>
+        <button class="nav-item active" data-page="settings"><i class="fas fa-cog"></i><span>Settings</span></button>
+    </nav>
+
+    <script src="app.js"></script>
+    <script>
+        function toggleSwitch(el) { el.classList.toggle('on'); showToast('⚙️ Setting updated!', 'success'); }
+
+        function openStaffModal() {
+            document.getElementById('staffModal').classList.add('active');
+            document.getElementById('staffForm').reset();
+        }
+
+        function closeStaffModal() { document.getElementById('staffModal').classList.remove('active'); }
+
+        function saveStaff(e) {
+            e.preventDefault();
+            const name = document.getElementById('staffName').value.trim();
+            const email = document.getElementById('staffEmail').value.trim();
+            const password = document.getElementById('staffPassword').value.trim();
+            const role = document.getElementById('staffRole').value;
+            if (!name || !email || !password) { showToast('Please fill in all fields.', 'error'); return; }
+            showToast(`✅ Staff "${name}" added successfully!`, 'success');
+            closeStaffModal();
+            const staff = JSON.parse(localStorage.getItem('edustock_staff') || '[]');
+            staff.push({ name, email, role, created: new Date().toISOString() });
+            localStorage.setItem('edustock_staff', JSON.stringify(staff));
+        }
+
+        function clearAllData() {
+            if (confirm('⚠️ This will delete ALL data. Are you sure?')) {
+                if (confirm('This cannot be undone! Continue?')) {
+                    localStorage.clear();
+                    showToast('🗑️ All data cleared!', 'warning');
+                    setTimeout(() => { window.location.href = 'login.html'; }, 1500);
+                }
+            }
+        }
+
+        function loadUserRole() {
+            try {
+                const session = JSON.parse(localStorage.getItem('edustock_session'));
+                if (session && session.profile) {
+                    const role = session.profile.role || 'staff';
+                    document.getElementById('userRoleBadge').textContent = role.charAt(0).toUpperCase() + role.slice(1);
+                    if (role !== 'admin') {
+                        document.getElementById('userManagementSection').style.display = 'none';
+                    }
+                }
+            } catch(e) { console.error('Session error:', e); }
+        }
+
+        document.getElementById('staffModal').addEventListener('click', function(e) {
+            if (e.target === this) closeStaffModal();
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUserRole();
+            console.log('📦 EduStock - Settings Page Loaded');
+        });
+    </script>
+
+</body>
+</html>
