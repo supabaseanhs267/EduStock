@@ -1029,6 +1029,88 @@
                 grid-template-columns: 1fr;
             }
         }
+/* ============================================================
+   BADGES & SELECTED CARDS
+   ============================================================ */
+.badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 10px;
+    border-radius: 12px;
+    margin-left: auto;
+}
+
+.badge-pending {
+    background: var(--gray-100);
+    color: var(--gray-400);
+}
+
+.badge-done {
+    background: var(--success-bg);
+    color: var(--success);
+}
+
+.selected-card {
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.selected-card.show {
+    display: block;
+}
+
+.selected-card .label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.selected-card .name {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--gray-900);
+}
+
+.selected-card .details {
+    font-size: 13px;
+    color: var(--gray-500);
+}
+
+.selected-card .remove-btn {
+    background: none;
+    border: none;
+    color: var(--gray-400);
+    cursor: pointer;
+    font-size: 14px;
+    float: right;
+    padding: 4px;
+}
+
+.selected-card .remove-btn:hover {
+    color: var(--danger);
+}
+
+.selected-card.student {
+    background: var(--success-bg);
+    border: 2px solid var(--success);
+}
+
+.selected-card.student .label {
+    color: var(--success);
+}
+
+.selected-card.asset {
+    background: var(--primary-bg);
+    border: 2px solid var(--primary);
+}
+
+.selected-card.asset .label {
+    color: var(--primary);
+}
     </style>
 </head>
 <body>
@@ -1083,10 +1165,10 @@
         STEP 1: FIND STUDENT
         ============================================================ -->
         <div id="step1Content">
-            <div class="search-section">
-                <div class="section-title">
-                    <i class="fas fa-user-graduate"></i> Find Student
-                </div>
+<div class="section-title">
+    <i class="fas fa-user-graduate"></i> Find Student
+    <span id="studentBadge" class="badge badge-pending">⬜ Pending</span>
+</div>
                 <div class="search-hint">
                     <span>📋 LRN</span>
                     <span>👤 Name</span>
@@ -1189,11 +1271,12 @@
                 </div>
             </div>
 
-            <!-- Selected Student Info -->
-            <div class="selected-info" id="selectedStudent">
-                <div class="label">Selected Student</div>
-                <div class="value" id="selectedStudentName">-</div>
-                <div class="sub" id="selectedStudentDetails">LRN: - · Grade: -</div>
+            <!-- Selected Student Card -->
+            <div class="selected-card student" id="selectedStudent">
+                <button class="remove-btn" onclick="removeStudent()"><i class="fas fa-times"></i></button>
+                <div class="label">✅ Student Selected</div>
+                <div class="name" id="selectedStudentName">-</div>
+                <div class="details" id="selectedStudentDetails">LRN: - · Grade: -</div>
             </div>
         </div>
 
@@ -1202,9 +1285,10 @@
         ============================================================ -->
         <div id="step2Content" style="display:none;">
             <div class="search-section">
-                <div class="section-title">
-                    <i class="fas fa-boxes"></i> Find Asset
-                </div>
+        <div class="section-title">
+            <i class="fas fa-boxes"></i> Find Asset
+            <span id="assetBadge" class="badge badge-pending">⬜ Pending</span>
+        </div>
                 <div class="search-hint">
                     <span>📦 Name</span>
                     <span>🏷️ Brand</span>
@@ -1242,11 +1326,12 @@
                 </div>
             </div>
 
-            <!-- Selected Asset Info -->
-            <div class="selected-info" id="selectedAsset">
-                <div class="label">Selected Asset</div>
-                <div class="value" id="selectedAssetName">-</div>
-                <div class="sub" id="selectedAssetDetails">Available: - / -</div>
+            <!-- Selected Asset Card -->
+            <div class="selected-card asset" id="selectedAsset">
+                <button class="remove-btn" onclick="removeAsset()"><i class="fas fa-times"></i></button>
+                <div class="label">✅ Asset Selected</div>
+                <div class="name" id="selectedAssetName">-</div>
+                <div class="details" id="selectedAssetDetails">Available: - / -</div>
             </div>
 
             <!-- Back button -->
@@ -1514,6 +1599,46 @@
                 await startCamera();
             }
         }
+
+        // ============================================================
+// REMOVE SELECTED STUDENT
+// ============================================================
+function removeStudent() {
+    selectedStudent = null;
+    document.getElementById('selectedStudent').classList.remove('show');
+    document.getElementById('studentBadge').className = 'badge badge-pending';
+    document.getElementById('studentBadge').textContent = '⬜ Pending';
+    document.getElementById('studentSearch').disabled = false;
+    document.getElementById('studentSearch').value = '';
+    document.getElementById('studentResults').innerHTML = `
+        <div class="empty-state">
+            <i class="fas fa-search"></i>
+            <p>Search by LRN, Name, Grade, or Section</p>
+        </div>
+    `;
+    showToast('🔄 Student removed. Select a new student.', 'info');
+    goToStep(1);
+}
+
+// ============================================================
+// REMOVE SELECTED ASSET
+// ============================================================
+function removeAsset() {
+    selectedAsset = null;
+    document.getElementById('selectedAsset').classList.remove('show');
+    document.getElementById('assetBadge').className = 'badge badge-pending';
+    document.getElementById('assetBadge').textContent = '⬜ Pending';
+    document.getElementById('assetSearch').disabled = false;
+    document.getElementById('assetSearch').value = '';
+    document.getElementById('assetResults').innerHTML = `
+        <div class="empty-state">
+            <i class="fas fa-search"></i>
+            <p>Search by Name, Brand, Model, Serial, or Category</p>
+        </div>
+    `;
+    showToast('🔄 Asset removed. Select a new asset.', 'info');
+    goToStep(2);
+}
 
         async function startCamera() {
             try {
@@ -2129,15 +2254,34 @@
             selectedStudent = students.find(s => s.id === id);
             if (!selectedStudent) return;
 
+            // Update selected card
             document.getElementById('selectedStudentName').textContent = selectedStudent.full_name;
             document.getElementById('selectedStudentDetails').textContent =
                 `LRN: ${selectedStudent.lrn} · ${selectedStudent.grade_level} ${selectedStudent.section || ''}`;
             document.getElementById('selectedStudent').classList.add('show');
 
-            goToStep(2);
-            document.getElementById('assetSearch').focus();
+            // Update badge
+            document.getElementById('studentBadge').className = 'badge badge-done';
+            document.getElementById('studentBadge').textContent = '✅ Done';
+
+            // Disable search
+            document.getElementById('studentSearch').disabled = true;
+
+            // Clear results
+            document.getElementById('studentResults').innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-check-circle" style="color:var(--success);"></i>
+                    <p>Student selected! Proceeding to asset selection...</p>
+                </div>
+            `;
 
             showToast(`✅ Student selected: ${selectedStudent.full_name}`, 'success');
+
+            // Auto-proceed to Step 2
+            setTimeout(() => {
+                goToStep(2);
+                document.getElementById('assetSearch').focus();
+            }, 800);
         }
 
         // ============================================================
@@ -2224,13 +2368,28 @@
                 return;
             }
 
+            // Update selected card
             document.getElementById('selectedAssetName').textContent = selectedAsset.name;
             document.getElementById('selectedAssetDetails').textContent =
                 `Available: ${selectedAsset.available_quantity} / ${selectedAsset.total_quantity} · ${selectedAsset.locations?.name || 'N/A'}`;
             document.getElementById('selectedAsset').classList.add('show');
 
-            goToStep(3);
+            // Update badge
+            document.getElementById('assetBadge').className = 'badge badge-done';
+            document.getElementById('assetBadge').textContent = '✅ Done';
 
+            // Disable search
+            document.getElementById('assetSearch').disabled = true;
+
+            // Clear results
+            document.getElementById('assetResults').innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-check-circle" style="color:var(--success);"></i>
+                    <p>Asset selected! Proceeding to confirmation...</p>
+                </div>
+            `;
+
+            // Fill confirm section
             document.getElementById('confirmStudent').textContent = selectedStudent.full_name;
             document.getElementById('confirmAsset').textContent = selectedAsset.name;
             document.getElementById('confirmAvailable').textContent =
@@ -2244,6 +2403,11 @@
             document.getElementById('borrowReturnDate').value = date.toISOString().split('T')[0];
 
             showToast(`✅ Asset selected: ${selectedAsset.name}`, 'success');
+
+            // Auto-proceed to Step 3
+            setTimeout(() => {
+                goToStep(3);
+            }, 800);
         }
 
         // ============================================================
