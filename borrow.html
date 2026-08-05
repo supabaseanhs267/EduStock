@@ -305,6 +305,93 @@
             transform: scale(0.95);
         }
 
+        .search-input-group button.paste-btn {
+            background: var(--warning);
+            color: white;
+        }
+
+        .search-input-group button.paste-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* ============================================================
+           MANUAL ENTRY FORM
+           ============================================================ */
+        .manual-entry {
+            background: var(--gray-50);
+            border-radius: var(--radius-sm);
+            padding: 12px;
+            margin-top: 10px;
+            border: 1px dashed var(--gray-300);
+            display: none;
+        }
+
+        .manual-entry.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .manual-entry .manual-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: 8px;
+        }
+
+        .manual-entry .manual-title i {
+            color: var(--primary);
+        }
+
+        .manual-entry .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .manual-entry .form-row input,
+        .manual-entry .form-row select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            background: white;
+        }
+
+        .manual-entry .form-row input:focus,
+        .manual-entry .form-row select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .manual-entry .manual-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+            justify-content: flex-end;
+        }
+
+        .manual-entry .manual-actions button {
+            padding: 6px 16px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .manual-entry .manual-actions .add-btn {
+            background: var(--success);
+            color: white;
+        }
+
+        .manual-entry .manual-actions .cancel-btn {
+            background: var(--gray-200);
+            color: var(--gray-700);
+        }
+
         /* ============================================================
            QR SCANNER CONTAINER
            ============================================================ */
@@ -328,26 +415,6 @@
             margin: 0 auto;
         }
 
-        .qr-scanner-container .qr-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            pointer-events: none;
-        }
-
-        .qr-scanner-container .qr-overlay .scan-frame {
-            width: 200px;
-            height: 200px;
-            border: 2px solid rgba(255, 255, 255, 0.5);
-            border-radius: 8px;
-            box-shadow: 0 0 0 4000px rgba(0, 0, 0, 0.3);
-        }
-
         .qr-scanner-container .qr-close-btn {
             position: absolute;
             top: 10px;
@@ -369,6 +436,141 @@
             font-size: 12px;
             background: rgba(0, 0, 0, 0.5);
             border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+        }
+
+        /* ============================================================
+           CAMERA CONTAINER
+           ============================================================ */
+        .camera-container {
+            display: none;
+            margin-top: 12px;
+            padding: 12px;
+            background: var(--gray-900);
+            border-radius: var(--radius-sm);
+            position: relative;
+            text-align: center;
+        }
+
+        .camera-container.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .camera-container video {
+            width: 100%;
+            border-radius: var(--radius-sm);
+            max-height: 350px;
+            object-fit: cover;
+            background: #000;
+        }
+
+        .camera-container .camera-controls {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .camera-container .camera-controls button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            flex: 1;
+            min-width: 100px;
+        }
+
+        .camera-container .camera-controls .capture-btn {
+            background: var(--success);
+            color: white;
+        }
+
+        .camera-container .camera-controls .close-btn {
+            background: var(--danger);
+            color: white;
+        }
+
+        .camera-container .camera-status {
+            color: white;
+            text-align: center;
+            padding: 8px;
+            font-size: 12px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+            margin-top: 8px;
+        }
+
+        /* ============================================================
+           OCR RESULTS
+           ============================================================ */
+        .ocr-result {
+            background: white;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--gray-200);
+            padding: 12px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .ocr-result.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .ocr-result .ocr-field {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            font-size: 13px;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .ocr-result .ocr-field:last-child {
+            border-bottom: none;
+        }
+
+        .ocr-result .ocr-field .label {
+            color: var(--gray-500);
+        }
+
+        .ocr-result .ocr-field .value {
+            font-weight: 500;
+            color: var(--gray-800);
+        }
+
+        .ocr-result .ocr-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .ocr-result .ocr-actions button {
+            padding: 6px 16px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .ocr-result .ocr-actions .confirm-btn {
+            background: var(--success);
+            color: white;
+        }
+
+        .ocr-result .ocr-actions .retry-btn {
+            background: var(--gray-100);
+            color: var(--gray-700);
+        }
+
+        .ocr-result .ocr-actions .manual-btn {
+            background: var(--warning);
+            color: white;
         }
 
         /* ============================================================
@@ -452,11 +654,6 @@
         .selected-info.show {
             display: block;
             animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
         }
 
         .selected-info .label {
@@ -650,6 +847,49 @@
         }
 
         /* ============================================================
+           LOADING OVERLAY
+           ============================================================ */
+        .spinner-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 300;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 16px;
+            color: white;
+        }
+
+        .spinner-overlay.active {
+            display: flex;
+        }
+
+        .spinner-overlay .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .spinner-overlay .spinner-text {
+            font-size: 14px;
+            font-weight: 500;
+            text-align: center;
+            padding: 0 20px;
+        }
+
+        /* ============================================================
            BOTTOM NAVIGATION
            ============================================================ */
         .bottom-nav {
@@ -782,187 +1022,11 @@
                 font-size: 12px;
                 padding: 8px 12px;
             }
-            .qr-scanner-container #qr-reader {
-                width: 100%;
-            }
-            .qr-scanner-container .qr-overlay .scan-frame {
-                width: 150px;
-                height: 150px;
-            }
-        }
-                .camera-container {
-            display: none;
-            margin-top: 12px;
-            padding: 12px;
-            background: var(--gray-900);
-            border-radius: var(--radius-sm);
-            position: relative;
-            text-align: center;
-        }
-
-        .camera-container.active {
-            display: block;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .camera-container video {
-            width: 100%;
-            border-radius: var(--radius-sm);
-            max-height: 350px;
-            object-fit: cover;
-            background: #000;
-        }
-
-        .camera-container .camera-controls {
-            display: flex;
-            gap: 8px;
-            margin-top: 8px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        .camera-container .camera-controls button {
-            padding: 10px 20px;
-            border: none;
-            border-radius: var(--radius-sm);
-            font-weight: 600;
-            font-size: 14px;
-            cursor: pointer;
-            flex: 1;
-            min-width: 100px;
-        }
-
-        .camera-container .camera-controls .capture-btn {
-            background: var(--success);
-            color: white;
-        }
-
-        .camera-container .camera-controls .close-btn {
-            background: var(--danger);
-            color: white;
-        }
-
-        .camera-container .camera-status {
-            color: white;
-            text-align: center;
-            padding: 8px;
-            font-size: 12px;
-            background: rgba(0, 0, 0, 0.5);
-            border-radius: 0 0 var(--radius-sm) var(--radius-sm);
-            margin-top: 8px;
-        }
-
-        .ocr-result {
-            background: white;
-            border-radius: var(--radius-sm);
-            border: 1px solid var(--gray-200);
-            padding: 12px;
-            margin-top: 10px;
-            display: none;
-        }
-
-        .ocr-result.show {
-            display: block;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .ocr-result .ocr-field {
-            display: flex;
-            justify-content: space-between;
-            padding: 4px 0;
-            font-size: 13px;
-            border-bottom: 1px solid var(--gray-100);
-        }
-
-        .ocr-result .ocr-field:last-child {
-            border-bottom: none;
-        }
-
-        .ocr-result .ocr-field .label {
-            color: var(--gray-500);
-        }
-
-        .ocr-result .ocr-field .value {
-            font-weight: 500;
-            color: var(--gray-800);
-        }
-
-        .ocr-result .ocr-actions {
-            display: flex;
-            gap: 8px;
-            margin-top: 10px;
-            justify-content: flex-end;
-            flex-wrap: wrap;
-        }
-
-        .ocr-result .ocr-actions button {
-            padding: 6px 16px;
-            border: none;
-            border-radius: var(--radius-sm);
-            font-weight: 600;
-            font-size: 13px;
-            cursor: pointer;
-        }
-
-        .ocr-result .ocr-actions .confirm-btn {
-            background: var(--success);
-            color: white;
-        }
-
-        .ocr-result .ocr-actions .retry-btn {
-            background: var(--gray-100);
-            color: var(--gray-700);
-        }
-
-        /* Loading Overlay */
-        .spinner-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
-            z-index: 300;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            gap: 16px;
-            color: white;
-        }
-
-        .spinner-overlay.active {
-            display: flex;
-        }
-
-        .spinner-overlay .spinner {
-            width: 48px;
-            height: 48px;
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-top: 4px solid white;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .spinner-overlay .spinner-text {
-            font-size: 14px;
-            font-weight: 500;
-            text-align: center;
-            padding: 0 20px;
-        }
-
-        @media (max-width: 420px) {
             .camera-container video {
                 max-height: 250px;
             }
-            .camera-container .camera-controls button {
-                font-size: 12px;
-                padding: 8px 12px;
-                min-width: 80px;
+            .manual-entry .form-row {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -974,7 +1038,7 @@
     ============================================================ -->
     <div class="spinner-overlay" id="loadingOverlay">
         <div class="spinner"></div>
-        <div class="spinner-text" id="loadingText">Processing ID card...</div>
+        <div class="spinner-text" id="loadingText">Processing...</div>
     </div>
 
     <!-- ============================================================
@@ -1085,14 +1149,42 @@
                     </div>
                     <div class="ocr-actions">
                         <button class="retry-btn" onclick="retryOCR()">🔄 Retry</button>
-                        <button class="confirm-btn" onclick="confirmOCR()">✅ Confirm & Use</button>
+                        <button class="manual-btn" onclick="showManualEntry()">✏️ Manual</button>
+                        <button class="confirm-btn" onclick="confirmOCR()">✅ Confirm</button>
+                    </div>
+                </div>
+
+                <!-- Manual Entry Form -->
+                <div class="manual-entry" id="manualEntry">
+                    <div class="manual-title">
+                        <i class="fas fa-edit"></i> Enter Student Details
+                    </div>
+                    <div class="form-row">
+                        <input type="text" id="manualLRN" placeholder="LRN (12 digits)" maxlength="12" />
+                        <input type="text" id="manualName" placeholder="Full Name" />
+                    </div>
+                    <div class="form-row">
+                        <select id="manualGrade">
+                            <option value="">Select Grade</option>
+                            <option value="Grade 7">Grade 7</option>
+                            <option value="Grade 8">Grade 8</option>
+                            <option value="Grade 9">Grade 9</option>
+                            <option value="Grade 10">Grade 10</option>
+                        </select>
+                        <input type="text" id="manualSection" placeholder="Section" />
+                    </div>
+                    <div class="manual-actions">
+                        <button class="cancel-btn" onclick="hideManualEntry()">Cancel</button>
+                        <button class="add-btn" onclick="addManualStudent()">
+                            <i class="fas fa-plus"></i> Add Student
+                        </button>
                     </div>
                 </div>
 
                 <div class="results-list" id="studentResults">
                     <div class="empty-state">
                         <i class="fas fa-search"></i>
-                        <p>Search by LRN, Name, Grade, or Section<br>or scan the student ID card</p>
+                        <p>Search by LRN, Name, Grade, or Section</p>
                     </div>
                 </div>
             </div>
@@ -1120,12 +1212,16 @@
                     <span>🔍 Serial</span>
                     <span>📂 Category</span>
                     <span>📱 Scan QR</span>
+                    <span>📋 Paste</span>
                 </div>
 
-                <!-- Search + Scan Buttons -->
+                <!-- Search + Scan + Paste Buttons -->
                 <div class="search-input-group">
-                    <input type="text" id="assetSearch" placeholder="Search by Name, Brand, Model, Serial, Category..." />
+                    <input type="text" id="assetSearch" placeholder="Search or paste asset name, ID, serial..." />
                     <button onclick="searchAssets()"><i class="fas fa-search"></i></button>
+                    <button class="paste-btn" onclick="pasteAsset()" title="Paste from clipboard">
+                        <i class="fas fa-paste"></i>
+                    </button>
                     <button class="scan-btn" onclick="toggleAssetScanner()">
                         <i class="fas fa-qrcode"></i>
                     </button>
@@ -1141,7 +1237,7 @@
                 <div class="results-list" id="assetResults">
                     <div class="empty-state">
                         <i class="fas fa-search"></i>
-                        <p>Search by Name, Brand, Model, Serial, Category<br>or scan the asset's QR code</p>
+                        <p>Search by Name, Brand, Model, Serial, Category</p>
                     </div>
                 </div>
             </div>
@@ -1213,7 +1309,6 @@
                     <i class="fas fa-check"></i> Confirm Borrow
                 </button>
 
-                <!-- Back button -->
                 <button onclick="goToStep(2)" style="width:100%;padding:10px;margin-top:8px;background:var(--gray-100);border:none;border-radius:var(--radius-sm);font-weight:500;cursor:pointer;">
                     <i class="fas fa-arrow-left"></i> Back to Asset
                 </button>
@@ -1274,10 +1369,7 @@
         let assetScanner = null;
         let isStudentScanning = false;
         let isAssetScanning = false;
-
-        // Camera state
         let stream = null;
-        let capturedImageData = null;
         let ocrData = null;
 
         // ============================================================
@@ -1415,7 +1507,6 @@
             if (container.classList.contains('active')) {
                 closeIDScanner();
             } else {
-                // Close QR scanner if open
                 if (document.getElementById('studentScanner').classList.contains('active')) {
                     toggleStudentScanner();
                 }
@@ -1448,7 +1539,6 @@
             document.getElementById('video').srcObject = null;
             document.getElementById('cameraContainer').classList.remove('active');
             document.getElementById('ocrResult').classList.remove('show');
-            capturedImageData = null;
             ocrData = null;
             console.log('📷 Camera closed');
         }
@@ -1466,7 +1556,6 @@
 
             try {
                 const imageData = canvas.toDataURL('image/jpeg', 0.9);
-                capturedImageData = imageData;
 
                 document.getElementById('loadingText').textContent = '🔍 Reading text from ID...';
 
@@ -1504,66 +1593,65 @@
             document.getElementById('loadingOverlay').classList.remove('active');
         }
 
-function parseIDText(text) {
-    const result = { name: '', lrn: '', grade: '', section: '' };
+        function parseIDText(text) {
+            const result = { name: '', lrn: '', grade: '', section: '' };
 
-    // 1. Extract LRN (12 digits)
-    const lrnMatch = text.match(/\b(\d{12})\b/);
-    if (lrnMatch) {
-        result.lrn = lrnMatch[1];
-    }
+            // Extract LRN (12 digits)
+            const lrnMatch = text.match(/\b(\d{12})\b/);
+            if (lrnMatch) {
+                result.lrn = lrnMatch[1];
+            }
 
-    // 2. Extract Grade (Grade 7, 8, 9, 10) - FIXED REGEX
-    const gradeMatch = text.match(/Grade\s*([7-9]|10)/i);
-    if (gradeMatch) {
-        result.grade = 'Grade ' + gradeMatch[1];
-    }
+            // Extract Grade (Grade 7, 8, 9, 10)
+            const gradeMatch = text.match(/Grade\s*([7-9]|10)/i);
+            if (gradeMatch) {
+                result.grade = 'Grade ' + gradeMatch[1];
+            }
 
-    // 3. Extract Section
-    const sectionMatch = text.match(/Section\s*([A-Za-z0-9]+)|Sec\.?\s*([A-Za-z0-9]+)/i);
-    if (sectionMatch) {
-        result.section = sectionMatch[1] || sectionMatch[2] || '';
-    }
+            // Extract Section
+            const sectionMatch = text.match(/Section\s*([A-Za-z0-9]+)|Sec\.?\s*([A-Za-z0-9]+)/i);
+            if (sectionMatch) {
+                result.section = sectionMatch[1] || sectionMatch[2] || '';
+            }
 
-    // 4. Extract Name
-    let nameMatch = null;
-    const namePatterns = [
-        /Name:\s*([A-Za-z\s\.]+)/i,
-        /Name\s*([A-Za-z\s\.]+)/i,
-        /([A-Z][a-z]+\s+[A-Z][a-z]+\s+[A-Z][a-z]+)/,
-        /([A-Z][a-z]+\s+[A-Z][a-z]+)/
-    ];
-    
-    for (const pattern of namePatterns) {
-        const match = text.match(pattern);
-        if (match) {
-            nameMatch = match;
-            break;
-        }
-    }
-    
-    if (nameMatch) {
-        result.name = nameMatch[1].trim().replace(/[^A-Za-z\s\.]/g, '');
-    }
+            // Extract Name - multiple patterns for better accuracy
+            const namePatterns = [
+                /Name:\s*([A-Za-z\s\.]+)/i,
+                /Name\s*([A-Za-z\s\.]+)/i,
+                /([A-Z][a-z]+\s+[A-Z][a-z]+\s+[A-Z][a-z]+)/,
+                /([A-Z][a-z]+\s+[A-Z][a-z]+)/
+            ];
 
-    // 5. Fallback: Try to find name from lines
-    if (!result.name) {
-        const lines = text.split('\n').filter(line => line.trim().length > 0);
-        for (const line of lines) {
-            const trimmed = line.trim();
-            if (trimmed.split(' ').length >= 2 && trimmed.split(' ').length <= 4) {
-                if (!/^[A-Z\s]+$/.test(trimmed) && !/\d/.test(trimmed)) {
-                    result.name = trimmed;
+            for (const pattern of namePatterns) {
+                const match = text.match(pattern);
+                if (match) {
+                    result.name = match[1].trim();
                     break;
                 }
             }
+
+            // Fallback: try to extract from lines
+            if (!result.name) {
+                const lines = text.split('\n').filter(line => line.trim().length > 0);
+                for (const line of lines) {
+                    const trimmed = line.trim();
+                    if (trimmed.split(' ').length >= 2 && trimmed.split(' ').length <= 4) {
+                        if (!/^[A-Z\s]+$/.test(trimmed) && !/\d/.test(trimmed)) {
+                            result.name = trimmed;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // Clean up
+            if (result.name) {
+                result.name = result.name.replace(/[^A-Za-z\s\.]/g, '').trim();
+            }
+            if (!result.name) result.name = '';
+
+            return result;
         }
-    }
-
-    if (!result.name) result.name = 'Unknown';
-
-    return result;
-}
 
         function showOCRResults(data) {
             document.getElementById('ocrName').textContent = data.name || 'Not found';
@@ -1583,6 +1671,91 @@ function parseIDText(text) {
             ocrData = null;
             document.querySelector('.camera-status').textContent = '📷 Position the student ID card clearly in the frame';
             showToast('🔄 Retake photo of the ID card', 'info');
+        }
+
+        function showManualEntry() {
+            document.getElementById('ocrResult').classList.remove('show');
+            document.getElementById('manualEntry').classList.add('show');
+            // Pre-fill with OCR data if available
+            if (ocrData) {
+                document.getElementById('manualLRN').value = ocrData.lrn || '';
+                document.getElementById('manualName').value = ocrData.name || '';
+                document.getElementById('manualGrade').value = ocrData.grade || '';
+                document.getElementById('manualSection').value = ocrData.section || '';
+            }
+            closeIDScanner();
+        }
+
+        function hideManualEntry() {
+            document.getElementById('manualEntry').classList.remove('show');
+        }
+
+        async function addManualStudent() {
+            const lrn = document.getElementById('manualLRN').value.trim();
+            const name = document.getElementById('manualName').value.trim();
+            const grade = document.getElementById('manualGrade').value;
+            const section = document.getElementById('manualSection').value.trim();
+
+            if (!lrn || !name || !grade) {
+                showToast('❌ Please fill in LRN, Name, and Grade.', 'error');
+                return;
+            }
+
+            if (lrn.length !== 12) {
+                showToast('❌ LRN must be exactly 12 digits.', 'error');
+                return;
+            }
+
+            try {
+                // Check if student exists
+                const { data: existing, error } = await _supabase
+                    .from('students')
+                    .select('*')
+                    .eq('lrn', lrn)
+                    .limit(1);
+
+                if (error) throw error;
+
+                if (existing && existing.length > 0) {
+                    selectedStudent = existing[0];
+                    document.getElementById('selectedStudentName').textContent = selectedStudent.full_name;
+                    document.getElementById('selectedStudentDetails').textContent =
+                        `LRN: ${selectedStudent.lrn} · ${selectedStudent.grade_level} ${selectedStudent.section || ''}`;
+                    document.getElementById('selectedStudent').classList.add('show');
+                    showToast(`✅ Student found: ${selectedStudent.full_name}`, 'success');
+                } else {
+                    const newStudent = {
+                        lrn: lrn,
+                        full_name: name,
+                        grade_level: grade,
+                        section: section
+                    };
+
+                    const { data: created, error: createError } = await _supabase
+                        .from('students')
+                        .insert([newStudent])
+                        .select()
+                        .single();
+
+                    if (createError) throw createError;
+
+                    selectedStudent = created;
+                    document.getElementById('selectedStudentName').textContent = selectedStudent.full_name;
+                    document.getElementById('selectedStudentDetails').textContent =
+                        `LRN: ${selectedStudent.lrn} · ${selectedStudent.grade_level} ${selectedStudent.section || ''}`;
+                    document.getElementById('selectedStudent').classList.add('show');
+                    showToast(`✅ New student added: ${selectedStudent.full_name}`, 'success');
+                }
+
+                hideManualEntry();
+                document.getElementById('ocrResult').classList.remove('show');
+                goToStep(2);
+                document.getElementById('assetSearch').focus();
+
+            } catch (error) {
+                console.error('Error saving student:', error);
+                showToast('❌ Error saving student: ' + error.message, 'error');
+            }
         }
 
         async function confirmOCR() {
@@ -1648,7 +1821,24 @@ function parseIDText(text) {
         }
 
         // ============================================================
-        // QR SCANNER FUNCTIONS (Keep your existing ones)
+        // ASSET PASTE FUNCTION
+        // ============================================================
+        async function pasteAsset() {
+            try {
+                const text = await navigator.clipboard.readText();
+                if (text) {
+                    document.getElementById('assetSearch').value = text.trim();
+                    await searchAssets();
+                    showToast('📋 Pasted from clipboard!', 'success');
+                }
+            } catch (err) {
+                console.error('Paste error:', err);
+                showToast('❌ Unable to paste. Please paste manually.', 'error');
+            }
+        }
+
+        // ============================================================
+        // QR SCANNER FUNCTIONS
         // ============================================================
         function toggleStudentScanner() {
             const container = document.getElementById('studentScanner');
@@ -1656,7 +1846,6 @@ function parseIDText(text) {
                 stopStudentScanner();
                 container.classList.remove('active');
             } else {
-                // Close ID scanner if open
                 if (document.getElementById('cameraContainer').classList.contains('active')) {
                     closeIDScanner();
                 }
@@ -2137,17 +2326,18 @@ function parseIDText(text) {
                     document.getElementById('studentSearch').value = '';
                     document.getElementById('assetSearch').value = '';
                     document.getElementById('ocrResult').classList.remove('show');
+                    document.getElementById('manualEntry').classList.remove('show');
 
                     document.getElementById('studentResults').innerHTML = `
                         <div class="empty-state">
                             <i class="fas fa-search"></i>
-                            <p>Search by LRN, Name, Grade, or Section<br>or scan the student ID card</p>
+                            <p>Search by LRN, Name, Grade, or Section</p>
                         </div>
                     `;
                     document.getElementById('assetResults').innerHTML = `
                         <div class="empty-state">
                             <i class="fas fa-search"></i>
-                            <p>Search by Name, Brand, Model, Serial, Category<br>or scan the asset's QR code</p>
+                            <p>Search by Name, Brand, Model, Serial, Category</p>
                         </div>
                     `;
 
@@ -2189,10 +2379,12 @@ function parseIDText(text) {
             document.getElementById('borrowReturnDate').value = date.toISOString().split('T')[0];
 
             console.log('📦 EduStock - Borrow Page Loaded');
-            console.log('📷 ID Scanner: Take photo of student ID, extract LRN, Name, Grade');
+            console.log('📷 ID Scanner: Take photo of student ID');
             console.log('🔍 Student Search: LRN, Name, Grade, Section');
             console.log('🔍 Asset Search: Name, Brand, Model, Serial, Category');
             console.log('📱 QR Scanning: Student ID QR and Asset QR codes');
+            console.log('📋 Asset Paste: Paste from clipboard');
+            console.log('✏️ Manual Entry: Add student manually if OCR fails');
         }
 
         document.addEventListener('DOMContentLoaded', init);
