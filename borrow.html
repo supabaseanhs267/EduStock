@@ -2193,59 +2193,102 @@ function removeAsset() {
         // ============================================================
         // SEARCH STUDENTS
         // ============================================================
-        async function searchStudents() {
-            const query = document.getElementById('studentSearch').value.trim();
+async function searchStudents() {
+    const query = document.getElementById('studentSearch').value.trim();
 
-            if (!query) {
-                document.getElementById('studentResults').innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-search"></i>
-                        <p>Search by LRN, Name, Grade, or Section</p>
-                    </div>
-                `;
-                return;
-            }
+    if (!query) {
+        document.getElementById('studentResults').innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-search"></i>
+                <p>Search by LRN, Name, Grade, or Section</p>
+            </div>
+        `;
+        return;
+    }
 
-            try {
-                const { data, error } = await _supabase
-                    .from('students')
-                    .select('*')
-                    .or(`lrn.ilike.%${query}%,full_name.ilike.%${query}%,grade_level.ilike.%${query}%,section.ilike.%${query}%`)
-                    .order('full_name')
-                    .limit(20);
+    try {
+        console.log('🔍 Searching students for:', query);
 
-                if (error) throw error;
+        // ✅ Search across multiple fields
+        const { data, error } = await _supabase
+            .from('students')
+            .select('*')
+            .ilike('full_name', `%${query}%`)
+            .order('full_name')
+            .limit(20);
 
-                students = data || [];
+        let results = data || [];
 
-                const container = document.getElementById('studentResults');
+        if (results.length === 0) {
+            const { data: lrnData, error: lrnError } = await _supabase
+                .from('students')
+                .select('*')
+                .ilike('lrn', `%${query}%`)
+                .order('full_name')
+                .limit(20);
 
-                if (students.length === 0) {
-                    container.innerHTML = `
-                        <div class="empty-state">
-                            <i class="fas fa-user-slash"></i>
-                            <p>No students found. Try a different search.</p>
-                            <p style="font-size:12px;color:var(--gray-400);margin-top:4px;">💡 Search by LRN, Name, Grade, or Section</p>
-                        </div>
-                    `;
-                    return;
-                }
-
-                container.innerHTML = students.map(s => `
-                    <div class="result-item" onclick="selectStudent(${s.id})">
-                        <div class="info">
-                            <div class="name">${s.full_name}</div>
-                            <div class="details">LRN: ${s.lrn} · ${s.grade_level} ${s.section || ''}</div>
-                        </div>
-                        <span class="status-badge available">Select</span>
-                    </div>
-                `).join('');
-
-            } catch (error) {
-                console.error('Search students error:', error);
-                showToast('Error searching students', 'error');
+            if (!lrnError && lrnData) {
+                results = lrnData;
             }
         }
+
+        if (results.length === 0) {
+            const { data: gradeData, error: gradeError } = await _supabase
+                .from('students')
+                .select('*')
+                .ilike('grade_level', `%${query}%`)
+                .order('full_name')
+                .limit(20);
+
+            if (!gradeError && gradeData) {
+                results = gradeData;
+            }
+        }
+
+        if (results.length === 0) {
+            const { data: sectionData, error: sectionError } = await _supabase
+                .from('students')
+                .select('*')
+                .ilike('section', `%${query}%`)
+                .order('full_name')
+                .limit(20);
+
+            if (!sectionError && sectionData) {
+                results = sectionData;
+            }
+        }
+
+        students = results;
+        console.log('✅ Found', students.length, 'students');
+
+        const container = document.getElementById('studentResults');
+
+        if (students.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-user-slash"></i>
+                    <p>No students found. Try a different search.</p>
+                    <p style="font-size:12px;color:var(--gray-400);margin-top:4px;">💡 Search by LRN, Name, Grade, or Section</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = students.map(s => `
+            <div class="result-item" onclick="selectStudent(${s.id})">
+                <div class="info">
+                    <div class="name">${s.full_name}</div>
+                    <div class="details">LRN: ${s.lrn} · ${s.grade_level} ${s.section || ''}</div>
+                </div>
+                <span class="status-badge available">Select</span>
+            </div>
+        `).join('');
+
+    } catch (error) {
+        console.error('❌ Search students error:', error);
+        showToast('Error searching students', 'error');
+    }
+}
 
         // ============================================================
         // SELECT STUDENT
@@ -2284,131 +2327,199 @@ function removeAsset() {
             }, 800);
         }
 
-        // ============================================================
-        // SEARCH ASSETS
-        // ============================================================
-        async function searchAssets() {
-            const query = document.getElementById('assetSearch').value.trim();
+// ============================================================
+// SEARCH ASSETS (Alternative - Multiple ilike filters)
+// ============================================================
+async function searchAssets() {
+    const query = document.getElementById('assetSearch').value.trim();
 
-            if (!query) {
-                document.getElementById('assetResults').innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-search"></i>
-                        <p>Search by Name, Brand, Model, Serial, or Category</p>
-                    </div>
-                `;
-                return;
-            }
+    if (!query) {
+        document.getElementById('assetResults').innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-search"></i>
+                <p>Search by Name, Brand, Model, Serial, or Category</p>
+            </div>
+        `;
+        return;
+    }
 
-            try {
-                const { data, error } = await _supabase
-                    .from('assets')
-                    .select(`
-                        *,
-                        categories!inner(name),
-                        brands!inner(name),
-                        locations!inner(name)
-                    `)
-                    .or(`
-                        name.ilike.%${query}%,
-                        model.ilike.%${query}%,
-                        serial_number.ilike.%${query}%,
-                        categories.name.ilike.%${query}%,
-                        brands.name.ilike.%${query}%
-                    `)
-                    .order('name')
-                    .limit(20);
+    try {
+        console.log('🔍 Searching assets for:', query);
 
-                if (error) throw error;
+        // ✅ Alternative: Use multiple ilike filters instead of or()
+        const { data, error } = await _supabase
+            .from('assets')
+            .select(`
+                *,
+                categories!inner(name),
+                brands!inner(name),
+                locations!inner(name)
+            `)
+            .ilike('name', `%${query}%`)
+            .order('name')
+            .limit(20);
 
-                assets = data || [];
+        // If no results with name, try brand, model, etc.
+        let results = data || [];
 
-                const container = document.getElementById('assetResults');
+        if (results.length === 0) {
+            // Try searching by brand
+            const { data: brandData, error: brandError } = await _supabase
+                .from('assets')
+                .select(`
+                    *,
+                    categories!inner(name),
+                    brands!inner(name),
+                    locations!inner(name)
+                `)
+                .ilike('brands.name', `%${query}%`)
+                .order('name')
+                .limit(20);
 
-                if (assets.length === 0) {
-                    container.innerHTML = `
-                        <div class="empty-state">
-                            <i class="fas fa-box-open"></i>
-                            <p>No assets found. Try a different search.</p>
-                            <p style="font-size:12px;color:var(--gray-400);margin-top:4px;">💡 Search by Name, Brand, Model, Serial, or Category</p>
-                        </div>
-                    `;
-                    return;
-                }
-
-                container.innerHTML = assets.map(a => {
-                    const status = a.available_quantity > 0 ? 'available' : 'borrowed';
-                    const statusText = a.available_quantity > 0 ? `${a.available_quantity} available` : 'All borrowed';
-                    return `
-                        <div class="result-item" onclick="selectAsset(${a.id})">
-                            <div class="info">
-                                <div class="name">${a.name}</div>
-                                <div class="details">${a.brands?.name || 'N/A'} · ${a.categories?.name || 'N/A'} · ${a.locations?.name || 'N/A'}</div>
-                            </div>
-                            <span class="status-badge ${status}">${statusText}</span>
-                        </div>
-                    `;
-                }).join('');
-
-            } catch (error) {
-                console.error('Search assets error:', error);
-                showToast('Error searching assets', 'error');
+            if (!brandError && brandData) {
+                results = brandData;
             }
         }
+
+        if (results.length === 0) {
+            // Try searching by model
+            const { data: modelData, error: modelError } = await _supabase
+                .from('assets')
+                .select(`
+                    *,
+                    categories!inner(name),
+                    brands!inner(name),
+                    locations!inner(name)
+                `)
+                .ilike('model', `%${query}%`)
+                .order('name')
+                .limit(20);
+
+            if (!modelError && modelData) {
+                results = modelData;
+            }
+        }
+
+        if (results.length === 0) {
+            // Try searching by serial
+            const { data: serialData, error: serialError } = await _supabase
+                .from('assets')
+                .select(`
+                    *,
+                    categories!inner(name),
+                    brands!inner(name),
+                    locations!inner(name)
+                `)
+                .ilike('serial_number', `%${query}%`)
+                .order('name')
+                .limit(20);
+
+            if (!serialError && serialData) {
+                results = serialData;
+            }
+        }
+
+        assets = results;
+        console.log('✅ Found', assets.length, 'assets');
+
+        const container = document.getElementById('assetResults');
+
+        if (assets.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-box-open"></i>
+                    <p>No assets found. Try a different search.</p>
+                    <p style="font-size:12px;color:var(--gray-400);margin-top:4px;">💡 Search by Name, Brand, Model, Serial, or Category</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = assets.map(a => {
+            const status = a.available_quantity > 0 ? 'available' : 'borrowed';
+            const statusText = a.available_quantity > 0 ? `${a.available_quantity} available` : 'All borrowed';
+            return `
+                <div class="result-item" onclick="selectAsset(${a.id})">
+                    <div class="info">
+                        <div class="name">${a.name}</div>
+                        <div class="details">${a.brands?.name || 'N/A'} · ${a.categories?.name || 'N/A'} · ${a.locations?.name || 'N/A'}</div>
+                    </div>
+                    <span class="status-badge ${status}">${statusText}</span>
+                </div>
+            `;
+        }).join('');
+
+    } catch (error) {
+        console.error('❌ Search assets error:', error);
+        showToast('Error searching assets', 'error');
+    }
+}
 
         // ============================================================
         // SELECT ASSET
         // ============================================================
-        function selectAsset(id) {
-            selectedAsset = assets.find(a => a.id === id);
-            if (!selectedAsset) return;
+// ============================================================
+// SELECT ASSET (with debug logging)
+// ============================================================
+function selectAsset(id) {
+    console.log('🔍 Selecting asset with ID:', id);
+    console.log('📦 Available assets:', assets);
 
-            if (selectedAsset.available_quantity <= 0) {
-                showToast('❌ This asset is currently not available.', 'error');
-                return;
-            }
+    selectedAsset = assets.find(a => a.id === id);
+    if (!selectedAsset) {
+        console.error('❌ Asset not found with ID:', id);
+        showToast('❌ Asset not found. Please try again.', 'error');
+        return;
+    }
 
-            // Update selected card
-            document.getElementById('selectedAssetName').textContent = selectedAsset.name;
-            document.getElementById('selectedAssetDetails').textContent =
-                `Available: ${selectedAsset.available_quantity} / ${selectedAsset.total_quantity} · ${selectedAsset.locations?.name || 'N/A'}`;
-            document.getElementById('selectedAsset').classList.add('show');
+    console.log('✅ Asset selected:', selectedAsset);
 
-            // Update badge
-            document.getElementById('assetBadge').className = 'badge badge-done';
-            document.getElementById('assetBadge').textContent = '✅ Done';
+    if (selectedAsset.available_quantity <= 0) {
+        showToast('❌ This asset is currently not available.', 'error');
+        return;
+    }
 
-            // Disable search
-            document.getElementById('assetSearch').disabled = true;
+    // Update selected card
+    document.getElementById('selectedAssetName').textContent = selectedAsset.name;
+    document.getElementById('selectedAssetDetails').textContent =
+        `Available: ${selectedAsset.available_quantity} / ${selectedAsset.total_quantity} · ${selectedAsset.locations?.name || 'N/A'}`;
+    document.getElementById('selectedAsset').classList.add('show');
 
-            // Clear results
-            document.getElementById('assetResults').innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-check-circle" style="color:var(--success);"></i>
-                    <p>Asset selected! Proceeding to confirmation...</p>
-                </div>
-            `;
+    // Update badge
+    document.getElementById('assetBadge').className = 'badge badge-done';
+    document.getElementById('assetBadge').textContent = '✅ Done';
 
-            // Fill confirm section
-            document.getElementById('confirmStudent').textContent = selectedStudent.full_name;
-            document.getElementById('confirmAsset').textContent = selectedAsset.name;
-            document.getElementById('confirmAvailable').textContent =
-                `${selectedAsset.available_quantity} / ${selectedAsset.total_quantity} available`;
+    // Disable search
+    document.getElementById('assetSearch').disabled = true;
 
-            document.getElementById('borrowQty').max = selectedAsset.available_quantity;
-            document.getElementById('borrowQty').value = 1;
+    // Clear results
+    document.getElementById('assetResults').innerHTML = `
+        <div class="empty-state">
+            <i class="fas fa-check-circle" style="color:var(--success);"></i>
+            <p>Asset selected! Proceeding to confirmation...</p>
+        </div>
+    `;
 
-            const date = new Date();
-            date.setDate(date.getDate() + 7);
-            document.getElementById('borrowReturnDate').value = date.toISOString().split('T')[0];
+    // Fill confirm section
+    document.getElementById('confirmStudent').textContent = selectedStudent.full_name;
+    document.getElementById('confirmAsset').textContent = selectedAsset.name;
+    document.getElementById('confirmAvailable').textContent =
+        `${selectedAsset.available_quantity} / ${selectedAsset.total_quantity} available`;
 
-            showToast(`✅ Asset selected: ${selectedAsset.name}`, 'success');
+    document.getElementById('borrowQty').max = selectedAsset.available_quantity;
+    document.getElementById('borrowQty').value = 1;
 
-            // Auto-proceed to Step 3
-            setTimeout(() => {
-                goToStep(3);
-            }, 800);
-        }
+    const date = new Date();
+    date.setDate(date.getDate() + 7);
+    document.getElementById('borrowReturnDate').value = date.toISOString().split('T')[0];
+
+    showToast(`✅ Asset selected: ${selectedAsset.name}`, 'success');
+
+    // Auto-proceed to Step 3
+    setTimeout(() => {
+        goToStep(3);
+    }, 800);
+}
 
         // ============================================================
         // CONFIRM BORROW
