@@ -1,0 +1,1785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>EduStock - Settings</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="nav.css" />
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        /* ============================================================
+           RESET & BASE
+           ============================================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #4F46E5;
+            --primary-dark: #4338CA;
+            --primary-light: #818CF8;
+            --primary-bg: #EEF2FF;
+            --success: #10B981;
+            --success-bg: #ECFDF5;
+            --warning: #F59E0B;
+            --warning-bg: #FFFBEB;
+            --danger: #EF4444;
+            --danger-bg: #FEF2F2;
+            --info: #3B82F6;
+            --info-bg: #EFF6FF;
+            --gray-50: #F9FAFB;
+            --gray-100: #F3F4F6;
+            --gray-200: #E5E7EB;
+            --gray-300: #D1D5DB;
+            --gray-400: #9CA3AF;
+            --gray-500: #6B7280;
+            --gray-600: #4B5563;
+            --gray-700: #374151;
+            --gray-800: #1F2937;
+            --gray-900: #111827;
+            --radius: 16px;
+            --radius-sm: 10px;
+            --shadow: 0 2px 8px rgba(0,0,0,0.08);
+            --shadow-md: 0 4px 16px rgba(0,0,0,0.12);
+            --nav-height: 60px;
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-800);
+            padding: 0 0 calc(var(--nav-height) + 16px) 0;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 16px 16px 24px;
+        }
+
+        /* ============================================================
+           HEADER (with User Menu)
+           ============================================================ */
+        .app-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 0 12px;
+            border-bottom: 1px solid var(--gray-200);
+            margin-bottom: 12px;
+        }
+
+        .app-header .greeting h2 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        .app-header .greeting p {
+            font-size: 12px;
+            color: var(--gray-500);
+        }
+
+        /* User Menu */
+        .user-menu {
+            position: relative;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            user-select: none;
+        }
+
+        .user-avatar:hover {
+            border-color: var(--primary);
+            transform: scale(1.05);
+        }
+
+        .user-avatar:active {
+            transform: scale(0.95);
+        }
+
+        .user-dropdown {
+            display: none;
+            position: absolute;
+            top: 48px;
+            right: 0;
+            background: white;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--gray-200);
+            box-shadow: var(--shadow-md);
+            min-width: 200px;
+            overflow: hidden;
+            z-index: 50;
+            animation: dropdownSlide 0.2s ease;
+        }
+
+        .user-dropdown.show {
+            display: block;
+        }
+
+        @keyframes dropdownSlide {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .user-dropdown .dropdown-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--gray-100);
+            background: var(--gray-50);
+        }
+
+        .user-dropdown .dropdown-header .name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .user-dropdown .dropdown-header .email {
+            font-size: 12px;
+            color: var(--gray-500);
+        }
+
+        .user-dropdown .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--gray-700);
+            font-size: 13px;
+            font-weight: 500;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .user-dropdown .dropdown-item:hover {
+            background: var(--gray-50);
+            color: var(--primary);
+        }
+
+        .user-dropdown .dropdown-item i {
+            width: 18px;
+            font-size: 14px;
+            color: var(--gray-400);
+        }
+
+        .user-dropdown .dropdown-item:hover i {
+            color: var(--primary);
+        }
+
+        .user-dropdown .dropdown-divider {
+            height: 1px;
+            background: var(--gray-100);
+            margin: 4px 0;
+        }
+
+        .user-dropdown .dropdown-item.danger {
+            color: var(--danger);
+        }
+
+        .user-dropdown .dropdown-item.danger:hover {
+            background: var(--danger-bg);
+            color: var(--danger);
+        }
+
+        .user-dropdown .dropdown-item.danger:hover i {
+            color: var(--danger);
+        }
+
+        /* ============================================================
+           SETTINGS SECTIONS
+           ============================================================ */
+        .settings-section {
+            background: white;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--gray-200);
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: var(--shadow);
+        }
+
+        .settings-section .section-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .settings-section .section-title i {
+            color: var(--primary);
+            font-size: 14px;
+        }
+
+        .settings-section .section-title .badge {
+            font-size: 10px;
+            font-weight: 600;
+            padding: 1px 8px;
+            border-radius: 10px;
+            background: var(--gray-100);
+            color: var(--gray-500);
+            margin-left: auto;
+        }
+
+        .settings-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .settings-item:last-child {
+            border-bottom: none;
+        }
+
+        .settings-item .info .label {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--gray-800);
+        }
+
+        .settings-item .info .desc {
+            font-size: 12px;
+            color: var(--gray-400);
+        }
+
+        .settings-item .action-btn {
+            background: none;
+            border: none;
+            color: var(--gray-400);
+            font-size: 16px;
+            cursor: pointer;
+            padding: 4px 8px;
+            transition: all 0.3s ease;
+        }
+
+        .settings-item .action-btn:hover {
+            color: var(--primary);
+        }
+
+        /* Toggle Switch */
+        .toggle {
+            width: 44px;
+            height: 24px;
+            background: var(--gray-200);
+            border-radius: 12px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .toggle.on {
+            background: var(--primary);
+        }
+
+        .toggle .thumb {
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow);
+        }
+
+        .toggle.on .thumb {
+            left: 22px;
+        }
+
+        .toggle:active .thumb {
+            transform: scale(0.9);
+        }
+
+        /* ============================================================
+           MODAL (For adding/editing items)
+           ============================================================ */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 200;
+            align-items: flex-end;
+            justify-content: center;
+            padding: 0 16px calc(var(--nav-height) + 16px);
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: var(--radius) var(--radius) 0 0;
+            width: 100%;
+            max-width: 480px;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 20px 20px 32px;
+            animation: modalSlideUp 0.3s ease;
+        }
+
+        @keyframes modalSlideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .modal-header h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        .modal-header .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--gray-400);
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        .modal .form-group {
+            margin-bottom: 14px;
+        }
+
+        .modal .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: 4px;
+        }
+
+        .modal .form-group label .required {
+            color: var(--danger);
+        }
+
+        .modal .form-group input,
+        .modal .form-group select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            background: white;
+            transition: all 0.3s ease;
+        }
+
+        .modal .form-group input:focus,
+        .modal .form-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px var(--primary-bg);
+        }
+
+        .modal .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .modal .form-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .modal .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: var(--radius-sm);
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .modal .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .modal .btn-secondary {
+            background: var(--gray-100);
+            color: var(--gray-700);
+            border: 1px solid var(--gray-200);
+            padding: 10px 20px;
+            border-radius: var(--radius-sm);
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .modal .btn-secondary:hover {
+            background: var(--gray-200);
+        }
+
+        /* ============================================================
+           DANGER ZONE
+           ============================================================ */
+        .danger-zone {
+            border-color: var(--danger);
+        }
+
+        .danger-zone .section-title {
+            color: var(--danger);
+        }
+
+        .danger-zone .section-title i {
+            color: var(--danger);
+        }
+
+        .btn-danger {
+            width: 100%;
+            padding: 12px;
+            background: var(--danger);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-danger:hover {
+            background: #DC2626;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-danger:active {
+            transform: scale(0.95);
+        }
+
+        .danger-zone .warning-text {
+            font-size: 12px;
+            color: var(--gray-500);
+            margin-top: 6px;
+            text-align: center;
+        }
+
+        /* ============================================================
+           TOAST
+           ============================================================ */
+        .toast {
+            position: fixed;
+            bottom: calc(var(--nav-height) + 16px);
+            left: 16px;
+            right: 16px;
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 10px 14px;
+            border-radius: var(--radius-sm);
+            color: white;
+            font-weight: 500;
+            font-size: 12px;
+            box-shadow: var(--shadow-md);
+            z-index: 1000;
+            animation: slideUp 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toast.hidden { display: none; }
+        .toast.success { background: var(--success); }
+        .toast.error { background: var(--danger); }
+        .toast.warning { background: var(--warning); }
+        .toast.info { background: var(--primary); }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .toast .close-toast {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            margin-left: auto;
+            opacity: 0.7;
+        }
+
+        /* ============================================================
+           BOTTOM NAVIGATION (6 Tabs)
+           ============================================================ */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 4px 0 calc(4px + var(--safe-bottom, 0px));
+            z-index: 100;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+            max-width: 480px;
+            margin: 0 auto;
+            height: var(--nav-height);
+        }
+
+        .bottom-nav .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1px;
+            padding: 4px 4px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            color: var(--gray-400);
+            font-family: 'Inter', sans-serif;
+            position: relative;
+            min-width: 32px;
+            flex: 1;
+            height: 100%;
+            font-size: 9px;
+            transition: all 0.2s ease;
+        }
+
+        .bottom-nav .nav-item i {
+            font-size: 18px;
+            transition: all 0.2s ease;
+        }
+
+        .bottom-nav .nav-item span {
+            font-weight: 500;
+        }
+
+        .bottom-nav .nav-item.active {
+            color: var(--primary);
+        }
+
+        .bottom-nav .nav-item.active i {
+            transform: translateY(-2px);
+        }
+
+        .bottom-nav .nav-item .nav-badge {
+            position: absolute;
+            top: 1px;
+            right: 4px;
+            background: var(--danger);
+            color: white;
+            font-size: 7px;
+            font-weight: 700;
+            padding: 1px 4px;
+            border-radius: 8px;
+            min-width: 12px;
+            text-align: center;
+        }
+
+        .bottom-nav .nav-item:active {
+            transform: scale(0.92);
+        }
+
+        @media (max-width: 420px) {
+            .bottom-nav { height: 52px; }
+            .bottom-nav .nav-item { padding: 2px 2px; min-width: 28px; }
+            .bottom-nav .nav-item i { font-size: 16px; }
+            .bottom-nav .nav-item span { font-size: 8px; }
+        }
+
+        @media (max-width: 360px) {
+            .bottom-nav { height: 48px; }
+            .bottom-nav .nav-item i { font-size: 14px; }
+            .bottom-nav .nav-item span { font-size: 7px; }
+        }
+
+        /* ============================================================
+           STAFF LIST IN MODAL
+           ============================================================ */
+        .staff-list {
+            margin-top: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .staff-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .staff-item:last-child {
+            border-bottom: none;
+        }
+
+        .staff-item .staff-info .staff-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--gray-800);
+        }
+
+        .staff-item .staff-info .staff-email {
+            font-size: 11px;
+            color: var(--gray-400);
+        }
+
+        .staff-item .staff-role {
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: var(--primary-bg);
+            color: var(--primary);
+        }
+
+        .staff-item .staff-role.admin {
+            background: var(--warning-bg);
+            color: var(--warning);
+        }
+
+        .staff-item .staff-actions button {
+            background: none;
+            border: none;
+            color: var(--gray-400);
+            cursor: pointer;
+            font-size: 14px;
+            padding: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .staff-item .staff-actions button:hover {
+            color: var(--danger);
+        }
+
+        /* Profile Modal specific styles */
+        .profile-photo {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 32px;
+            margin: 0 auto 12px;
+            border: 3px solid var(--gray-200);
+        }
+
+        .profile-photo .edit-badge {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            border: 2px solid white;
+        }
+
+        .profile-photo-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ============================================================
+    APP CONTAINER
+    ============================================================ -->
+    <div class="app-container">
+
+        <!-- ===== HEADER (with User Menu) ===== -->
+        <header class="app-header">
+            <div class="greeting">
+                <h2 id="userGreeting">Welcome back! 👋</h2>
+                <p id="userRole">Admin · Alitagtag NHS</p>
+            </div>
+            <div class="user-menu">
+                <div class="user-avatar" id="userAvatar" onclick="toggleDropdown()">
+                    <span id="userInitials">OM</span>
+                </div>
+                <div class="user-dropdown" id="userDropdown">
+                    <div class="dropdown-header">
+                        <div class="name" id="dropdownName">Orley Medallada</div>
+                        <div class="email" id="dropdownEmail">admin@edustock.com</div>
+                    </div>
+                    <button class="dropdown-item" onclick="showNotifications()">
+                        <i class="fas fa-bell"></i> Notifications
+                        <span style="margin-left:auto;background:var(--danger);color:white;font-size:10px;padding:1px 8px;border-radius:10px;">3</span>
+                    </button>
+                    <button class="dropdown-item" onclick="window.location.href='settings.html'">
+                        <i class="fas fa-cog"></i> Settings
+                    </button>
+                    <div class="dropdown-divider"></div>
+                    <button class="dropdown-item danger" onclick="handleLogout()">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- ============================================================
+        PROFILE MANAGEMENT (NEW)
+        ============================================================ -->
+        <div class="settings-section">
+            <div class="section-title">
+                <i class="fas fa-user-circle"></i> Profile
+                <span class="badge" id="profileStatus">Active</span>
+            </div>
+            <div class="settings-item" onclick="openProfileModal()" style="cursor:pointer;">
+                <div class="info">
+                    <div class="label" id="profileDisplayName"></div>
+                    <div class="desc" id="profileDisplayEmail"></div>
+                </div>
+                <button class="action-btn">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- ============================================================
+        USER MANAGEMENT
+        ============================================================ -->
+        <div class="settings-section" id="userManagementSection">
+            <div class="section-title">
+                <i class="fas fa-users-cog"></i> User Management
+                <span class="badge" id="staffCount">0 staff</span>
+            </div>
+            <div class="settings-item">
+                <div class="info">
+                    <div class="label">Staff Accounts</div>
+                    <div class="desc">Manage staff users and permissions</div>
+                </div>
+                <button class="action-btn" onclick="openStaffModal()">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- ============================================================
+        CATEGORIES
+        ============================================================ -->
+        <div class="settings-section">
+            <div class="section-title">
+                <i class="fas fa-tags"></i> Categories
+                <span class="badge" id="categoryCount">0 items</span>
+            </div>
+            <div class="settings-item">
+                <div class="info">
+                    <div class="label">Manage Categories</div>
+                    <div class="desc">Add, edit, or remove asset categories</div>
+                </div>
+                <button class="action-btn" onclick="openCategoryModal()">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- ============================================================
+        BRANDS
+        ============================================================ -->
+        <div class="settings-section">
+            <div class="section-title">
+                <i class="fas fa-tag"></i> Brands
+                <span class="badge" id="brandCount">0 items</span>
+            </div>
+            <div class="settings-item">
+                <div class="info">
+                    <div class="label">Manage Brands</div>
+                    <div class="desc">Add, edit, or remove asset brands</div>
+                </div>
+                <button class="action-btn" onclick="openBrandModal()">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- ============================================================
+        LOCATIONS
+        ============================================================ -->
+        <div class="settings-section">
+            <div class="section-title">
+                <i class="fas fa-map-marker-alt"></i> Locations
+                <span class="badge" id="locationCount">0 items</span>
+            </div>
+            <div class="settings-item">
+                <div class="info">
+                    <div class="label">Manage Locations</div>
+                    <div class="desc">Add, edit, or remove storage locations</div>
+                </div>
+                <button class="action-btn" onclick="openLocationModal()">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- ============================================================
+        NOTIFICATIONS
+        ============================================================ -->
+        <div class="settings-section">
+            <div class="section-title">
+                <i class="fas fa-bell"></i> Notifications
+            </div>
+            <div class="settings-item">
+                <div class="info">
+                    <div class="label">Overdue Alerts</div>
+                    <div class="desc">Get notified when assets are overdue</div>
+                </div>
+                <div class="toggle on" onclick="toggleSwitch(this)">
+                    <span class="thumb"></span>
+                </div>
+            </div>
+            <div class="settings-item">
+                <div class="info">
+                    <div class="label">Low Stock Alerts</div>
+                    <div class="desc">Get notified when inventory is low</div>
+                </div>
+                <div class="toggle on" onclick="toggleSwitch(this)">
+                    <span class="thumb"></span>
+                </div>
+            </div>
+            <div class="settings-item">
+                <div class="info">
+                    <div class="label">Maintenance Reminders</div>
+                    <div class="desc">Get reminded when maintenance is due</div>
+                </div>
+                <div class="toggle" onclick="toggleSwitch(this)">
+                    <span class="thumb"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+        ABOUT
+        ============================================================ -->
+        <div class="settings-section">
+            <div class="section-title">
+                <i class="fas fa-info-circle"></i> About
+            </div>
+            <div class="settings-item">
+                <div class="info">
+                    <div class="label">Version</div>
+                    <div class="desc">v1.0.0</div>
+                </div>
+            </div>
+            <div class="settings-item">
+                <div class="info">
+                    <div class="label">School</div>
+                    <div class="desc">Alitagtag National High School</div>
+                </div>
+            </div>
+            <div class="settings-item">
+                <div class="info">
+                    <div class="label">Data Storage</div>
+                    <div class="desc">Supabase (Cloud)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+        DANGER ZONE
+        ============================================================ -->
+        <div class="settings-section danger-zone">
+            <div class="section-title">
+                <i class="fas fa-exclamation-triangle"></i> Danger Zone
+            </div>
+            <button class="btn-danger" onclick="clearAllData()">
+                <i class="fas fa-trash"></i> Clear All Data
+            </button>
+            <div class="warning-text">⚠️ This action cannot be undone. All data will be permanently deleted.</div>
+        </div>
+
+    </div>
+
+    <!-- ============================================================
+    PROFILE MODAL (NEW)
+    ============================================================ -->
+    <div class="modal-overlay" id="profileModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-user-circle"></i> Edit Profile</h3>
+                <button class="close-btn" onclick="closeProfileModal()">&times;</button>
+            </div>
+            <form id="profileForm" onsubmit="saveProfile(event)">
+                <div style="text-align:center;margin-bottom:16px;">
+                    <div class="profile-photo-wrapper">
+                        <div class="profile-photo" id="profilePhoto">
+                            <span id="profilePhotoInitials">OM</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Full Name <span class="required">*</span></label>
+                    <input type="text" id="profileName" placeholder="Full Name" required />
+                </div>
+                <div class="form-group">
+                    <label>Email <span class="required">*</span></label>
+                    <input type="email" id="profileEmail" placeholder="Email" required />
+                </div>
+                <div class="form-group">
+                    <label>New Password</label>
+                    <input type="password" id="profilePassword" placeholder="Leave blank to keep current password" />
+                </div>
+                <div class="form-group">
+                    <label>Confirm New Password</label>
+                    <input type="password" id="profilePasswordConfirm" placeholder="Confirm new password" />
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="closeProfileModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-save"></i> Save Profile
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ============================================================
+    STAFF MODAL
+    ============================================================ -->
+    <div class="modal-overlay" id="staffModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-users-cog"></i> Staff Management</h3>
+                <button class="close-btn" onclick="closeStaffModal()">&times;</button>
+            </div>
+            <div style="margin-bottom:12px;">
+                <button class="btn-primary" onclick="showAddStaffForm()" style="width:100%;justify-content:center;">
+                    <i class="fas fa-user-plus"></i> Add Staff
+                </button>
+            </div>
+            <div id="staffList" class="staff-list">
+                <!-- Rendered by JavaScript -->
+            </div>
+            <div id="addStaffForm" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--gray-200);">
+                <div class="form-group">
+                    <label>Full Name <span class="required">*</span></label>
+                    <input type="text" id="staffName" placeholder="Full Name" />
+                </div>
+                <div class="form-group">
+                    <label>Email <span class="required">*</span></label>
+                    <input type="email" id="staffEmail" placeholder="staff@edustock.com" />
+                </div>
+                <div class="form-group">
+                    <label>Password <span class="required">*</span></label>
+                    <input type="password" id="staffPassword" placeholder="Password" />
+                </div>
+                <div class="form-group">
+                    <label>Role</label>
+                    <select id="staffRole">
+                        <option value="staff">Staff</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button class="btn-secondary" onclick="hideAddStaffForm()">Cancel</button>
+                    <button class="btn-primary" onclick="addStaff()"><i class="fas fa-save"></i> Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+    CATEGORY MODAL
+    ============================================================ -->
+    <div class="modal-overlay" id="categoryModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-tags"></i> Manage Categories</h3>
+                <button class="close-btn" onclick="closeCategoryModal()">&times;</button>
+            </div>
+            <div style="margin-bottom:12px;">
+                <button class="btn-primary" onclick="showAddCategoryForm()" style="width:100%;justify-content:center;">
+                    <i class="fas fa-plus"></i> Add Category
+                </button>
+            </div>
+            <div id="categoryList" class="staff-list">
+                <!-- Rendered by JavaScript -->
+            </div>
+            <div id="addCategoryForm" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--gray-200);">
+                <div class="form-group">
+                    <label>Category Name <span class="required">*</span></label>
+                    <input type="text" id="categoryName" placeholder="e.g., Electronics" />
+                </div>
+                <div class="form-actions">
+                    <button class="btn-secondary" onclick="hideAddCategoryForm()">Cancel</button>
+                    <button class="btn-primary" onclick="addCategory()"><i class="fas fa-save"></i> Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+    BRAND MODAL
+    ============================================================ -->
+    <div class="modal-overlay" id="brandModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-tag"></i> Manage Brands</h3>
+                <button class="close-btn" onclick="closeBrandModal()">&times;</button>
+            </div>
+            <div style="margin-bottom:12px;">
+                <button class="btn-primary" onclick="showAddBrandForm()" style="width:100%;justify-content:center;">
+                    <i class="fas fa-plus"></i> Add Brand
+                </button>
+            </div>
+            <div id="brandList" class="staff-list">
+                <!-- Rendered by JavaScript -->
+            </div>
+            <div id="addBrandForm" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--gray-200);">
+                <div class="form-group">
+                    <label>Brand Name <span class="required">*</span></label>
+                    <input type="text" id="brandName" placeholder="e.g., Dell" />
+                </div>
+                <div class="form-actions">
+                    <button class="btn-secondary" onclick="hideAddBrandForm()">Cancel</button>
+                    <button class="btn-primary" onclick="addBrand()"><i class="fas fa-save"></i> Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+    LOCATION MODAL
+    ============================================================ -->
+    <div class="modal-overlay" id="locationModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-map-marker-alt"></i> Manage Locations</h3>
+                <button class="close-btn" onclick="closeLocationModal()">&times;</button>
+            </div>
+            <div style="margin-bottom:12px;">
+                <button class="btn-primary" onclick="showAddLocationForm()" style="width:100%;justify-content:center;">
+                    <i class="fas fa-plus"></i> Add Location
+                </button>
+            </div>
+            <div id="locationList" class="staff-list">
+                <!-- Rendered by JavaScript -->
+            </div>
+            <div id="addLocationForm" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--gray-200);">
+                <div class="form-group">
+                    <label>Location Name <span class="required">*</span></label>
+                    <input type="text" id="locationName" placeholder="e.g., Room 201, Cabinet A" />
+                </div>
+                <div class="form-actions">
+                    <button class="btn-secondary" onclick="hideAddLocationForm()">Cancel</button>
+                    <button class="btn-primary" onclick="addLocation()"><i class="fas fa-save"></i> Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+    BOTTOM NAVIGATION (6 Tabs - No Settings)
+    ============================================================ -->
+    <nav class="bottom-nav">
+        <button class="nav-item" onclick="window.location.href='dashboard.html'">
+            <i class="fas fa-th-large"></i><span>Home</span>
+        </button>
+        <button class="nav-item" onclick="window.location.href='assets.html'">
+            <i class="fas fa-boxes"></i><span>Assets</span>
+        </button>
+        <button class="nav-item" onclick="window.location.href='borrow.html'">
+            <i class="fas fa-hand-holding"></i><span>Borrow</span>
+        </button>
+        <button class="nav-item" onclick="window.location.href='return.html'">
+            <i class="fas fa-undo-alt"></i><span>Return</span>
+        </button>
+        <button class="nav-item active" onclick="window.location.href='students.html'">
+            <i class="fas fa-users"></i><span>Students</span>
+        </button>
+        <button class="nav-item" onclick="window.location.href='activity.html'">
+            <i class="fas fa-history"></i><span>Activity</span>
+        </button>
+    </nav>
+
+    <!-- ============================================================
+    TOAST
+    ============================================================ -->
+    <div class="toast hidden" id="globalToast">
+        <i class="fas fa-info-circle"></i>
+        <span id="toastMessage">Toast message</span>
+        <button class="close-toast" onclick="this.parentElement.classList.add('hidden')">&times;</button>
+    </div>
+
+    <!-- ============================================================
+    SCRIPTS
+    ============================================================ -->
+    <script>
+        // ============================================================
+        // SUPABASE CONFIGURATION
+        // ============================================================
+        const _SUPABASE_URL = 'https://zvbbnwawvbmxfygvkyaq.supabase.co';
+        const _SUPABASE_ANON_KEY = 'sb_publishable_LQd5C3G15qa-svzIDMadAw_ErT3Usmd';
+        const _supabase = window.supabase.createClient(_SUPABASE_URL, _SUPABASE_ANON_KEY);
+
+        // ============================================================
+        // STATE
+        // ============================================================
+        let staffList = [];
+        let categories = [];
+        let brands = [];
+        let locations = [];
+        let currentUser = null;
+
+        // ============================================================
+        // USER MENU FUNCTIONS
+        // ============================================================
+        function toggleDropdown() {
+            document.getElementById('userDropdown').classList.toggle('show');
+        }
+
+        document.addEventListener('click', function(e) {
+            const menu = document.querySelector('.user-menu');
+            if (menu && !menu.contains(e.target)) {
+                document.getElementById('userDropdown').classList.remove('show');
+            }
+        });
+
+        function showNotifications() {
+            showToast('🔔 You have 3 unread notifications', 'warning');
+            document.getElementById('userDropdown').classList.remove('show');
+        }
+
+        function handleLogout() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.removeItem('edustock_session');
+                showToast('👋 Logged out successfully!', 'success');
+                setTimeout(() => { window.location.href = 'login.html'; }, 1000);
+            }
+            document.getElementById('userDropdown').classList.remove('show');
+        }
+
+        // ============================================================
+        // LOAD USER SESSION
+        // ============================================================
+        function loadUserSession() {
+            try {
+                const session = JSON.parse(localStorage.getItem('edustock_session'));
+                if (session && session.profile) {
+                    const name = session.profile.full_name || 'User';
+                    const role = session.profile.role || 'Staff';
+                    const email = session.user?.email || 'user@edustock.com';
+                    
+                    currentUser = {
+                        id: session.user?.id,
+                        name: name,
+                        email: email,
+                        role: role
+                    };
+
+                    document.getElementById('userGreeting').textContent = `Welcome back, ${name}! 👋`;
+                    document.getElementById('userRole').textContent =
+                        `${role.charAt(0).toUpperCase() + role.slice(1)} · Alitagtag NHS`;
+                    
+                    const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+                    document.getElementById('userInitials').textContent = initials;
+                    document.getElementById('dropdownName').textContent = name;
+                    document.getElementById('dropdownEmail').textContent = email;
+                    
+                    // Profile display
+                    document.getElementById('profileDisplayName').textContent = name;
+                    document.getElementById('profileDisplayEmail').textContent = email;
+                    document.getElementById('profilePhotoInitials').textContent = initials;
+                }
+            } catch (e) { console.error('Session error:', e); }
+        }
+
+        // ============================================================
+        // CHECK AUTH
+        // ============================================================
+        async function checkAuth() {
+            const session = JSON.parse(localStorage.getItem('edustock_session'));
+            if (!session) { window.location.href = 'login.html'; return false; }
+            try {
+                const { data, error } = await _supabase.auth.getUser();
+                if (error || !data.user) {
+                    localStorage.removeItem('edustock_session');
+                    window.location.href = 'login.html';
+                    return false;
+                }
+                return true;
+            } catch (e) { return false; }
+        }
+
+        // ============================================================
+        // TOAST
+        // ============================================================
+        function showToast(text, type = 'info') {
+            const toast = document.getElementById('globalToast');
+            const messageEl = document.getElementById('toastMessage');
+            const icon = toast.querySelector('i');
+            const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', warning: 'fa-exclamation-triangle', info: 'fa-info-circle' };
+            toast.className = `toast ${type}`;
+            messageEl.textContent = text;
+            icon.className = `fas ${icons[type] || icons.info}`;
+            toast.classList.remove('hidden');
+            clearTimeout(toast._timeout);
+            toast._timeout = setTimeout(() => { toast.classList.add('hidden'); }, 4000);
+        }
+
+        // ============================================================
+        // PROFILE MODAL
+        // ============================================================
+        function openProfileModal() {
+            if (!currentUser) return;
+            document.getElementById('profileName').value = currentUser.name || '';
+            document.getElementById('profileEmail').value = currentUser.email || '';
+            document.getElementById('profilePassword').value = '';
+            document.getElementById('profilePasswordConfirm').value = '';
+            document.getElementById('profileModal').classList.add('active');
+        }
+
+        function closeProfileModal() {
+            document.getElementById('profileModal').classList.remove('active');
+        }
+
+        async function saveProfile(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('profileName').value.trim();
+            const email = document.getElementById('profileEmail').value.trim();
+            const password = document.getElementById('profilePassword').value;
+            const passwordConfirm = document.getElementById('profilePasswordConfirm').value;
+
+            if (!name) {
+                showToast('Please enter your name.', 'error');
+                return;
+            }
+
+            if (!email) {
+                showToast('Please enter your email.', 'error');
+                return;
+            }
+
+            if (password && password !== passwordConfirm) {
+                showToast('Passwords do not match.', 'error');
+                return;
+            }
+
+            if (password && password.length < 6) {
+                showToast('Password must be at least 6 characters.', 'error');
+                return;
+            }
+
+            const btn = document.querySelector('#profileForm .btn-primary');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+            try {
+                // Update user profile in users table
+                const { error: updateError } = await _supabase
+                    .from('users')
+                    .update({
+                        full_name: name,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', currentUser.id);
+
+                if (updateError) throw updateError;
+
+                // Update email if changed
+                if (email !== currentUser.email) {
+                    const { error: emailError } = await _supabase.auth.updateUser({
+                        email: email
+                    });
+                    if (emailError) throw emailError;
+                }
+
+                // Update password if provided
+                if (password) {
+                    const { error: passError } = await _supabase.auth.updateUser({
+                        password: password
+                    });
+                    if (passError) throw passError;
+                }
+
+                // Update session
+                const session = JSON.parse(localStorage.getItem('edustock_session'));
+                if (session) {
+                    session.profile.full_name = name;
+                    session.user.email = email;
+                    localStorage.setItem('edustock_session', JSON.stringify(session));
+                }
+
+                // Update UI
+                currentUser.name = name;
+                currentUser.email = email;
+                
+                const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+                document.getElementById('userInitials').textContent = initials;
+                document.getElementById('dropdownName').textContent = name;
+                document.getElementById('dropdownEmail').textContent = email;
+                document.getElementById('userGreeting').textContent = `Welcome back, ${name}! 👋`;
+                document.getElementById('profileDisplayName').textContent = name;
+                document.getElementById('profileDisplayEmail').textContent = email;
+                document.getElementById('profilePhotoInitials').textContent = initials;
+
+                showToast('✅ Profile updated successfully!', 'success');
+                closeProfileModal();
+
+            } catch (error) {
+                console.error('Profile update error:', error);
+                showToast('❌ Error updating profile: ' + error.message, 'error');
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-save"></i> Save Profile';
+        }
+
+        // ============================================================
+        // LOAD STAFF
+        // ============================================================
+        async function loadStaff() {
+            try {
+                const { data, error } = await _supabase
+                    .from('users')
+                    .select('*')
+                    .order('full_name');
+                if (error) throw error;
+                staffList = data || [];
+                renderStaffList();
+            } catch (error) {
+                console.error('Error loading staff:', error);
+            }
+        }
+
+        function renderStaffList() {
+            const container = document.getElementById('staffList');
+            document.getElementById('staffCount').textContent = `${staffList.length} staff`;
+            if (staffList.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align:center;padding:16px;color:var(--gray-400);font-size:13px;">
+                        <i class="fas fa-users" style="display:block;font-size:24px;margin-bottom:6px;"></i>
+                        No staff accounts yet.
+                    </div>
+                `;
+                return;
+            }
+            container.innerHTML = staffList.map(s => `
+                <div class="staff-item">
+                    <div class="staff-info">
+                        <div class="staff-name">${s.full_name}</div>
+                        <div class="staff-email">${s.email}</div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <span class="staff-role ${s.role}">${s.role}</span>
+                        <div class="staff-actions">
+                            <button onclick="deleteStaff('${s.id}')" title="Remove staff">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ============================================================
+        // STAFF CRUD
+        // ============================================================
+        function showAddStaffForm() {
+            document.getElementById('addStaffForm').style.display = 'block';
+            document.getElementById('staffName').value = '';
+            document.getElementById('staffEmail').value = '';
+            document.getElementById('staffPassword').value = '';
+            document.getElementById('staffRole').value = 'staff';
+        }
+
+        function hideAddStaffForm() {
+            document.getElementById('addStaffForm').style.display = 'none';
+        }
+
+        async function addStaff() {
+            const name = document.getElementById('staffName').value.trim();
+            const email = document.getElementById('staffEmail').value.trim();
+            const password = document.getElementById('staffPassword').value.trim();
+            const role = document.getElementById('staffRole').value;
+
+            if (!name || !email || !password) {
+                showToast('Please fill in all fields.', 'error');
+                return;
+            }
+
+            try {
+                const { data: authData, error: authError } = await _supabase.auth.admin.createUser({
+                    email: email,
+                    password: password,
+                    email_confirm: true,
+                    user_metadata: { full_name: name, role: role }
+                });
+
+                if (authError) throw authError;
+
+                const { error: userError } = await _supabase
+                    .from('users')
+                    .insert([{
+                        id: authData.user.id,
+                        email: email,
+                        full_name: name,
+                        role: role
+                    }]);
+
+                if (userError) throw userError;
+
+                showToast(`✅ Staff "${name}" added successfully!`, 'success');
+                hideAddStaffForm();
+                await loadStaff();
+            } catch (error) {
+                console.error('Add staff error:', error);
+                showToast('❌ Error adding staff: ' + error.message, 'error');
+            }
+        }
+
+        async function deleteStaff(id) {
+            if (!confirm('Remove this staff member?')) return;
+            try {
+                const { error } = await _supabase.from('users').delete().eq('id', id);
+                if (error) throw error;
+                showToast('🗑️ Staff removed', 'info');
+                await loadStaff();
+            } catch (error) {
+                console.error('Delete staff error:', error);
+                showToast('Error removing staff', 'error');
+            }
+        }
+
+        function openStaffModal() {
+            document.getElementById('staffModal').classList.add('active');
+            hideAddStaffForm();
+            loadStaff();
+        }
+
+        function closeStaffModal() {
+            document.getElementById('staffModal').classList.remove('active');
+        }
+
+        // ============================================================
+        // CATEGORY CRUD
+        // ============================================================
+        async function loadCategories() {
+            try {
+                const { data, error } = await _supabase.from('categories').select('*').order('name');
+                if (error) throw error;
+                categories = data || [];
+                renderCategoryList();
+            } catch (error) { console.error('Error loading categories:', error); }
+        }
+
+        function renderCategoryList() {
+            const container = document.getElementById('categoryList');
+            document.getElementById('categoryCount').textContent = `${categories.length} items`;
+            if (categories.length === 0) {
+                container.innerHTML = `<div style="text-align:center;padding:16px;color:var(--gray-400);font-size:13px;">No categories yet.</div>`;
+                return;
+            }
+            container.innerHTML = categories.map(c => `
+                <div class="staff-item">
+                    <div class="staff-info">
+                        <div class="staff-name">${c.name}</div>
+                    </div>
+                    <div class="staff-actions">
+                        <button onclick="deleteCategory(${c.id})"><i class="fas fa-times"></i></button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function showAddCategoryForm() {
+            document.getElementById('addCategoryForm').style.display = 'block';
+            document.getElementById('categoryName').value = '';
+        }
+
+        function hideAddCategoryForm() {
+            document.getElementById('addCategoryForm').style.display = 'none';
+        }
+
+        async function addCategory() {
+            const name = document.getElementById('categoryName').value.trim();
+            if (!name) { showToast('Please enter category name.', 'error'); return; }
+            try {
+                const { error } = await _supabase.from('categories').insert([{ name }]);
+                if (error) throw error;
+                showToast('✅ Category added!', 'success');
+                hideAddCategoryForm();
+                await loadCategories();
+            } catch (error) {
+                showToast('❌ Error: ' + error.message, 'error');
+            }
+        }
+
+        async function deleteCategory(id) {
+            if (!confirm('Delete this category?')) return;
+            try {
+                const { error } = await _supabase.from('categories').delete().eq('id', id);
+                if (error) throw error;
+                await loadCategories();
+            } catch (error) { showToast('Error deleting category', 'error'); }
+        }
+
+        function openCategoryModal() {
+            document.getElementById('categoryModal').classList.add('active');
+            hideAddCategoryForm();
+            loadCategories();
+        }
+
+        function closeCategoryModal() {
+            document.getElementById('categoryModal').classList.remove('active');
+        }
+
+        // ============================================================
+        // BRAND CRUD
+        // ============================================================
+        async function loadBrands() {
+            try {
+                const { data, error } = await _supabase.from('brands').select('*').order('name');
+                if (error) throw error;
+                brands = data || [];
+                renderBrandList();
+            } catch (error) { console.error('Error loading brands:', error); }
+        }
+
+        function renderBrandList() {
+            const container = document.getElementById('brandList');
+            document.getElementById('brandCount').textContent = `${brands.length} items`;
+            if (brands.length === 0) {
+                container.innerHTML = `<div style="text-align:center;padding:16px;color:var(--gray-400);font-size:13px;">No brands yet.</div>`;
+                return;
+            }
+            container.innerHTML = brands.map(b => `
+                <div class="staff-item">
+                    <div class="staff-info">
+                        <div class="staff-name">${b.name}</div>
+                    </div>
+                    <div class="staff-actions">
+                        <button onclick="deleteBrand(${b.id})"><i class="fas fa-times"></i></button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function showAddBrandForm() {
+            document.getElementById('addBrandForm').style.display = 'block';
+            document.getElementById('brandName').value = '';
+        }
+
+        function hideAddBrandForm() {
+            document.getElementById('addBrandForm').style.display = 'none';
+        }
+
+        async function addBrand() {
+            const name = document.getElementById('brandName').value.trim();
+            if (!name) { showToast('Please enter brand name.', 'error'); return; }
+            try {
+                const { error } = await _supabase.from('brands').insert([{ name }]);
+                if (error) throw error;
+                showToast('✅ Brand added!', 'success');
+                hideAddBrandForm();
+                await loadBrands();
+            } catch (error) {
+                showToast('❌ Error: ' + error.message, 'error');
+            }
+        }
+
+        async function deleteBrand(id) {
+            if (!confirm('Delete this brand?')) return;
+            try {
+                const { error } = await _supabase.from('brands').delete().eq('id', id);
+                if (error) throw error;
+                await loadBrands();
+            } catch (error) { showToast('Error deleting brand', 'error'); }
+        }
+
+        function openBrandModal() {
+            document.getElementById('brandModal').classList.add('active');
+            hideAddBrandForm();
+            loadBrands();
+        }
+
+        function closeBrandModal() {
+            document.getElementById('brandModal').classList.remove('active');
+        }
+
+        // ============================================================
+        // LOCATION CRUD
+        // ============================================================
+        async function loadLocations() {
+            try {
+                const { data, error } = await _supabase.from('locations').select('*').order('name');
+                if (error) throw error;
+                locations = data || [];
+                renderLocationList();
+            } catch (error) { console.error('Error loading locations:', error); }
+        }
+
+        function renderLocationList() {
+            const container = document.getElementById('locationList');
+            document.getElementById('locationCount').textContent = `${locations.length} items`;
+            if (locations.length === 0) {
+                container.innerHTML = `<div style="text-align:center;padding:16px;color:var(--gray-400);font-size:13px;">No locations yet.</div>`;
+                return;
+            }
+            container.innerHTML = locations.map(l => `
+                <div class="staff-item">
+                    <div class="staff-info">
+                        <div class="staff-name">${l.name}</div>
+                    </div>
+                    <div class="staff-actions">
+                        <button onclick="deleteLocation(${l.id})"><i class="fas fa-times"></i></button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function showAddLocationForm() {
+            document.getElementById('addLocationForm').style.display = 'block';
+            document.getElementById('locationName').value = '';
+        }
+
+        function hideAddLocationForm() {
+            document.getElementById('addLocationForm').style.display = 'none';
+        }
+
+        async function addLocation() {
+            const name = document.getElementById('locationName').value.trim();
+            if (!name) { showToast('Please enter location name.', 'error'); return; }
+            try {
+                const { error } = await _supabase.from('locations').insert([{ name }]);
+                if (error) throw error;
+                showToast('✅ Location added!', 'success');
+                hideAddLocationForm();
+                await loadLocations();
+            } catch (error) {
+                showToast('❌ Error: ' + error.message, 'error');
+            }
+        }
+
+        async function deleteLocation(id) {
+            if (!confirm('Delete this location?')) return;
+            try {
+                const { error } = await _supabase.from('locations').delete().eq('id', id);
+                if (error) throw error;
+                await loadLocations();
+            } catch (error) { showToast('Error deleting location', 'error'); }
+        }
+
+        function openLocationModal() {
+            document.getElementById('locationModal').classList.add('active');
+            hideAddLocationForm();
+            loadLocations();
+        }
+
+        function closeLocationModal() {
+            document.getElementById('locationModal').classList.remove('active');
+        }
+
+        // ============================================================
+        // TOGGLE SWITCH
+        // ============================================================
+        function toggleSwitch(el) {
+            el.classList.toggle('on');
+            showToast('⚙️ Setting updated!', 'success');
+        }
+
+        // ============================================================
+        // DANGER ZONE
+        // ============================================================
+        function clearAllData() {
+            if (confirm('⚠️ This will delete ALL data. Are you sure?')) {
+                if (confirm('This cannot be undone! Continue?')) {
+                    localStorage.clear();
+                    showToast('🗑️ All data cleared!', 'warning');
+                    setTimeout(() => { window.location.href = 'login.html'; }, 1500);
+                }
+            }
+        }
+
+        // ============================================================
+        // INIT
+        // ============================================================
+        async function init() {
+            const isAuth = await checkAuth();
+            if (!isAuth) return;
+            loadUserSession();
+            await loadCategories();
+            await loadBrands();
+            await loadLocations();
+            console.log('📦 EduStock - Settings Page Loaded');
+            console.log(`📋 ${categories.length} categories, ${brands.length} brands, ${locations.length} locations`);
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>EduStock - Login</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        /* ============================================================
+           RESET & BASE (Mobile-First)
+           ============================================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #4F46E5;
+            --primary-dark: #4338CA;
+            --primary-light: #818CF8;
+            --primary-bg: #EEF2FF;
+            --success: #10B981;
+            --success-bg: #ECFDF5;
+            --warning: #F59E0B;
+            --warning-bg: #FFFBEB;
+            --danger: #EF4444;
+            --danger-bg: #FEF2F2;
+            --gray-50: #F9FAFB;
+            --gray-100: #F3F4F6;
+            --gray-200: #E5E7EB;
+            --gray-300: #D1D5DB;
+            --gray-400: #9CA3AF;
+            --gray-500: #6B7280;
+            --gray-600: #4B5563;
+            --gray-700: #374151;
+            --gray-800: #1F2937;
+            --gray-900: #111827;
+            --radius: 16px;
+            --radius-sm: 10px;
+            --shadow: 0 2px 8px rgba(0,0,0,0.08);
+            --shadow-md: 0 4px 16px rgba(0,0,0,0.12);
+            --shadow-lg: 0 8px 32px rgba(0,0,0,0.16);
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-800);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 400px;
+            background: white;
+            border-radius: var(--radius);
+            padding: 32px 24px 28px;
+            box-shadow: var(--shadow-lg);
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .login-brand {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .login-brand .logo-icon {
+            width: 64px;
+            height: 64px;
+            background: var(--primary);
+            border-radius: var(--radius-sm);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 30px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+        }
+
+        .login-brand h1 {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--gray-900);
+            letter-spacing: -0.5px;
+        }
+
+        .login-brand h1 span {
+            color: var(--primary);
+        }
+
+        .login-brand p {
+            font-size: 13px;
+            color: var(--gray-500);
+            margin-top: 2px;
+            font-weight: 400;
+        }
+
+        .login-brand .school-name {
+            font-size: 12px;
+            color: var(--gray-400);
+            margin-top: 4px;
+            font-weight: 500;
+        }
+
+        .login-form {
+            margin-top: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: 6px;
+        }
+
+        .form-group label .required {
+            color: var(--danger);
+            margin-left: 2px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            background: var(--gray-50);
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            transition: var(--transition);
+        }
+
+        .input-wrapper:focus-within {
+            border-color: var(--primary);
+            background: white;
+            box-shadow: 0 0 0 3px var(--primary-bg);
+        }
+
+        .input-wrapper .input-icon {
+            padding: 0 0 0 14px;
+            color: var(--gray-400);
+            font-size: 16px;
+            transition: var(--transition);
+        }
+
+        .input-wrapper:focus-within .input-icon {
+            color: var(--primary);
+        }
+
+        .input-wrapper input {
+            width: 100%;
+            padding: 14px 12px;
+            border: none;
+            outline: none;
+            background: transparent;
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            color: var(--gray-800);
+        }
+
+        .input-wrapper input::placeholder {
+            color: var(--gray-400);
+            font-size: 14px;
+        }
+
+        .input-wrapper .toggle-password {
+            padding: 0 14px 0 0;
+            background: none;
+            border: none;
+            color: var(--gray-400);
+            cursor: pointer;
+            font-size: 16px;
+            transition: var(--transition);
+        }
+
+        .input-wrapper .toggle-password:hover {
+            color: var(--gray-600);
+        }
+
+        .form-options {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--gray-600);
+            font-weight: 500;
+        }
+
+        .remember-me input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary);
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .forgot-link {
+            font-size: 13px;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .forgot-link:hover {
+            text-decoration: underline;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 14px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-family: 'Inter', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            position: relative;
+        }
+
+        .btn-login:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+        }
+
+        .btn-login:active {
+            transform: scale(0.98);
+        }
+
+        .btn-login:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-login .spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .btn-login.loading .spinner {
+            display: block;
+        }
+
+        .btn-login.loading .btn-text {
+            display: none;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .message {
+            padding: 10px 14px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 16px;
+            display: none;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .message.show {
+            display: flex;
+        }
+
+        .message.error {
+            background: var(--danger-bg);
+            color: var(--danger);
+            border: 1px solid #FECACA;
+        }
+
+        .message.success {
+            background: var(--success-bg);
+            color: var(--success);
+            border: 1px solid #A7F3D0;
+        }
+
+        .message i {
+            font-size: 16px;
+        }
+
+        .login-footer {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .login-footer p {
+            font-size: 12px;
+            color: var(--gray-400);
+        }
+
+        .login-footer .version {
+            font-size: 11px;
+            color: var(--gray-300);
+        }
+
+        .demo-credentials {
+            background: var(--gray-50);
+            border-radius: var(--radius-sm);
+            padding: 12px 14px;
+            margin-top: 16px;
+            border: 1px dashed var(--gray-300);
+        }
+
+        .demo-credentials p {
+            font-size: 12px;
+            color: var(--gray-500);
+            font-weight: 500;
+        }
+
+        .demo-credentials .cred-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--gray-600);
+            padding: 2px 0;
+        }
+
+        .demo-credentials .cred-row .label {
+            color: var(--gray-400);
+        }
+
+        .demo-credentials .cred-row .value {
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            color: var(--gray-700);
+        }
+
+        @media (max-width: 420px) {
+            .login-container {
+                padding: 24px 16px 20px;
+            }
+            .login-brand h1 {
+                font-size: 20px;
+            }
+            .login-brand .logo-icon {
+                width: 54px;
+                height: 54px;
+                font-size: 24px;
+            }
+            .input-wrapper input {
+                font-size: 14px;
+                padding: 12px 10px;
+            }
+            .btn-login {
+                font-size: 15px;
+                padding: 12px;
+            }
+            .form-options {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            .demo-credentials .cred-row {
+                flex-direction: column;
+                gap: 2px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .login-container {
+                padding: 16px 12px;
+                border-radius: var(--radius-sm);
+            }
+            .login-brand h1 {
+                font-size: 18px;
+            }
+            .login-brand p {
+                font-size: 12px;
+            }
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 16px;
+            right: 16px;
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            color: white;
+            font-weight: 500;
+            font-size: 13px;
+            box-shadow: var(--shadow-md);
+            z-index: 1000;
+            animation: slideUp 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transform-origin: bottom;
+        }
+
+        .toast.hidden {
+            display: none;
+        }
+
+        .toast.success {
+            background: var(--success);
+        }
+        .toast.error {
+            background: var(--danger);
+        }
+        .toast.warning {
+            background: var(--warning);
+        }
+        .toast.info {
+            background: var(--primary);
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .toast .close-toast {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            margin-left: auto;
+            opacity: 0.7;
+        }
+
+        .toast .close-toast:hover {
+            opacity: 1;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            50% { transform: translateX(8px); }
+            75% { transform: translateX(-4px); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+
+        <div class="login-brand">
+            <div class="logo-icon">
+                <i class="fas fa-box"></i>
+            </div>
+            <h1>i<span>SMART</span></h1>
+            <p>QR-Code and ID Scan ICT Equipment Management</p>
+            <div class="school-name">Alitagtag National High School</div>
+        </div>
+
+        <div class="message error" id="message">
+            <i class="fas fa-exclamation-circle"></i>
+            <span id="messageText">Invalid credentials. Please try again.</span>
+        </div>
+
+        <form class="login-form" id="loginForm" autocomplete="off" novalidate>
+
+            <div class="form-group">
+                <label for="email">Email Address <span class="required">*</span></label>
+                <div class="input-wrapper">
+                    <span class="input-icon"><i class="fas fa-envelope"></i></span>
+                    <input
+                        type="email"
+                        id="email"
+                        placeholder="admin@edustock.com"
+                        required
+                        autocomplete="username"
+                    />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password <span class="required">*</span></label>
+                <div class="input-wrapper">
+                    <span class="input-icon"><i class="fas fa-lock"></i></span>
+                    <input
+                        type="password"
+                        id="password"
+                        placeholder="Enter your password"
+                        required
+                        autocomplete="current-password"
+                    />
+                    <button type="button" class="toggle-password" id="togglePassword" aria-label="Toggle password visibility">
+                        <i class="fas fa-eye" id="eyeIcon"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-options">
+                <label class="remember-me">
+                    <input type="checkbox" id="rememberMe" checked />
+                    <span>Remember me</span>
+                </label>
+                <span class="forgot-link" id="forgotLink">Forgot password?</span>
+            </div>
+
+            <button type="submit" class="btn-login" id="loginBtn">
+                <span class="spinner"></span>
+                <span class="btn-text"><i class="fas fa-sign-in-alt"></i> Log In</span>
+            </button>
+
+        </form>
+
+        <div class="demo-credentials">
+            <p>🔑 Demo Credentials</p>
+            <div class="cred-row">
+                <span class="label">Admin:</span>
+                <span class="value">admin@edustock.com / Admin12345</span>
+            </div>
+            <div class="cred-row">
+                <span class="label">Staff:</span>
+                <span class="value">staff@edustock.com / Staff12345</span>
+            </div>
+        </div>
+
+        <div class="login-footer">
+            <p>&copy; 2024 EduStock | Alitagtag National High School</p>
+            <span class="version">v1.0.0</span>
+        </div>
+
+    </div>
+
+    <div class="toast hidden" id="toast">
+        <i class="fas fa-info-circle"></i>
+        <span id="toastMessage">Toast message</span>
+        <button class="close-toast" id="toastClose">&times;</button>
+    </div>
+
+    <script>
+        // ============================================================
+        // SUPABASE CONFIGURATION
+        // ============================================================
+        const SUPABASE_URL = 'https://zvbbnwawvbmxfygvkyaq.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_LQd5C3G15qa-svzIDMadAw_ErT3Usmd';
+        
+        // Initialize Supabase client
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        window.supabase = supabaseClient;
+
+        // ============================================================
+        // DOM REFS
+        // ============================================================
+        const form = document.getElementById('loginForm');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const loginBtn = document.getElementById('loginBtn');
+        const rememberMe = document.getElementById('rememberMe');
+        const togglePassword = document.getElementById('togglePassword');
+        const eyeIcon = document.getElementById('eyeIcon');
+        const message = document.getElementById('message');
+        const messageText = document.getElementById('messageText');
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toastMessage');
+        const toastClose = document.getElementById('toastClose');
+
+        // ============================================================
+        // TOAST FUNCTION
+        // ============================================================
+        function showToast(text, type = 'info') {
+            toast.className = `toast ${type}`;
+            toastMessage.textContent = text;
+            const icon = toast.querySelector('i');
+            const icons = {
+                success: 'fa-check-circle',
+                error: 'fa-exclamation-circle',
+                warning: 'fa-exclamation-triangle',
+                info: 'fa-info-circle'
+            };
+            icon.className = `fas ${icons[type] || icons.info}`;
+            clearTimeout(toast._timeout);
+            toast._timeout = setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 4000);
+        }
+
+        toastClose.addEventListener('click', function() {
+            toast.classList.add('hidden');
+            clearTimeout(toast._timeout);
+        });
+
+        // ============================================================
+        // MESSAGE FUNCTIONS
+        // ============================================================
+        function showMessage(text, type = 'error') {
+            message.className = `message show ${type}`;
+            messageText.textContent = text;
+        }
+
+        function hideMessage() {
+            message.className = 'message';
+        }
+
+        // ============================================================
+        // PASSWORD TOGGLE
+        // ============================================================
+        togglePassword.addEventListener('click', function() {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            eyeIcon.className = type === 'password' ? 'fas fa-eye' : 'fas fa-eye-slash';
+        });
+
+        // ============================================================
+        // REMEMBER ME
+        // ============================================================
+        function loadRememberedCredentials() {
+            const saved = localStorage.getItem('edustock_remembered');
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    if (data.remember) {
+                        emailInput.value = data.email || '';
+                        passwordInput.value = data.password || '';
+                        rememberMe.checked = true;
+                    }
+                } catch (e) {
+                    console.error('Error loading remembered credentials:', e);
+                }
+            }
+        }
+
+        function saveRememberedCredentials(email, password) {
+            const data = {
+                email: email,
+                password: rememberMe.checked ? password : '',
+                remember: rememberMe.checked
+            };
+            localStorage.setItem('edustock_remembered', JSON.stringify(data));
+        }
+
+        // ============================================================
+        // FORGOT PASSWORD
+        // ============================================================
+        document.getElementById('forgotLink').addEventListener('click', function() {
+            showToast('📧 Contact system administrator to reset your password.', 'info');
+        });
+
+        // ============================================================
+        // ✅ FIXED: LOGIN FUNCTION (Uses the password from the form)
+        // ============================================================
+        async function loginUser(email, password) {
+            try {
+                console.log('🔐 Attempting login with:', email);
+                console.log('📝 Password length:', password ? password.length : 0);
+
+                // ✅ Use the password passed from the form (NOT hardcoded)
+                const { data, error } = await window.supabase.auth.signInWithPassword({
+                    email: email,
+                    password: password  // ← This uses what the user typed!
+                });
+
+                if (error) {
+                    console.error('❌ Auth Error:', error);
+                    return { success: false, message: error.message };
+                }
+
+                console.log('✅ Auth Success:', data.user);
+
+                // Get user role from users table
+                const { data: userData, error: userError } = await window.supabase
+                    .from('users')
+                    .select('full_name, role')
+                    .eq('id', data.user.id)
+                    .single();
+
+                if (userError) {
+                    console.error('❌ User data error:', userError);
+                    return { 
+                        success: false, 
+                        message: 'Account found but no role assigned. Contact admin.' 
+                    };
+                }
+
+                console.log('✅ User role:', userData);
+
+                // Create session
+                const session = {
+                    user: data.user,
+                    profile: {
+                        full_name: userData.full_name,
+                        role: userData.role
+                    },
+                    loginTime: new Date().toISOString()
+                };
+
+                localStorage.setItem('edustock_session', JSON.stringify(session));
+
+                return {
+                    success: true,
+                    user: data.user,
+                    profile: {
+                        full_name: userData.full_name,
+                        role: userData.role
+                    },
+                    session: session
+                };
+
+            } catch (error) {
+                console.error('❌ Login error:', error);
+                return { 
+                    success: false, 
+                    message: 'An unexpected error occurred. Please try again.' 
+                };
+            }
+        }
+
+        // ============================================================
+        // ✅ DISABLED AUTO-LOGIN - User must click login button
+        // ============================================================
+
+        // ============================================================
+        // FORM SUBMIT
+        // ============================================================
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const email = emailInput.value.trim();
+            const password = passwordInput.value.trim();
+
+            if (!email) {
+                showMessage('Please enter your email address.', 'error');
+                emailInput.focus();
+                return;
+            }
+
+            if (!password) {
+                showMessage('Please enter your password.', 'error');
+                passwordInput.focus();
+                return;
+            }
+
+            hideMessage();
+            loginBtn.classList.add('loading');
+            loginBtn.disabled = true;
+
+            const result = await loginUser(email, password);
+
+            if (result.success) {
+                saveRememberedCredentials(email, password);
+                showMessage(`✅ Welcome back, ${result.profile.full_name}! Redirecting...`, 'success');
+
+                setTimeout(() => {
+                    loginBtn.classList.remove('loading');
+                    loginBtn.disabled = false;
+                    window.location.href = 'dashboard.html';
+                }, 1200);
+
+            } else {
+                loginBtn.classList.remove('loading');
+                loginBtn.disabled = false;
+                showMessage(`❌ ${result.message}`, 'error');
+
+                form.style.animation = 'shake 0.5s ease';
+                setTimeout(() => {
+                    form.style.animation = '';
+                }, 500);
+
+                passwordInput.value = '';
+                passwordInput.focus();
+            }
+        });
+
+        // ============================================================
+        // KEYBOARD SHORTCUTS
+        // ============================================================
+        passwordInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                form.dispatchEvent(new Event('submit'));
+            }
+        });
+
+        emailInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                passwordInput.focus();
+            }
+        });
+
+        // ============================================================
+        // QUICK LOGIN: Triple-tap logo (Auto-fills ONLY, does NOT submit)
+        // ============================================================
+        let logoClickCount = 0;
+        let logoClickTimer = null;
+
+        document.querySelector('.logo-icon').addEventListener('click', function() {
+            logoClickCount++;
+            clearTimeout(logoClickTimer);
+            logoClickTimer = setTimeout(() => {
+                if (logoClickCount >= 3) {
+                    emailInput.value = 'admin@edustock.com';
+                    passwordInput.value = 'Admin12345';
+                    rememberMe.checked = true;
+                    showToast('🔑 Demo credentials auto-filled! Click "Log In" to continue.', 'success');
+                    logoClickCount = 0;
+                }
+                logoClickCount = 0;
+            }, 400);
+        });
+
+        // ============================================================
+        // RESET DEMO (Ctrl+Shift+R)
+        // ============================================================
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.shiftKey && e.key === 'R') {
+                e.preventDefault();
+                localStorage.removeItem('edustock_remembered');
+                localStorage.removeItem('edustock_session');
+                emailInput.value = '';
+                passwordInput.value = '';
+                rememberMe.checked = true;
+                showToast('🔄 Demo reset! Credentials cleared.', 'info');
+                console.log('🔄 Demo reset');
+            }
+        });
+
+        // ============================================================
+        // INIT
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', function() {
+            loadRememberedCredentials();
+            
+            console.log('📦 EduStock Login with Supabase');
+            console.log('🔗 Connected to:', SUPABASE_URL);
+            console.log('💡 Quick Login: Triple-tap the logo to auto-fill demo credentials!');
+            console.log('🔑 Then click "Log In" button to login.');
+            console.log('ℹ️ Wrong credentials will show an error message.');
+        });
+    </script>
+
+</body>
+</html>
