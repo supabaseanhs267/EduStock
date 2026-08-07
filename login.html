@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>EduStock - Login</title>
+    <title>iSMART - Login</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -346,36 +346,29 @@
             color: var(--gray-300);
         }
 
-        .demo-credentials {
-            background: var(--gray-50);
+        /* ============================================================
+           Quick Tip Section
+           ============================================================ */
+        .quick-tip {
+            background: var(--primary-bg);
             border-radius: var(--radius-sm);
             padding: 12px 14px;
             margin-top: 16px;
-            border: 1px dashed var(--gray-300);
+            border: 1px solid var(--primary-light);
+            text-align: center;
         }
 
-        .demo-credentials p {
+        .quick-tip p {
             font-size: 12px;
-            color: var(--gray-500);
+            color: var(--gray-600);
             font-weight: 500;
         }
 
-        .demo-credentials .cred-row {
-            display: flex;
-            justify-content: space-between;
-            font-size: 12px;
-            color: var(--gray-600);
-            padding: 2px 0;
-        }
-
-        .demo-credentials .cred-row .label {
-            color: var(--gray-400);
-        }
-
-        .demo-credentials .cred-row .value {
-            font-family: 'Courier New', monospace;
-            font-weight: 600;
-            color: var(--gray-700);
+        .quick-tip .tip-icon {
+            color: var(--primary);
+            font-size: 18px;
+            display: block;
+            margin-bottom: 4px;
         }
 
         @media (max-width: 420px) {
@@ -402,10 +395,6 @@
                 flex-direction: column;
                 align-items: flex-start;
                 gap: 8px;
-            }
-            .demo-credentials .cred-row {
-                flex-direction: column;
-                gap: 2px;
             }
         }
 
@@ -520,7 +509,7 @@
                     <input
                         type="email"
                         id="email"
-                        placeholder="admin@edustock.com"
+                        placeholder="admin@ismart.com"
                         required
                         autocomplete="username"
                     />
@@ -559,20 +548,15 @@
 
         </form>
 
-        <div class="demo-credentials">
-            <p>🔑 Demo Credentials</p>
-            <div class="cred-row">
-                <span class="label">Admin:</span>
-                <span class="value">admin@edustock.com / Admin12345</span>
-            </div>
-            <div class="cred-row">
-                <span class="label">Staff:</span>
-                <span class="value">staff@edustock.com / Staff12345</span>
-            </div>
+        <!-- ============================================================
+        Quick Tip Section (Removed triple-tap reference)
+        ============================================================ -->
+        <div class="quick-tip">
+            <p>Contact your system administrator<br />if you need assistance with your account</p>
         </div>
 
         <div class="login-footer">
-            <p>&copy; 2024 EduStock | Alitagtag National High School</p>
+            <p>&copy; 2024 iSMART | Alitagtag National High School</p>
             <span class="version">v1.0.0</span>
         </div>
 
@@ -661,7 +645,7 @@
         // REMEMBER ME
         // ============================================================
         function loadRememberedCredentials() {
-            const saved = localStorage.getItem('edustock_remembered');
+            const saved = localStorage.getItem('ismart_remembered');
             if (saved) {
                 try {
                     const data = JSON.parse(saved);
@@ -682,7 +666,7 @@
                 password: rememberMe.checked ? password : '',
                 remember: rememberMe.checked
             };
-            localStorage.setItem('edustock_remembered', JSON.stringify(data));
+            localStorage.setItem('ismart_remembered', JSON.stringify(data));
         }
 
         // ============================================================
@@ -693,17 +677,15 @@
         });
 
         // ============================================================
-        // ✅ FIXED: LOGIN FUNCTION (Uses the password from the form)
+        // LOGIN FUNCTION
         // ============================================================
         async function loginUser(email, password) {
             try {
                 console.log('🔐 Attempting login with:', email);
-                console.log('📝 Password length:', password ? password.length : 0);
 
-                // ✅ Use the password passed from the form (NOT hardcoded)
                 const { data, error } = await window.supabase.auth.signInWithPassword({
                     email: email,
-                    password: password  // ← This uses what the user typed!
+                    password: password
                 });
 
                 if (error) {
@@ -713,7 +695,6 @@
 
                 console.log('✅ Auth Success:', data.user);
 
-                // Get user role from users table
                 const { data: userData, error: userError } = await window.supabase
                     .from('users')
                     .select('full_name, role')
@@ -728,9 +709,6 @@
                     };
                 }
 
-                console.log('✅ User role:', userData);
-
-                // Create session
                 const session = {
                     user: data.user,
                     profile: {
@@ -740,7 +718,7 @@
                     loginTime: new Date().toISOString()
                 };
 
-                localStorage.setItem('edustock_session', JSON.stringify(session));
+                localStorage.setItem('ismart_session', JSON.stringify(session));
 
                 return {
                     success: true,
@@ -760,10 +738,6 @@
                 };
             }
         }
-
-        // ============================================================
-        // ✅ DISABLED AUTO-LOGIN - User must click login button
-        // ============================================================
 
         // ============================================================
         // FORM SUBMIT
@@ -833,39 +807,18 @@
         });
 
         // ============================================================
-        // QUICK LOGIN: Triple-tap logo (Auto-fills ONLY, does NOT submit)
-        // ============================================================
-        let logoClickCount = 0;
-        let logoClickTimer = null;
-
-        document.querySelector('.logo-icon').addEventListener('click', function() {
-            logoClickCount++;
-            clearTimeout(logoClickTimer);
-            logoClickTimer = setTimeout(() => {
-                if (logoClickCount >= 3) {
-                    emailInput.value = 'admin@edustock.com';
-                    passwordInput.value = 'Admin12345';
-                    rememberMe.checked = true;
-                    showToast('🔑 Demo credentials auto-filled! Click "Log In" to continue.', 'success');
-                    logoClickCount = 0;
-                }
-                logoClickCount = 0;
-            }, 400);
-        });
-
-        // ============================================================
-        // RESET DEMO (Ctrl+Shift+R)
+        // RESET (Ctrl+Shift+R)
         // ============================================================
         document.addEventListener('keydown', function(e) {
             if (e.ctrlKey && e.shiftKey && e.key === 'R') {
                 e.preventDefault();
-                localStorage.removeItem('edustock_remembered');
-                localStorage.removeItem('edustock_session');
+                localStorage.removeItem('ismart_remembered');
+                localStorage.removeItem('ismart_session');
                 emailInput.value = '';
                 passwordInput.value = '';
                 rememberMe.checked = true;
-                showToast('🔄 Demo reset! Credentials cleared.', 'info');
-                console.log('🔄 Demo reset');
+                showToast('🔄 Reset! Credentials cleared.', 'info');
+                console.log('🔄 Reset');
             }
         });
 
@@ -875,11 +828,8 @@
         document.addEventListener('DOMContentLoaded', function() {
             loadRememberedCredentials();
             
-            console.log('📦 EduStock Login with Supabase');
+            console.log('📦 iSMART Login with Supabase');
             console.log('🔗 Connected to:', SUPABASE_URL);
-            console.log('💡 Quick Login: Triple-tap the logo to auto-fill demo credentials!');
-            console.log('🔑 Then click "Log In" button to login.');
-            console.log('ℹ️ Wrong credentials will show an error message.');
         });
     </script>
 
