@@ -1940,19 +1940,38 @@
         // ============================================================
         // CHECK AUTH
         // ============================================================
-        async function checkAuth() {
-            const session = JSON.parse(localStorage.getItem('edustock_session'));
-            if (!session) { window.location.href = 'login.html'; return false; }
-            try {
-                const { data, error } = await _supabase.auth.getUser();
-                if (error || !data.user) {
-                    localStorage.removeItem('edustock_session');
-                    window.location.href = 'login.html';
-                    return false;
-                }
-                return true;
-            } catch (e) { return false; }
+async function checkAuth() {
+    const session = JSON.parse(localStorage.getItem('ismart_session'));
+    
+    if (!session) {
+        console.log('🔒 No session found, redirecting to login');
+        window.location.href = 'login.html';
+        return false;
+    }
+
+    try {
+        const { data, error } = await _supabaseClient.auth.getUser();
+        
+        if (error || !data.user) {
+            console.log('🔒 Invalid session, redirecting to login');
+            localStorage.removeItem('ismart_session');
+            window.location.href = 'login.html';
+            return false;
         }
+        
+        console.log('✅ Session valid for:', data.user.email);
+        
+        if (session.user?.id !== data.user.id) {
+            session.user = data.user;
+            localStorage.setItem('ismart_session', JSON.stringify(session));
+        }
+        
+        return true;
+    } catch (e) {
+        console.error('❌ Auth check error:', e);
+        return false;
+    }
+}
 
         // ============================================================
         // BORROWER TYPE
