@@ -1606,6 +1606,17 @@
 .captured-preview .preview-header .status.error {
     color: var(--danger);
 }
+/* ============================================================
+   CAPTURED PREVIEW IN CAMERA FRAME
+   ============================================================ */
+#capturedPreview {
+    width: 100%;
+    border-radius: var(--radius-sm);
+    max-height: 280px;
+    object-fit: contain;
+    background: #000;
+    display: none;
+}
     </style>
 </head>
 <body>
@@ -2503,33 +2514,48 @@ function updateAssetList() {
             }
         }
 
-        async function startCamera() {
-            try {
-                stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: 'environment', width: { ideal: 400 } }
-                });
-                document.getElementById('video').srcObject = stream;
-                await document.getElementById('video').play();
-                document.querySelector('.camera-status').textContent = '📷 Position the student ID card clearly in the frame';
-                console.log('📷 Camera started');
-            } catch (err) {
-                console.error('Camera error:', err);
-                showToast('❌ Unable to access camera. Please allow camera permissions.', 'error');
-                closeIDScanner();
-            }
+async function startCamera() {
+    try {
+        // Remove any existing preview
+        const preview = document.getElementById('capturedPreview');
+        if (preview) {
+            preview.remove();
         }
+        document.getElementById('video').style.display = 'block';
+        
+        stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'environment', width: { ideal: 400 } }
+        });
+        document.getElementById('video').srcObject = stream;
+        await document.getElementById('video').play();
+        document.querySelector('.camera-status').textContent = '📷 Position the student ID card clearly in the frame';
+        console.log('📷 Camera started');
+    } catch (err) {
+        console.error('Camera error:', err);
+        showToast('❌ Unable to access camera. Please allow camera permissions.', 'error');
+        closeIDScanner();
+    }
+}
 
-        function closeIDScanner() {
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
-                stream = null;
-            }
-            document.getElementById('video').srcObject = null;
-            document.getElementById('cameraContainer').classList.remove('active');
-            document.getElementById('ocrResult').classList.remove('show');
-            ocrData = null;
-            console.log('📷 Camera closed');
-        }
+function closeIDScanner() {
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+    }
+    document.getElementById('video').srcObject = null;
+    document.getElementById('video').style.display = 'block';
+    
+    // Remove captured preview
+    const preview = document.getElementById('capturedPreview');
+    if (preview) {
+        preview.remove();
+    }
+    
+    document.getElementById('cameraContainer').classList.remove('active');
+    document.getElementById('ocrResult').classList.remove('show');
+    ocrData = null;
+    console.log('📷 Camera closed');
+}
 
 async function captureID() {
     const video = document.getElementById('video');
@@ -2539,35 +2565,39 @@ async function captureID() {
     const ctx = canvas.getContext('2d');
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    // Display captured image preview
-    const previewContainer = document.getElementById('cameraContainer');
-    const previewImg = document.createElement('img');
-    previewImg.src = canvas.toDataURL('image/jpeg', 0.9);
-    previewImg.style.width = '100%';
-    previewImg.style.borderRadius = 'var(--radius-sm)';
-    previewImg.style.marginTop = '6px';
+    // Get the captured image data
+    const imageData = canvas.toDataURL('image/jpeg', 0.9);
     
-    // Remove old preview if exists
-    const oldPreview = previewContainer.querySelector('.captured-preview');
-    if (oldPreview) oldPreview.remove();
+    // Stop the camera stream
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+    }
     
-    const previewWrapper = document.createElement('div');
-    previewWrapper.className = 'captured-preview';
-    previewWrapper.innerHTML = `
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">
-            <span style="color:white;font-size:11px;">📸 Captured ID</span>
-            <span style="color:var(--gray-400);font-size:10px;">Processing...</span>
-        </div>
-    `;
-    previewWrapper.appendChild(previewImg);
-    previewContainer.appendChild(previewWrapper);
+    // Hide video, show captured image in the same container
+    const videoEl = document.getElementById('video');
+    videoEl.style.display = 'none';
+    
+    // Create or update preview image in the camera container
+    let previewImg = document.getElementById('capturedPreview');
+    if (!previewImg) {
+        previewImg = document.createElement('img');
+        previewImg.id = 'capturedPreview';
+        previewImg.style.width = '100%';
+        previewImg.style.borderRadius = 'var(--radius-sm)';
+        previewImg.style.maxHeight = '280px';
+        previewImg.style.objectFit = 'contain';
+        previewImg.style.background = '#000';
+        // Insert after video
+        videoEl.parentNode.insertBefore(previewImg, videoEl.nextSibling);
+    }
+    previewImg.src = imageData;
+    previewImg.style.display = 'block';
 
     document.getElementById('loadingOverlay').classList.add('active');
     document.getElementById('loadingText').textContent = '📷 Processing ID card...';
 
     try {
-        const imageData = canvas.toDataURL('image/jpeg', 0.9);
-
         document.getElementById('loadingText').textContent = '🔍 Reading text from ID...';
 
         const result = await Tesseract.recognize(
@@ -2587,15 +2617,6 @@ async function captureID() {
         console.log('OCR Text:', text);
 
         const parsed = parseIDText(text);
-
-        // Update preview status
-        if (parsed.lrn || parsed.name) {
-            const statusEl = previewWrapper.querySelector('span:last-child');
-            if (statusEl) {
-                statusEl.textContent = '✅ Done';
-                statusEl.style.color = 'var(--success)';
-            }
-        }
 
         if (parsed.lrn || parsed.name) {
             ocrData = parsed;
@@ -2686,9 +2707,15 @@ function retryOCR() {
     document.getElementById('ocrResult').classList.remove('show');
     ocrData = null;
     
-    // Remove preview
-    const preview = document.querySelector('.captured-preview');
-    if (preview) preview.remove();
+    // Remove preview and show video again
+    const preview = document.getElementById('capturedPreview');
+    if (preview) {
+        preview.remove();
+    }
+    document.getElementById('video').style.display = 'block';
+    
+    // Restart camera
+    startCamera();
     
     document.querySelector('.camera-status').textContent = '📷 Position the student ID card clearly in the frame';
     showToast('🔄 Retake photo of the ID card', 'info');
