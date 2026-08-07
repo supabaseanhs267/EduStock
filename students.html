@@ -3,16 +3,11 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>iSMART - Return</title>
+    <title>iSMART - Students</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="nav.css" />
-    
-    <!-- QR Scanner Library -->
-    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-    <!-- Tesseract.js for OCR -->
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
@@ -264,111 +259,34 @@
         }
 
         /* ============================================================
-           STEP INDICATOR
+           STATS BAR
            ============================================================ */
-        .step-indicator {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 14px;
-            position: relative;
-            padding: 0 10px;
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            margin-bottom: 16px;
         }
 
-        .step-indicator::before {
-            content: '';
-            position: absolute;
-            top: 16px;
-            left: 40px;
-            right: 40px;
-            height: 2px;
-            background: var(--gray-200);
-            z-index: 0;
-        }
-
-        .step {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            z-index: 1;
-            flex: 1;
-        }
-
-        .step .step-number {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: var(--gray-200);
-            color: var(--gray-500);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 12px;
-            transition: all 0.3s ease;
-            border: 2px solid transparent;
-        }
-
-        .step.active .step-number {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px var(--primary-bg);
-        }
-
-        .step.completed .step-number {
-            background: var(--success);
-            color: white;
-            border-color: var(--success);
-        }
-
-        .step .step-label {
-            font-size: 8px;
-            color: var(--gray-400);
-            margin-top: 3px;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-        }
-
-        .step.active .step-label {
-            color: var(--primary);
-            font-weight: 600;
-        }
-
-        .step.completed .step-label {
-            color: var(--success);
-        }
-
-        /* ============================================================
-           BORROWER TYPE SELECTOR
-           ============================================================ */
-        .borrower-type {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 10px;
-        }
-
-        .borrower-type button {
-            flex: 1;
-            padding: 8px;
-            border: 2px solid var(--gray-200);
-            border-radius: var(--radius-sm);
+        .stats-bar .stat-item {
             background: white;
-            font-weight: 600;
-            font-size: 13px;
-            cursor: pointer;
-            transition: all 0.3s ease;
+            padding: 8px 6px;
+            border-radius: var(--radius-sm);
+            text-align: center;
+            border: 1px solid var(--gray-100);
+        }
+
+        .stats-bar .stat-item .number {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        .stats-bar .stat-item .label {
+            font-size: 9px;
             color: var(--gray-500);
-        }
-
-        .borrower-type button.active {
-            border-color: var(--primary);
-            background: var(--primary-bg);
-            color: var(--primary);
-        }
-
-        .borrower-type button:active {
-            transform: scale(0.95);
+            text-transform: uppercase;
+            font-weight: 600;
         }
 
         /* ============================================================
@@ -439,11 +357,6 @@
             box-shadow: 0 0 0 2px var(--primary-bg);
         }
 
-        .search-input-group input:disabled {
-            background: var(--gray-100);
-            color: var(--gray-500);
-        }
-
         .search-input-group button {
             padding: 8px 12px;
             background: var(--primary);
@@ -461,657 +374,280 @@
             transform: scale(0.95);
         }
 
-        .search-input-group button.secondary {
-            background: var(--gray-100);
-            color: var(--gray-700);
-        }
-
-        .search-input-group button.scan-btn {
-            background: var(--success);
-            color: white;
-        }
-
         /* ============================================================
-           FACULTY MANUAL ENTRY
+           STUDENT LIST
            ============================================================ */
-        .faculty-entry {
-            display: none;
-            margin-top: 8px;
-        }
-
-        .faculty-entry.show {
-            display: block;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .faculty-entry input {
-            width: 100%;
-            padding: 8px 12px;
-            border: 1px solid var(--gray-200);
-            border-radius: var(--radius-sm);
-            font-family: 'Inter', sans-serif;
-            font-size: 13px;
-            margin-bottom: 6px;
-            transition: all 0.3s ease;
-            background: white;
-        }
-
-        .faculty-entry input:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-
-        .faculty-entry .faculty-add-btn {
-            width: 100%;
-            padding: 8px;
-            background: var(--success);
-            color: white;
-            border: none;
-            border-radius: var(--radius-sm);
-            font-weight: 600;
-            font-size: 13px;
-            cursor: pointer;
-            margin-top: 4px;
-            transition: all 0.3s ease;
-        }
-
-        .faculty-entry .faculty-add-btn:active {
-            transform: scale(0.95);
-        }
-
-        /* ============================================================
-           QR / CAMERA SCANNER
-           ============================================================ */
-        .scanner-container {
-            display: none;
-            margin-top: 8px;
-            padding: 10px;
-            background: var(--gray-900);
-            border-radius: var(--radius-sm);
-            position: relative;
-        }
-
-        .scanner-container.active {
-            display: block;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .scanner-container video {
-            width: 100%;
-            border-radius: var(--radius-sm);
-            max-height: 280px;
-            object-fit: cover;
-            background: #000;
-        }
-
-        .scanner-container #qr-reader {
-            width: 100%;
-            max-width: 400px;
-            margin: 0 auto;
-        }
-
-        .scanner-container .scanner-controls {
+        .student-list {
             display: flex;
-            gap: 6px;
-            margin-top: 6px;
-            justify-content: center;
-            flex-wrap: wrap;
+            flex-direction: column;
+            gap: 8px;
         }
 
-        .scanner-container .scanner-controls button {
-            padding: 6px 14px;
-            border: none;
+        .student-card {
+            background: white;
             border-radius: var(--radius-sm);
-            font-weight: 600;
-            font-size: 12px;
-            cursor: pointer;
-            flex: 1;
-            min-width: 80px;
+            border: 1px solid var(--gray-200);
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.3s ease;
         }
 
-        .scanner-container .scanner-controls .capture-btn {
-            background: var(--success);
-            color: white;
+        .student-card:active {
+            transform: scale(0.98);
         }
 
-        .scanner-container .scanner-controls .close-btn {
-            background: var(--danger);
-            color: white;
-        }
-
-        .scanner-container .scanner-status {
-            color: white;
-            text-align: center;
-            padding: 6px;
-            font-size: 11px;
-            background: rgba(0,0,0,0.5);
-            border-radius: 0 0 var(--radius-sm) var(--radius-sm);
-            margin-top: 6px;
-        }
-
-        .scanner-container .close-scanner {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            background: rgba(255,255,255,0.2);
-            border: none;
-            color: white;
-            font-size: 18px;
-            padding: 4px 8px;
+        .student-card .avatar {
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
-            cursor: pointer;
-            z-index: 10;
-        }
-
-        /* ============================================================
-           OCR RESULTS
-           ============================================================ */
-        .ocr-result {
-            background: white;
-            border-radius: var(--radius-sm);
-            border: 1px solid var(--gray-200);
-            padding: 10px;
-            margin-top: 8px;
-            display: none;
-        }
-
-        .ocr-result.show {
-            display: block;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .ocr-result .ocr-field {
-            display: flex;
-            justify-content: space-between;
-            padding: 3px 0;
-            font-size: 12px;
-            border-bottom: 1px solid var(--gray-100);
-        }
-
-        .ocr-result .ocr-field:last-child {
-            border-bottom: none;
-        }
-
-        .ocr-result .ocr-field .label {
-            color: var(--gray-500);
-        }
-
-        .ocr-result .ocr-field .value {
-            font-weight: 500;
-            color: var(--gray-800);
-        }
-
-        .ocr-result .ocr-actions {
-            display: flex;
-            gap: 6px;
-            margin-top: 8px;
-            justify-content: flex-end;
-            flex-wrap: wrap;
-        }
-
-        .ocr-result .ocr-actions button {
-            padding: 4px 12px;
-            border: none;
-            border-radius: var(--radius-sm);
-            font-weight: 600;
-            font-size: 11px;
-            cursor: pointer;
-        }
-
-        .ocr-result .ocr-actions .confirm-btn {
-            background: var(--success);
-            color: white;
-        }
-
-        .ocr-result .ocr-actions .retry-btn {
-            background: var(--gray-100);
-            color: var(--gray-700);
-        }
-
-        .ocr-result .ocr-actions .manual-btn {
-            background: var(--warning);
-            color: white;
-        }
-
-        /* ============================================================
-           MANUAL ENTRY
-           ============================================================ */
-        .manual-entry {
-            background: var(--gray-50);
-            border-radius: var(--radius-sm);
-            padding: 10px;
-            margin-top: 8px;
-            border: 1px dashed var(--gray-300);
-            display: none;
-        }
-
-        .manual-entry.show {
-            display: block;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .manual-entry .manual-title {
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--gray-700);
-            margin-bottom: 6px;
-        }
-
-        .manual-entry .manual-title i {
-            color: var(--primary);
-        }
-
-        .manual-entry .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 6px;
-            margin-bottom: 6px;
-        }
-
-        .manual-entry .form-row input,
-        .manual-entry .form-row select {
-            width: 100%;
-            padding: 6px 10px;
-            border: 1px solid var(--gray-200);
-            border-radius: var(--radius-sm);
-            font-family: 'Inter', sans-serif;
-            font-size: 12px;
-            background: white;
-        }
-
-        .manual-entry .form-row input:focus,
-        .manual-entry .form-row select:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-
-        .manual-entry .manual-actions {
-            display: flex;
-            gap: 6px;
-            margin-top: 6px;
-            justify-content: flex-end;
-        }
-
-        .manual-entry .manual-actions button {
-            padding: 5px 12px;
-            border: none;
-            border-radius: var(--radius-sm);
-            font-weight: 600;
-            font-size: 12px;
-            cursor: pointer;
-        }
-
-        .manual-entry .manual-actions .add-btn {
-            background: var(--success);
-            color: white;
-        }
-
-        .manual-entry .manual-actions .cancel-btn {
-            background: var(--gray-200);
-            color: var(--gray-700);
-        }
-
-        /* ============================================================
-           RESULTS LIST
-           ============================================================ */
-        .results-list {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            margin-top: 8px;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-
-        .result-item {
-            background: white;
-            border: 1px solid var(--gray-200);
-            border-radius: var(--radius-sm);
-            padding: 8px 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .result-item:active {
-            transform: scale(0.98);
-        }
-
-        .result-item .info .name {
-            font-weight: 600;
-            font-size: 13px;
-            color: var(--gray-800);
-        }
-
-        .result-item .info .details {
-            font-size: 11px;
-            color: var(--gray-500);
-        }
-
-        .result-item .status-badge {
-            font-size: 10px;
-            font-weight: 600;
-            padding: 2px 8px;
-            border-radius: 10px;
             background: var(--primary-bg);
-            color: var(--primary);
-        }
-
-        /* ============================================================
-           FULL LIST
-           ============================================================ */
-        .full-list-container {
-            margin-top: 8px;
-            max-height: 150px;
-            overflow-y: auto;
-            border-top: 1px solid var(--gray-200);
-            padding-top: 8px;
-        }
-
-        .full-list-container .list-label {
-            font-size: 10px;
-            font-weight: 600;
-            color: var(--gray-500);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 4px;
-        }
-
-        .full-list-item {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            padding: 6px 10px;
-            border-bottom: 1px solid var(--gray-100);
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .full-list-item:active {
-            transform: scale(0.98);
-        }
-
-        .full-list-item .item-name {
-            font-size: 12px;
-            font-weight: 500;
-            color: var(--gray-800);
-        }
-
-        .full-list-item .item-details {
-            font-size: 10px;
-            color: var(--gray-500);
-        }
-
-        .full-list-item .item-status {
-            font-size: 9px;
-            font-weight: 600;
-            padding: 1px 6px;
-            border-radius: 8px;
-            background: var(--success-bg);
-            color: var(--success);
-        }
-
-        /* ============================================================
-           SELECTED BORROWER CARD
-           ============================================================ */
-        .selected-card {
-            border-radius: var(--radius-sm);
-            padding: 10px 14px;
-            margin-bottom: 12px;
-            display: none;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .selected-card.show {
-            display: block;
-        }
-
-        .selected-card .label {
-            font-size: 9px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .selected-card .name {
-            font-size: 14px;
+            justify-content: center;
+            color: var(--primary);
             font-weight: 700;
-            color: var(--gray-900);
+            font-size: 18px;
+            flex-shrink: 0;
         }
 
-        .selected-card .details {
+        .student-card .info {
+            flex: 1;
+        }
+
+        .student-card .info .name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        .student-card .info .details {
             font-size: 12px;
             color: var(--gray-500);
         }
 
-        .selected-card .remove-btn {
-            background: none;
-            border: none;
+        .student-card .info .lrn {
+            font-size: 11px;
             color: var(--gray-400);
+            font-weight: 500;
+        }
+
+        .student-card .actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .student-card .actions button {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
             font-size: 13px;
-            float: right;
-            padding: 4px;
             transition: all 0.3s ease;
         }
 
-        .selected-card .remove-btn:hover {
-            color: var(--danger);
-        }
-
-        .selected-card.student {
-            background: var(--success-bg);
-            border: 2px solid var(--success);
-        }
-
-        .selected-card.student .label {
-            color: var(--success);
-        }
-
-        .selected-card.faculty {
+        .student-card .actions .edit {
             background: var(--primary-bg);
-            border: 2px solid var(--primary);
-        }
-
-        .selected-card.faculty .label {
             color: var(--primary);
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(6px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* ============================================================
-           BORROWING LIST
-           ============================================================ */
-        .borrowing-list {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            margin-top: 8px;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-
-        .borrowing-item {
-            background: white;
-            border: 1px solid var(--gray-200);
-            border-radius: var(--radius-sm);
-            padding: 10px 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .borrowing-item:active {
-            transform: scale(0.98);
-        }
-
-        .borrowing-item.selected {
-            border-color: var(--primary);
-            background: var(--primary-bg);
-        }
-
-        .borrowing-item .info .name {
-            font-weight: 600;
-            font-size: 13px;
-            color: var(--gray-800);
-        }
-
-        .borrowing-item .info .details {
-            font-size: 11px;
-            color: var(--gray-500);
-        }
-
-        .borrowing-item .status-badge {
-            font-size: 10px;
-            font-weight: 600;
-            padding: 2px 8px;
-            border-radius: 10px;
-        }
-
-        .status-badge.overdue {
+        .student-card .actions .delete {
             background: var(--danger-bg);
             color: var(--danger);
         }
 
-        .status-badge.on-time {
-            background: var(--success-bg);
-            color: var(--success);
-        }
-
-        .borrowing-item .select-check {
-            width: 20px;
-            height: 20px;
-            border-radius: 4px;
-            border: 2px solid var(--gray-300);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-        }
-
-        .borrowing-item .select-check.checked {
-            background: var(--primary);
-            border-color: var(--primary);
-            color: white;
+        .student-card .actions button:active {
+            transform: scale(0.9);
         }
 
         /* ============================================================
-           CONDITION ASSESSMENT
+           FAB (Floating Action Button)
            ============================================================ */
-        .condition-section {
-            background: white;
-            border-radius: var(--radius-sm);
-            border: 1px solid var(--gray-200);
-            padding: 14px;
-            box-shadow: var(--shadow);
+        .fab {
+            position: fixed;
+            bottom: calc(var(--nav-height) + 16px);
+            right: 16px;
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            font-size: 24px;
+            box-shadow: var(--shadow-md);
+            cursor: pointer;
+            z-index: 50;
+            max-width: 480px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .fab:active {
+            transform: scale(0.9);
+        }
+
+        /* ============================================================
+           MODAL
+           ============================================================ */
+        .modal-overlay {
             display: none;
-            margin-top: 12px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 200;
+            align-items: flex-end;
+            justify-content: center;
+            padding: 0 16px calc(var(--nav-height) + 16px);
         }
 
-        .condition-section.show {
-            display: block;
-            animation: fadeIn 0.3s ease;
+        .modal-overlay.active {
+            display: flex;
         }
 
-        .condition-section .condition-title {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--gray-700);
-            margin-bottom: 10px;
-        }
-
-        .condition-section .condition-title i {
-            color: var(--primary);
-        }
-
-        .condition-section .form-group {
-            margin-bottom: 10px;
-        }
-
-        .condition-section .form-group label {
-            display: block;
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--gray-700);
-            margin-bottom: 3px;
-        }
-
-        .condition-section .form-group select,
-        .condition-section .form-group textarea,
-        .condition-section .form-group input {
+        .modal {
+            background: white;
+            border-radius: var(--radius) var(--radius) 0 0;
             width: 100%;
-            padding: 8px 12px;
+            max-width: 480px;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 20px 20px 32px;
+            animation: modalSlideUp 0.3s ease;
+        }
+
+        @keyframes modalSlideUp {
+            from {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .modal-header h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        .modal-header .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--gray-400);
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        .modal .form-group {
+            margin-bottom: 14px;
+        }
+
+        .modal .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: 4px;
+        }
+
+        .modal .form-group label .required {
+            color: var(--danger);
+            margin-left: 2px;
+        }
+
+        .modal .form-group input,
+        .modal .form-group select {
+            width: 100%;
+            padding: 10px 14px;
             border: 1px solid var(--gray-200);
             border-radius: var(--radius-sm);
             font-family: 'Inter', sans-serif;
-            font-size: 13px;
+            font-size: 14px;
             background: white;
             transition: all 0.3s ease;
         }
 
-        .condition-section .form-group select:focus,
-        .condition-section .form-group textarea:focus,
-        .condition-section .form-group input:focus {
+        .modal .form-group input:focus,
+        .modal .form-group select:focus {
             outline: none;
             border-color: var(--primary);
             box-shadow: 0 0 0 2px var(--primary-bg);
         }
 
-        .condition-section .form-group textarea {
-            resize: vertical;
-            min-height: 50px;
-        }
-
-        .condition-section .checkbox-grid {
+        .modal .form-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 4px 10px;
-            margin-top: 4px;
+            gap: 12px;
         }
 
-        .condition-section .checkbox-grid label {
-            font-size: 12px;
+        .modal .form-actions {
             display: flex;
-            align-items: center;
-            gap: 6px;
-            font-weight: 400;
-            cursor: pointer;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px solid var(--gray-200);
         }
 
-        .condition-section .checkbox-grid input[type="checkbox"] {
-            width: 16px;
-            height: 16px;
-            accent-color: var(--primary);
-        }
-
-        .condition-section .btn-return {
-            width: 100%;
-            padding: 10px;
-            background: var(--success);
+        .modal .btn-primary {
+            background: var(--primary);
             color: white;
             border: none;
+            padding: 10px 24px;
             border-radius: var(--radius-sm);
+            font-family: 'Inter', sans-serif;
             font-weight: 600;
             font-size: 14px;
             cursor: pointer;
             transition: all 0.3s ease;
-            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .condition-section .btn-return:active {
-            transform: scale(0.95);
+        .modal .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
         }
 
-        .condition-section .btn-return:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
+        .modal .btn-secondary {
+            background: var(--gray-100);
+            color: var(--gray-700);
+            border: 1px solid var(--gray-200);
+            padding: 10px 20px;
+            border-radius: var(--radius-sm);
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .modal .btn-secondary:hover {
+            background: var(--gray-200);
         }
 
         /* ============================================================
@@ -1119,37 +655,20 @@
            ============================================================ */
         .empty-state {
             text-align: center;
-            padding: 16px;
+            padding: 40px 20px;
             color: var(--gray-500);
-            font-size: 13px;
         }
 
         .empty-state i {
-            font-size: 28px;
+            font-size: 40px;
             color: var(--gray-300);
-            margin-bottom: 4px;
+            margin-bottom: 8px;
             display: block;
         }
 
-        /* ============================================================
-           BADGES
-           ============================================================ */
-        .badge {
-            font-size: 9px;
-            font-weight: 600;
-            padding: 2px 8px;
-            border-radius: 10px;
-            margin-left: auto;
-        }
-
-        .badge-pending {
-            background: var(--gray-100);
-            color: var(--gray-400);
-        }
-
-        .badge-done {
-            background: var(--success-bg);
-            color: var(--success);
+        .empty-state h3 {
+            color: var(--gray-700);
+            font-size: 16px;
         }
 
         /* ============================================================
@@ -1197,49 +716,6 @@
             font-size: 14px;
             margin-left: auto;
             opacity: 0.7;
-        }
-
-        /* ============================================================
-           LOADING OVERLAY
-           ============================================================ */
-        .spinner-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.7);
-            z-index: 300;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            gap: 12px;
-            color: white;
-        }
-
-        .spinner-overlay.active {
-            display: flex;
-        }
-
-        .spinner-overlay .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid rgba(255,255,255,0.3);
-            border-top: 4px solid white;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .spinner-overlay .spinner-text {
-            font-size: 13px;
-            font-weight: 500;
-            text-align: center;
-            padding: 0 20px;
         }
 
         /* ============================================================
@@ -1362,17 +838,7 @@
                 font-size: 11px;
                 padding: 6px 10px;
             }
-            .scanner-container video {
-                max-height: 200px;
-            }
-            .manual-entry .form-row {
-                grid-template-columns: 1fr;
-            }
-            .borrower-type button {
-                font-size: 12px;
-                padding: 6px;
-            }
-            .condition-section .checkbox-grid {
+            .modal .form-row {
                 grid-template-columns: 1fr;
             }
         }
@@ -1406,81 +872,9 @@
                 min-width: 24px;
             }
         }
-
-        /* Loading Skeleton */
-        .skeleton {
-            background: var(--gray-100);
-            border-radius: var(--radius-sm);
-            animation: pulse 1.5s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 0.6; }
-            50% { opacity: 1; }
-        }
-
-        .skeleton-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 12px;
-            border-bottom: 1px solid var(--gray-200);
-        }
-
-        .skeleton-item .skeleton-line {
-            height: 14px;
-            background: var(--gray-200);
-            border-radius: 4px;
-            animation: pulse 1.5s ease-in-out infinite;
-        }
-
-        .skeleton-item .skeleton-line:first-child {
-            width: 60%;
-        }
-
-        .skeleton-item .skeleton-line:last-child {
-            width: 30%;
-        }
-
-        /* Smooth removal animation */
-        .borrowing-item.removing {
-            opacity: 0;
-            transform: scale(0.95);
-            transition: all 0.3s ease;
-        }
-        
-        .full-list-item.removing {
-            opacity: 0;
-            transform: scale(0.95);
-            transition: all 0.3s ease;
-        }
-        
-        .selected-card.removing {
-            opacity: 0;
-            transform: scale(0.95);
-            transition: all 0.3s ease;
-        }
-        
-        /* Toast success with icon */
-        .toast.success i {
-            animation: bounce 0.5s ease;
-        }
-        
-        @keyframes bounce {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.3); }
-        }
     </style>
 </head>
 <body>
-
-    <!-- ============================================================
-    LOADING OVERLAY
-    ============================================================ -->
-    <div class="spinner-overlay" id="loadingOverlay">
-        <div class="spinner"></div>
-        <div class="spinner-text" id="loadingText">Processing...</div>
-    </div>
 
     <!-- ============================================================
     APP CONTAINER
@@ -1522,286 +916,98 @@
             </div>
         </header>
 
-        <!-- ===== STEP INDICATOR ===== -->
-        <div class="step-indicator">
-            <div class="step active" id="step1">
-                <div class="step-number">1</div>
-                <div class="step-label">Borrower</div>
+        <!-- ===== STATS BAR ===== -->
+        <div class="stats-bar" id="statsBar">
+            <div class="stat-item">
+                <div class="number" id="totalCount">0</div>
+                <div class="label">Total</div>
             </div>
-            <div class="step" id="step2">
-                <div class="step-number">2</div>
-                <div class="step-label">Select</div>
+            <div class="stat-item">
+                <div class="number" id="activeCount">0</div>
+                <div class="label">Active</div>
             </div>
-            <div class="step" id="step3">
-                <div class="step-number">3</div>
-                <div class="step-label">Assess</div>
+            <div class="stat-item">
+                <div class="number" id="borrowCount">0</div>
+                <div class="label">Borrowed</div>
             </div>
-        </div>
-
-        <!-- ============================================================
-        STEP 1: FIND BORROWER
-        ============================================================ -->
-        <div id="step1Content">
-
-            <!-- Borrower Type Selector -->
-            <div class="search-section">
-                <div class="borrower-type">
-                    <button class="active" id="returnBorrowerStudent" onclick="setBorrowerType('student')">Student</button>
-                    <button id="returnBorrowerFaculty" onclick="setBorrowerType('faculty')">Faculty</button>
-                </div>
-
-                <!-- Student Search -->
-                <div id="returnStudentSearchSection">
-                    <div class="section-title">
-                        <i class="fas fa-user-graduate"></i> Find Student
-                        <span id="returnStudentBadge" class="badge badge-pending">Pending</span>
-                    </div>
-
-                    <div class="search-input-group">
-                        <input type="text" id="returnStudentSearch" placeholder="Search by LRN, Name, Grade, Section..." />
-                        <button onclick="searchReturnStudents()"><i class="fas fa-search"></i></button>
-                        <button class="scan-btn" onclick="toggleReturnIDScanner()" title="Scan ID Card">
-                            <i class="fas fa-camera"></i>
-                        </button>
-                        <button class="scan-btn" onclick="toggleReturnStudentScanner()" title="Scan QR Code">
-                            <i class="fas fa-qrcode"></i>
-                        </button>
-                    </div>
-
-                    <!-- Camera & QR Scanners -->
-                    <div class="scanner-container" id="returnCameraContainer">
-                        <video id="returnVideo" autoplay playsinline></video>
-                        <div class="scanner-controls">
-                            <button class="capture-btn" onclick="captureReturnID()"><i class="fas fa-camera"></i> Capture</button>
-                            <button class="close-btn" onclick="closeReturnIDScanner()"><i class="fas fa-times"></i> Close</button>
-                        </div>
-                        <div class="scanner-status">📷 Position the student ID card clearly in the frame</div>
-                    </div>
-
-                    <div class="scanner-container" id="returnStudentScanner">
-                        <button class="close-scanner" onclick="toggleReturnStudentScanner()">&times;</button>
-                        <div id="returnStudentQrReader"></div>
-                        <div class="scanner-status">📷 Position the student's ID QR code in the frame</div>
-                    </div>
-
-                    <!-- OCR Results -->
-                    <div class="ocr-result" id="returnOcrResult">
-                        <div class="ocr-field"><span class="label">Name</span><span class="value" id="returnOcrName">-</span></div>
-                        <div class="ocr-field"><span class="label">LRN</span><span class="value" id="returnOcrLRN">-</span></div>
-                        <div class="ocr-field"><span class="label">Grade</span><span class="value" id="returnOcrGrade">-</span></div>
-                        <div class="ocr-field"><span class="label">Section</span><span class="value" id="returnOcrSection">-</span></div>
-                        <div class="ocr-actions">
-                            <button class="retry-btn" onclick="retryReturnOCR()">Retry</button>
-                            <button class="manual-btn" onclick="showReturnManualEntry()">Manual</button>
-                            <button class="confirm-btn" onclick="confirmReturnOCR()">Confirm</button>
-                        </div>
-                    </div>
-
-                    <!-- Manual Entry -->
-                    <div class="manual-entry" id="returnManualEntry">
-                        <div class="manual-title"><i class="fas fa-edit"></i> Enter Student Details</div>
-                        <div class="form-row">
-                            <input type="text" id="returnManualLRN" placeholder="LRN (12 digits)" maxlength="12" />
-                            <input type="text" id="returnManualName" placeholder="Full Name" />
-                        </div>
-                        <div class="form-row">
-                            <select id="returnManualGrade">
-                                <option value="">Select Grade</option>
-                                <option value="Grade 7">Grade 7</option>
-                                <option value="Grade 8">Grade 8</option>
-                                <option value="Grade 9">Grade 9</option>
-                                <option value="Grade 10">Grade 10</option>
-                            </select>
-                            <input type="text" id="returnManualSection" placeholder="Section" />
-                        </div>
-                        <div class="manual-actions">
-                            <button class="cancel-btn" onclick="hideReturnManualEntry()">Cancel</button>
-                            <button class="add-btn" onclick="addReturnManualStudent()"><i class="fas fa-plus"></i> Add</button>
-                        </div>
-                    </div>
-
-                    <!-- Results List -->
-                    <div class="results-list" id="returnStudentResults">
-                        <div class="empty-state">
-                            <i class="fas fa-search"></i>
-                            <p>Search by LRN, Name, Grade, or Section</p>
-                        </div>
-                    </div>
-
-                    <!-- FULL STUDENT LIST -->
-                    <div class="full-list-container" id="returnStudentFullList">
-                        <div class="list-label">Students with Active Borrowings</div>
-                        <div id="returnStudentFullListItems">
-                            <div style="text-align:center;padding:8px;color:var(--gray-400);font-size:12px;">
-                                <i class="fas fa-spinner fa-spin"></i> Loading...
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Faculty Search -->
-                <div id="returnFacultySearchSection" style="display:none;">
-                    <div class="section-title">
-                        <i class="fas fa-chalkboard-teacher"></i> Find Faculty
-                        <span id="returnFacultyBadge" class="badge badge-pending">Pending</span>
-                    </div>
-
-                    <div class="search-input-group">
-                        <input type="text" id="returnFacultySearch" placeholder="Search by Name or Email..." />
-                        <button onclick="searchReturnFaculty()"><i class="fas fa-search"></i></button>
-                    </div>
-
-                    <!-- Results List -->
-                    <div class="results-list" id="returnFacultyResults">
-                        <div class="empty-state">
-                            <i class="fas fa-search"></i>
-                            <p>Search by Name or Email</p>
-                        </div>
-                    </div>
-
-                    <div class="full-list-container" id="returnFacultyFullList">
-                        <div class="list-label">Faculty with Active Borrowings</div>
-                        <div id="returnFacultyFullListItems">
-                            <div style="text-align:center;padding:8px;color:var(--gray-400);font-size:12px;">
-                                <i class="fas fa-spinner fa-spin"></i> Loading...
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Faculty Manual Entry -->
-                    <div class="faculty-entry show" style="margin-top:10px;border-top:1px solid var(--gray-200);padding-top:10px;">
-                        <div style="font-size:12px;font-weight:600;color:var(--gray-600);margin-bottom:6px;">
-                            <i class="fas fa-plus-circle"></i> Or Add Faculty Manually
-                        </div>
-                        <input type="text" id="returnFacultyName" placeholder="Full Name *" />
-                        <input type="text" id="returnFacultyEmail" placeholder="Email (optional)" />
-                        <button class="faculty-add-btn" onclick="addReturnFaculty()">
-                            <i class="fas fa-user-plus"></i> Add Faculty
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Selected Borrower Card -->
-            <div class="selected-card student" id="returnSelectedBorrower">
-                <button class="remove-btn" onclick="removeReturnBorrower()"><i class="fas fa-times"></i></button>
-                <div class="label" id="returnBorrowerLabel">Student Selected</div>
-                <div class="name" id="returnBorrowerName">-</div>
-                <div class="details" id="returnBorrowerDetails">LRN: - · Grade: -</div>
+            <div class="stat-item">
+                <div class="number" id="overdueCount">0</div>
+                <div class="label">Overdue</div>
             </div>
         </div>
 
-        <!-- ============================================================
-        STEP 2: SELECT BORROWINGS
-        ============================================================ -->
-        <div id="step2Content" style="display:none;">
-            <div class="search-section">
-                <div class="section-title">
-                    <i class="fas fa-list"></i> Active Borrowings
-                    <span id="returnSelectBadge" class="badge badge-pending">Pending</span>
+        <!-- ===== SEARCH SECTION ===== -->
+        <div class="search-section">
+            <div class="section-title">
+                <i class="fas fa-user-graduate"></i> Students
+                <span style="font-size:11px;color:var(--gray-400);font-weight:400;margin-left:auto;" id="studentCount">0 enrolled</span>
+            </div>
+            <div class="search-hint">
+                <span>📋 LRN</span>
+                <span>👤 Name</span>
+                <span>📚 Grade</span>
+                <span>📁 Section</span>
+            </div>
+            <div class="search-input-group">
+                <input type="text" id="studentSearch" placeholder="Search by LRN, Name, Grade, Section..." />
+                <button onclick="searchStudents()"><i class="fas fa-search"></i></button>
+            </div>
+            <div class="student-list" id="studentList">
+                <div class="empty-state">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <h3>Loading...</h3>
                 </div>
-
-                <div id="returnBorrowingList" class="borrowing-list">
-                    <div class="empty-state">
-                        <i class="fas fa-inbox"></i>
-                        <p>Select a borrower to view their active borrowings.</p>
-                    </div>
-                </div>
-
-                <button onclick="goToAssess()" style="width:100%;padding:10px;background:var(--primary);color:white;border:none;border-radius:var(--radius-sm);font-weight:600;font-size:14px;cursor:pointer;margin-top:10px;display:none;" id="goToAssessBtn">
-                    <i class="fas fa-arrow-right"></i> Next: Assess Condition
-                </button>
-
-                <button onclick="goToReturnStep(1)" style="width:100%;padding:8px;background:var(--gray-100);border:none;border-radius:var(--radius-sm);font-weight:500;cursor:pointer;margin-top:6px;">
-                    <i class="fas fa-arrow-left"></i> Back
-                </button>
             </div>
         </div>
 
-        <!-- ============================================================
-        STEP 3: ASSESS CONDITION
-        ============================================================ -->
-        <div id="step3Content" style="display:none;">
-            <div class="condition-section show">
-                <div class="condition-title">
-                    <i class="fas fa-clipboard-check"></i> Assess Condition
-                </div>
+    </div>
 
-                <div id="returnSelectedItems" style="margin-bottom:10px;font-size:13px;color:var(--gray-600);">
-                    <strong>Items to return:</strong> <span id="returnItemsList">-</span>
-                </div>
+    <!-- ===== FAB ===== -->
+    <button class="fab" onclick="openAddModal()">
+        <i class="fas fa-plus"></i>
+    </button>
 
+    <!-- ===== MODAL ===== -->
+    <div class="modal-overlay" id="studentModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="modalTitle">Add Student</h3>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="studentForm" onsubmit="saveStudent(event)">
+                <input type="hidden" id="editId" value="" />
                 <div class="form-group">
-                    <label>Condition <span style="color:var(--danger);">*</span></label>
-                    <select id="returnCondition">
-                        <option value="">Select Condition</option>
-                        <optgroup label="✅ Good">
-                            <option value="Good">Good - Fully functional</option>
-                        </optgroup>
-                        <optgroup label="⚠️ Minor Issues">
-                            <option value="Rusty">Rusty</option>
-                            <option value="Missing Part">Missing Part</option>
-                            <option value="Scratch/Dent">Scratch/Dent</option>
-                            <option value="Loose Parts">Loose Parts</option>
-                        </optgroup>
-                        <optgroup label="🔧 Moderate Issues">
-                            <option value="Damaged">Damaged</option>
-                            <option value="Bent">Bent</option>
-                            <option value="Cracked">Cracked</option>
-                            <option value="Broken Knob">Broken Knob/Switch</option>
-                        </optgroup>
-                        <optgroup label="❌ Major Issues">
-                            <option value="Not Working">Not Working</option>
-                            <option value="Broken">Broken</option>
-                            <option value="Lost">Lost</option>
-                            <option value="Beyond Repair">Beyond Repair</option>
-                        </optgroup>
-                    </select>
+                    <label>LRN <span class="required">*</span></label>
+                    <input type="text" id="studentLRN" placeholder="12-digit LRN" maxlength="12" required />
                 </div>
-
-                <div class="form-group" id="returnDamageDescriptionGroup" style="display:none;">
-                    <label>Damage Description</label>
-                    <textarea id="returnDamageDescription" rows="2" placeholder="Describe the damage..."></textarea>
+                <div class="form-group">
+                    <label>Full Name <span class="required">*</span></label>
+                    <input type="text" id="studentName" placeholder="Full Name" required />
                 </div>
-
-                <div class="form-group" id="returnMissingPartsGroup" style="display:none;">
-                    <label>Missing Parts</label>
-                    <div class="checkbox-grid">
-                        <label><input type="checkbox" value="screw" /> Screw(s)</label>
-                        <label><input type="checkbox" value="knob" /> Knob/Switch</label>
-                        <label><input type="checkbox" value="battery_cover" /> Battery Cover</label>
-                        <label><input type="checkbox" value="cable" /> Cable/Wire</label>
-                        <label><input type="checkbox" value="lens" /> Lens/Cover</label>
-                        <label><input type="checkbox" value="handle" /> Handle/Grip</label>
-                        <label><input type="checkbox" value="stand" /> Stand/Base</label>
-                        <label><input type="checkbox" value="other" /> Other</label>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Grade Level <span class="required">*</span></label>
+                        <select id="studentGrade" required>
+                            <option value="">Select</option>
+                            <option value="Grade 7">Grade 7</option>
+                            <option value="Grade 8">Grade 8</option>
+                            <option value="Grade 9">Grade 9</option>
+                            <option value="Grade 10">Grade 10</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Section</label>
+                        <input type="text" id="studentSection" placeholder="e.g., Section A" />
                     </div>
                 </div>
-
-                <div class="form-group" id="returnRustAssessmentGroup" style="display:none;">
-                    <label>Rust Severity</label>
-                    <select id="returnRustSeverity">
-                        <option value="light">Light - Surface rust only</option>
-                        <option value="moderate">Moderate - Rust affecting function</option>
-                        <option value="severe">Severe - Extensive rust, unsafe</option>
-                    </select>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-save"></i> <span id="submitBtnText">Add Student</span>
+                    </button>
                 </div>
-
-                <div class="form-group">
-                    <label>Remarks</label>
-                    <input type="text" id="returnRemarks" placeholder="Additional notes..." />
-                </div>
-
-                <button class="btn-return" onclick="confirmReturn()">
-                    <i class="fas fa-check"></i> Confirm Return
-                </button>
-
-                <button onclick="goToReturnStep(2)" style="width:100%;padding:8px;background:var(--gray-100);border:none;border-radius:var(--radius-sm);font-weight:500;cursor:pointer;margin-top:6px;">
-                    <i class="fas fa-arrow-left"></i> Back
-                </button>
-            </div>
+            </form>
         </div>
-
     </div>
 
     <!-- ============================================================
@@ -1817,19 +1023,19 @@
         <button class="nav-item" onclick="window.location.href='borrow.html'">
             <i class="fas fa-hand-holding"></i><span>Borrow</span>
         </button>
-        <button class="nav-item active">
+        <button class="nav-item" onclick="window.location.href='return.html'">
             <i class="fas fa-undo-alt"></i><span>Return</span>
         </button>
-        <button class="nav-item" onclick="window.location.href='students.html'">
+        <button class="nav-item active">
             <i class="fas fa-users"></i><span>Students</span>
         </button>
-        <button class="nav-item" onclick="window.location.href='settings.html'">
-            <i class="fas fa-cog"></i><span>Settings</span>
+        <button class="nav-item" onclick="window.location.href='activity.html'">
+            <i class="fas fa-history"></i><span>Activity</span>
         </button>
     </nav>
 
     <!-- ============================================================
-    TOAST (Global)
+    TOAST
     ============================================================ -->
     <div class="toast hidden" id="globalToast">
         <i class="fas fa-info-circle"></i>
@@ -1851,66 +1057,11 @@
         // ============================================================
         // STATE
         // ============================================================
-        let borrowerType = 'student';
-        let selectedBorrower = null;
-        let selectedBorrowings = [];
-        let allStudents = [];
-        let allFaculty = [];
         let students = [];
-        let faculty = [];
-        let stream = null;
-        let ocrData = null;
-        let returnStudentScanner = null;
-        let isStudentScanning = false;
-
-        // Cache for borrowings
-        let borrowingsCache = {};
+        let currentUser = null;
 
         // ============================================================
-        // TOAST FUNCTION
-        // ============================================================
-        function showToast(text, type = 'info') {
-            const toast = document.getElementById('globalToast');
-            const messageEl = document.getElementById('toastMessage');
-            const icon = toast.querySelector('i');
-            const icons = {
-                success: 'fa-check-circle',
-                error: 'fa-exclamation-circle',
-                warning: 'fa-exclamation-triangle',
-                info: 'fa-info-circle'
-            };
-            toast.className = `toast ${type}`;
-            messageEl.textContent = text;
-            icon.className = `fas ${icons[type] || icons.info}`;
-            toast.classList.remove('hidden');
-            clearTimeout(toast._timeout);
-            toast._timeout = setTimeout(() => { toast.classList.add('hidden'); }, 4000);
-        }
-
-        // ============================================================
-        // LOAD USER SESSION
-        // ============================================================
-        function loadUserSession() {
-            try {
-                const session = JSON.parse(localStorage.getItem('edustock_session'));
-                if (session && session.profile) {
-                    const name = session.profile.full_name || 'User';
-                    const role = session.profile.role || 'Staff';
-                    const email = session.user?.email || 'user@edustock.com';
-                    
-                    const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-                    document.getElementById('userInitials').textContent = initials;
-                    document.getElementById('dropdownName').textContent = name;
-                    document.getElementById('dropdownEmail').textContent = email;
-                    
-                    const avatar = document.getElementById('userAvatar');
-                    avatar.className = `user-avatar ${role.toLowerCase()}`;
-                }
-            } catch (e) { console.error('Session error:', e); }
-        }
-
-        // ============================================================
-        // TOGGLE DROPDOWN
+        // USER MENU FUNCTIONS
         // ============================================================
         function toggleDropdown() {
             document.getElementById('userDropdown').classList.toggle('show');
@@ -1932,9 +1083,37 @@
             if (confirm('Are you sure you want to logout?')) {
                 localStorage.removeItem('edustock_session');
                 showToast('👋 Logged out successfully!', 'success');
-                setTimeout(() => { window.location.href = 'login.html'; }, 1000);
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 1000);
             }
             document.getElementById('userDropdown').classList.remove('show');
+        }
+
+        // ============================================================
+        // LOAD USER SESSION
+        // ============================================================
+        function loadUserSession() {
+            try {
+                const session = JSON.parse(localStorage.getItem('edustock_session'));
+                if (session && session.profile) {
+                    const name = session.profile.full_name || 'User';
+                    const role = session.profile.role || 'Staff';
+                    const email = session.user?.email || 'user@edustock.com';
+                    
+                    const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+                    document.getElementById('userInitials').textContent = initials;
+                    document.getElementById('dropdownName').textContent = name;
+                    document.getElementById('dropdownEmail').textContent = email;
+                    
+                    const avatar = document.getElementById('userAvatar');
+                    avatar.className = `user-avatar ${role.toLowerCase()}`;
+
+                    currentUser = { name, role, email };
+                }
+            } catch (e) {
+                console.error('Session error:', e);
+            }
         }
 
         // ============================================================
@@ -1942,17 +1121,24 @@
         // ============================================================
 async function checkAuth() {
     const session = JSON.parse(localStorage.getItem('ismart_session'));
+    
     if (!session) {
+        console.log('🔒 No session found, redirecting to login');
         window.location.href = 'login.html';
         return false;
     }
+
     try {
         const { data, error } = await _supabase.auth.getUser();
+        
         if (error || !data.user) {
+            console.log('🔒 Invalid session, redirecting to login');
             localStorage.removeItem('ismart_session');
             window.location.href = 'login.html';
             return false;
         }
+        
+        console.log('✅ Session valid for:', data.user.email);
         return true;
     } catch (e) {
         console.error('❌ Auth check error:', e);
@@ -1961,995 +1147,291 @@ async function checkAuth() {
 }
 
         // ============================================================
-        // BORROWER TYPE
+        // TOAST
         // ============================================================
-        function setBorrowerType(type) {
-            borrowerType = type;
-            document.getElementById('returnBorrowerStudent').classList.toggle('active', type === 'student');
-            document.getElementById('returnBorrowerFaculty').classList.toggle('active', type === 'faculty');
-            document.getElementById('returnStudentSearchSection').style.display = type === 'student' ? 'block' : 'none';
-            document.getElementById('returnFacultySearchSection').style.display = type === 'faculty' ? 'block' : 'none';
-            
-            if (type === 'student') {
-                loadReturnFullStudentList();
-            } else {
-                loadReturnFullFacultyList();
-            }
+        function showToast(text, type = 'info') {
+            const toast = document.getElementById('globalToast');
+            const messageEl = document.getElementById('toastMessage');
+            const icon = toast.querySelector('i');
+            const icons = {
+                success: 'fa-check-circle',
+                error: 'fa-exclamation-circle',
+                warning: 'fa-exclamation-triangle',
+                info: 'fa-info-circle'
+            };
+            toast.className = `toast ${type}`;
+            messageEl.textContent = text;
+            icon.className = `fas ${icons[type] || icons.info}`;
+            toast.classList.remove('hidden');
+            clearTimeout(toast._timeout);
+            toast._timeout = setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 4000);
         }
 
         // ============================================================
-        // LOAD FULL STUDENT LIST (Only those with active borrowings)
+        // FETCH STUDENTS
         // ============================================================
-        async function loadReturnFullStudentList() {
-            try {
-                const { data: activeStudents, error } = await _supabase
-                    .from('borrowing_transactions')
-                    .select('student_id')
-                    .eq('status', 'Borrowed')
-                    .not('student_id', 'is', null);
-
-                if (error) throw error;
-
-                const activeStudentIds = activeStudents.map(s => s.student_id).filter(id => id !== null);
-                
-                if (activeStudentIds.length === 0) {
-                    allStudents = [];
-                    renderReturnFullStudentList();
-                    return;
-                }
-
-                const { data: studentsData, error: studentError } = await _supabase
-                    .from('students')
-                    .select('id, full_name, lrn, grade_level, section')
-                    .in('id', activeStudentIds)
-                    .order('full_name')
-                    .limit(50);
-
-                if (studentError) throw studentError;
-
-                allStudents = studentsData || [];
-                renderReturnFullStudentList();
-            } catch (error) {
-                console.error('Error loading students:', error);
-                document.getElementById('returnStudentFullListItems').innerHTML = `
-                    <div style="text-align:center;padding:8px;color:var(--gray-400);font-size:12px;">Error loading</div>
-                `;
-            }
-        }
-
-        function renderReturnFullStudentList() {
-            const container = document.getElementById('returnStudentFullListItems');
-            if (allStudents.length === 0) {
-                container.innerHTML = `
-                    <div style="text-align:center;padding:16px;color:var(--gray-500);font-size:13px;">
-                        <i class="fas fa-check-circle" style="color:var(--success);display:block;font-size:24px;margin-bottom:6px;"></i>
-                        No active borrowings to return.
-                    </div>
-                `;
-                return;
-            }
-            container.innerHTML = allStudents.map(s => `
-                <div class="full-list-item" onclick="selectReturnStudent('${s.id}')">
-                    <div>
-                        <div class="item-name">${s.full_name}</div>
-                        <div class="item-details">LRN: ${s.lrn} · ${s.grade_level}</div>
-                    </div>
-                    <span class="item-status">Select</span>
-                </div>
-            `).join('');
-        }
-
-        // ============================================================
-        // LOAD FULL FACULTY LIST (Only those with active borrowings)
-        // ============================================================
-        async function loadReturnFullFacultyList() {
+        async function fetchStudents() {
             try {
                 const { data, error } = await _supabase
-                    .from('borrowing_transactions')
-                    .select('faculty_name, faculty_email')
-                    .eq('status', 'Borrowed')
-                    .not('faculty_name', 'is', null)
-                    .order('faculty_name');
+                    .from('students')
+                    .select('*')
+                    .order('full_name');
 
                 if (error) throw error;
 
-                const uniqueFaculty = {};
-                data.forEach(item => {
-                    if (item.faculty_name && !uniqueFaculty[item.faculty_name]) {
-                        uniqueFaculty[item.faculty_name] = {
-                            name: item.faculty_name,
-                            email: item.faculty_email || 'N/A'
-                        };
-                    }
-                });
-
-                allFaculty = Object.values(uniqueFaculty);
-                renderReturnFullFacultyList();
+                students = data || [];
+                renderAll();
             } catch (error) {
-                console.error('Error loading faculty:', error);
-                document.getElementById('returnFacultyFullListItems').innerHTML = `
-                    <div style="text-align:center;padding:8px;color:var(--gray-400);font-size:12px;">Error loading</div>
-                `;
+                console.error('Error fetching students:', error);
+                showToast('Error loading students', 'error');
             }
         }
 
-        function renderReturnFullFacultyList() {
-            const container = document.getElementById('returnFacultyFullListItems');
-            if (allFaculty.length === 0) {
-                container.innerHTML = `
-                    <div style="text-align:center;padding:16px;color:var(--gray-500);font-size:13px;">
-                        <i class="fas fa-check-circle" style="color:var(--success);display:block;font-size:24px;margin-bottom:6px;"></i>
-                        No faculty with active borrowings.
-                    </div>
-                `;
-                return;
-            }
-            container.innerHTML = allFaculty.map(f => `
-                <div class="full-list-item" onclick="selectReturnFaculty('${f.name}', '${f.email}')">
-                    <div>
-                        <div class="item-name">${f.name}</div>
-                        <div class="item-details">${f.email !== 'N/A' ? f.email : ''}</div>
-                    </div>
-                    <span class="item-status">Select</span>
-                </div>
-            `).join('');
+        // ============================================================
+        // RENDER FUNCTIONS
+        // ============================================================
+        function renderStats() {
+            const total = students.length;
+            const active = students.filter(s => s.is_active !== false).length;
+            const borrowed = students.filter(s => s.borrow_count > 0).length || 0;
+            const overdue = 0;
+
+            document.getElementById('totalCount').textContent = total;
+            document.getElementById('activeCount').textContent = active;
+            document.getElementById('borrowCount').textContent = borrowed;
+            document.getElementById('overdueCount').textContent = overdue;
+            document.getElementById('studentCount').textContent = `${total} enrolled`;
         }
 
-        // ============================================================
-        // SELECT FUNCTIONS
-        // ============================================================
-        function selectReturnStudent(id) {
-            const student = allStudents.find(s => String(s.id) === String(id)) || students.find(s => String(s.id) === String(id));
-            if (!student) { showToast('Student not found', 'error'); return; }
-            selectReturnStudentFromData(student);
-        }
+        function renderStudents() {
+            const container = document.getElementById('studentList');
+            const searchTerm = document.getElementById('studentSearch').value.toLowerCase().trim();
 
-        function selectReturnStudentFromData(student) {
-            selectedBorrower = {
-                id: student.id,
-                name: student.full_name,
-                type: 'student',
-                lrn: student.lrn,
-                grade: student.grade_level,
-                section: student.section || ''
-            };
-
-            updateBorrowerUI('Student Selected', student.full_name, 
-                `LRN: ${student.lrn} · ${student.grade_level} ${student.section || ''}`,
-                'student', 'returnStudentBadge');
-
-            document.getElementById('returnStudentSearch').disabled = true;
-            document.getElementById('returnStudentResults').innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-check-circle" style="color:var(--success);"></i>
-                    <p>Student selected! Loading borrowings...</p>
-                </div>
-            `;
-
-            showToast(`✅ Student found: ${student.full_name}`, 'success');
-            setTimeout(() => loadBorrowings(), 100);
-        }
-
-        function selectReturnFaculty(name, email) {
-            selectedBorrower = {
-                id: 'faculty_' + Date.now(),
-                name: name,
-                type: 'faculty',
-                email: email || 'N/A'
-            };
-
-            updateBorrowerUI('Faculty Selected', name, 
-                email && email !== 'N/A' ? `Email: ${email}` : '',
-                'faculty', 'returnFacultyBadge');
-
-            document.getElementById('returnFacultySearch').disabled = true;
-            document.getElementById('returnFacultyResults').innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-check-circle" style="color:var(--success);"></i>
-                    <p>Faculty selected! Loading borrowings...</p>
-                </div>
-            `;
-
-            showToast(`✅ Faculty selected: ${name}`, 'success');
-            setTimeout(() => loadBorrowings(), 100);
-        }
-
-        function updateBorrowerUI(label, name, details, type, badgeId) {
-            document.getElementById('returnBorrowerLabel').textContent = label;
-            document.getElementById('returnBorrowerName').textContent = name;
-            document.getElementById('returnBorrowerDetails').textContent = details;
-            document.getElementById('returnSelectedBorrower').className = `selected-card ${type} show`;
-            document.getElementById(badgeId).className = 'badge badge-done';
-            document.getElementById(badgeId).textContent = '✅ Done';
-        }
-
-        // ============================================================
-        // ADD FACULTY
-        // ============================================================
-        function addReturnFaculty() {
-            const name = document.getElementById('returnFacultyName').value.trim();
-            const email = document.getElementById('returnFacultyEmail').value.trim();
-
-            if (!name) {
-                showToast('Please enter faculty name.', 'error');
-                return;
-            }
-
-            const existing = allFaculty.find(f => f.name === name);
-            if (existing) {
-                selectReturnFaculty(name, email);
-                return;
-            }
-
-            const newFaculty = { name, email: email || 'N/A' };
-            allFaculty.push(newFaculty);
-            renderReturnFullFacultyList();
-            selectReturnFaculty(name, email);
-            
-            document.getElementById('returnFacultyName').value = '';
-            document.getElementById('returnFacultyEmail').value = '';
-        }
-
-        // ============================================================
-        // REMOVE BORROWER
-        // ============================================================
-        function removeReturnBorrower() {
-            selectedBorrower = null;
-            selectedBorrowings = [];
-            document.getElementById('returnSelectedBorrower').classList.remove('show');
-            document.getElementById('returnStudentBadge').className = 'badge badge-pending';
-            document.getElementById('returnStudentBadge').textContent = 'Pending';
-            document.getElementById('returnFacultyBadge').className = 'badge badge-pending';
-            document.getElementById('returnFacultyBadge').textContent = 'Pending';
-            document.getElementById('returnStudentSearch').disabled = false;
-            document.getElementById('returnStudentSearch').value = '';
-            document.getElementById('returnFacultySearch').disabled = false;
-            document.getElementById('returnFacultySearch').value = '';
-            document.getElementById('returnStudentResults').innerHTML = `
-                <div class="empty-state"><i class="fas fa-search"></i><p>Search by LRN, Name, or Grade</p></div>
-            `;
-            document.getElementById('returnFacultyResults').innerHTML = `
-                <div class="empty-state"><i class="fas fa-search"></i><p>Search by Name or Email</p></div>
-            `;
-            document.getElementById('returnBorrowingList').innerHTML = `
-                <div class="empty-state"><i class="fas fa-inbox"></i><p>Select a borrower to view their active borrowings.</p></div>
-            `;
-            document.getElementById('goToAssessBtn').style.display = 'none';
-            showToast('Borrower removed', 'info');
-            goToReturnStep(1);
-        }
-
-        // ============================================================
-        // STEP NAVIGATION
-        // ============================================================
-        function goToReturnStep(step) {
-            document.getElementById('step1Content').style.display = step === 1 ? 'block' : 'none';
-            document.getElementById('step2Content').style.display = step === 2 ? 'block' : 'none';
-            document.getElementById('step3Content').style.display = step === 3 ? 'block' : 'none';
-
-            document.querySelectorAll('.step').forEach(el => {
-                el.classList.remove('active', 'completed');
+            let filtered = students.filter(s => {
+                const searchable = [
+                    s.full_name,
+                    s.lrn,
+                    s.grade_level,
+                    s.section || ''
+                ].join(' ').toLowerCase();
+                return searchable.includes(searchTerm);
             });
-            for (let i = 1; i <= 3; i++) {
-                const el = document.getElementById('step' + i);
-                if (i < step) el.classList.add('completed');
-                if (i === step) el.classList.add('active');
-            }
-        }
 
-        // ============================================================
-        // LOAD BORROWINGS (With caching)
-        // ============================================================
-        async function loadBorrowings() {
-            if (!selectedBorrower) return;
-
-            const cacheKey = selectedBorrower.type === 'student' 
-                ? `student_${selectedBorrower.id}` 
-                : `faculty_${selectedBorrower.name}`;
-
-            if (borrowingsCache[cacheKey]) {
-                renderBorrowings(borrowingsCache[cacheKey]);
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-user-slash"></i>
+                        <h3>No Students Found</h3>
+                        <p>${searchTerm ? 'Try adjusting your search.' : 'Add a student to get started.'}</p>
+                    </div>
+                `;
                 return;
             }
 
-            const container = document.getElementById('returnBorrowingList');
-            container.innerHTML = `
-                <div style="padding:16px;">
-                    <div style="margin-bottom:8px;">
-                        <div class="skeleton" style="height:14px;width:60%;border-radius:4px;background:var(--gray-200);animation:pulse 1.5s ease-in-out infinite;"></div>
-                        <div class="skeleton" style="height:12px;width:40%;border-radius:4px;margin-top:4px;background:var(--gray-200);animation:pulse 1.5s ease-in-out infinite;"></div>
-                    </div>
-                    <div style="margin-bottom:8px;">
-                        <div class="skeleton" style="height:14px;width:70%;border-radius:4px;background:var(--gray-200);animation:pulse 1.5s ease-in-out infinite;"></div>
-                        <div class="skeleton" style="height:12px;width:30%;border-radius:4px;margin-top:4px;background:var(--gray-200);animation:pulse 1.5s ease-in-out infinite;"></div>
-                    </div>
-                    <div>
-                        <div class="skeleton" style="height:14px;width:50%;border-radius:4px;background:var(--gray-200);animation:pulse 1.5s ease-in-out infinite;"></div>
-                        <div class="skeleton" style="height:12px;width:35%;border-radius:4px;margin-top:4px;background:var(--gray-200);animation:pulse 1.5s ease-in-out infinite;"></div>
-                    </div>
-                </div>
-            `;
-
-            try {
-                let query = _supabase
-                    .from('borrowing_transactions')
-                    .select(`
-                        id,
-                        quantity,
-                        borrow_date,
-                        expected_return_date,
-                        status,
-                        assets:asset_id (id, name, total_quantity, available_quantity, condition)
-                    `)
-                    .eq('status', 'Borrowed')
-                    .order('borrow_date', { ascending: false });
-
-                if (selectedBorrower.type === 'student') {
-                    query = query.eq('student_id', selectedBorrower.id);
-                } else {
-                    query = query.eq('faculty_name', selectedBorrower.name);
-                }
-
-                const { data, error } = await query;
-                if (error) throw error;
-
-                borrowingsCache[cacheKey] = data || [];
-                renderBorrowings(borrowingsCache[cacheKey]);
-
-            } catch (error) {
-                console.error('Error loading borrowings:', error);
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-exclamation-circle" style="color:var(--danger);"></i>
-                        <p>Error loading borrowings. Please try again.</p>
-                    </div>
-                `;
-                showToast('Error loading borrowings', 'error');
-            }
-        }
-
-        function renderBorrowings(data) {
-            const container = document.getElementById('returnBorrowingList');
-            
-            if (!data || data.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-check-circle" style="color:var(--success);"></i>
-                        <p>No active borrowings found for this borrower.</p>
-                    </div>
-                `;
-                autoRemoveBorrower();
-                return;
-            }
-
-            selectedBorrowings = [];
-
-            container.innerHTML = data.map(item => {
-                const asset = item.assets || { name: 'Unknown Asset' };
-                const isOverdue = new Date(item.expected_return_date) < new Date();
-                const statusClass = isOverdue ? 'overdue' : 'on-time';
-                const statusText = isOverdue ? '⚠️ Overdue' : '✅ On Time';
-                
+            container.innerHTML = filtered.map(s => {
+                const initials = s.full_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
                 return `
-                    <div class="borrowing-item" data-id="${item.id}" onclick="toggleBorrowingSelect(this, '${item.id}', '${asset.name}')">
+                    <div class="student-card">
+                        <div class="avatar">${initials}</div>
                         <div class="info">
-                            <div class="name">${asset.name}</div>
-                            <div class="details">
-                                Qty: ${item.quantity} · Borrowed: ${new Date(item.borrow_date).toLocaleDateString()} · Due: ${new Date(item.expected_return_date).toLocaleDateString()}
-                            </div>
+                            <div class="name">${s.full_name}</div>
+                            <div class="details">${s.grade_level} • ${s.section || 'No Section'}</div>
+                            <div class="lrn">LRN: ${s.lrn}</div>
                         </div>
-                        <div style="display:flex;align-items:center;gap:8px;">
-                            <span class="status-badge ${statusClass}">${statusText}</span>
-                            <div class="select-check" id="returnCheck_${item.id}"></div>
+                        <div class="actions">
+                            <button class="edit" onclick="editStudent(${s.id})"><i class="fas fa-edit"></i></button>
+                            <button class="delete" onclick="deleteStudent(${s.id})"><i class="fas fa-trash"></i></button>
                         </div>
                     </div>
                 `;
             }).join('');
+        }
 
-            document.getElementById('returnSelectBadge').className = 'badge badge-pending';
-            document.getElementById('returnSelectBadge').textContent = 'Pending';
-            goToReturnStep(2);
+        function renderAll() {
+            renderStats();
+            renderStudents();
         }
 
         // ============================================================
-        // AUTO-REMOVE BORROWER (When no active borrowings)
+        // SEARCH
         // ============================================================
-        function autoRemoveBorrower() {
-            if (!selectedBorrower) return;
-
-            const card = document.getElementById('returnSelectedBorrower');
-            card.classList.add('removing');
-            
-            setTimeout(() => {
-                selectedBorrower = null;
-                selectedBorrowings = [];
-                
-                document.getElementById('returnSelectedBorrower').classList.remove('show', 'removing');
-                document.getElementById('returnStudentBadge').className = 'badge badge-pending';
-                document.getElementById('returnStudentBadge').textContent = 'Pending';
-                document.getElementById('returnFacultyBadge').className = 'badge badge-pending';
-                document.getElementById('returnFacultyBadge').textContent = 'Pending';
-                document.getElementById('returnSelectBadge').className = 'badge badge-pending';
-                document.getElementById('returnSelectBadge').textContent = 'Pending';
-                document.getElementById('returnStudentSearch').disabled = false;
-                document.getElementById('returnStudentSearch').value = '';
-                document.getElementById('returnFacultySearch').disabled = false;
-                document.getElementById('returnFacultySearch').value = '';
-                document.getElementById('returnStudentResults').innerHTML = `
-                    <div class="empty-state"><i class="fas fa-search"></i><p>Search by LRN, Name, or Grade</p></div>
-                `;
-                document.getElementById('returnFacultyResults').innerHTML = `
-                    <div class="empty-state"><i class="fas fa-search"></i><p>Search by Name or Email</p></div>
-                `;
-                document.getElementById('returnBorrowingList').innerHTML = `
-                    <div class="empty-state"><i class="fas fa-inbox"></i><p>Select a borrower to view their active borrowings.</p></div>
-                `;
-                document.getElementById('goToAssessBtn').style.display = 'none';
-                document.getElementById('returnItemsList').textContent = '-';
-                document.getElementById('returnCondition').value = '';
-                document.getElementById('returnDamageDescription').value = '';
-                document.getElementById('returnRemarks').value = '';
-                document.getElementById('returnDamageDescriptionGroup').style.display = 'none';
-                document.getElementById('returnMissingPartsGroup').style.display = 'none';
-                document.getElementById('returnRustAssessmentGroup').style.display = 'none';
-                
-                showToast('✅ All items returned! Borrower removed from list.', 'success');
-                goToReturnStep(1);
-                
-                loadReturnFullStudentList();
-                loadReturnFullFacultyList();
-            }, 400);
+        function searchStudents() {
+            renderStudents();
         }
 
         // ============================================================
-        // TOGGLE BORROWING SELECT
+        // CRUD OPERATIONS
         // ============================================================
-        function toggleBorrowingSelect(el, id, name) {
-            const checkEl = document.getElementById(`returnCheck_${id}`);
-            const index = selectedBorrowings.findIndex(b => b.id === id);
-
-            if (index === -1) {
-                selectedBorrowings.push({ id, name });
-                el.classList.add('selected');
-                checkEl.className = 'select-check checked';
-                checkEl.innerHTML = '<i class="fas fa-check" style="font-size:12px;color:white;"></i>';
-            } else {
-                selectedBorrowings.splice(index, 1);
-                el.classList.remove('selected');
-                checkEl.className = 'select-check';
-                checkEl.innerHTML = '';
-            }
-
-            const selectBadge = document.getElementById('returnSelectBadge');
-            if (selectedBorrowings.length > 0) {
-                selectBadge.className = 'badge badge-done';
-                selectBadge.textContent = `✅ ${selectedBorrowings.length} selected`;
-            } else {
-                selectBadge.className = 'badge badge-pending';
-                selectBadge.textContent = 'Pending';
-            }
-
-            const assessBtn = document.getElementById('goToAssessBtn');
-            assessBtn.style.display = selectedBorrowings.length > 0 ? 'block' : 'none';
-
-            document.getElementById('returnItemsList').textContent = 
-                selectedBorrowings.map(b => b.name).join(', ') || 'None';
-        }
-
-        // ============================================================
-        // GO TO ASSESS
-        // ============================================================
-        function goToAssess() {
-            if (selectedBorrowings.length === 0) {
-                showToast('Please select at least one item to return.', 'error');
-                return;
-            }
-            goToReturnStep(3);
-            document.getElementById('returnItemsList').textContent = 
-                selectedBorrowings.map(b => b.name).join(', ');
-        }
-
-        // ============================================================
-        // CONFIRM RETURN
-        // ============================================================
-        async function confirmReturn() {
-            if (selectedBorrowings.length === 0) {
-                showToast('No items selected to return.', 'error');
-                return;
-            }
-
-            const condition = document.getElementById('returnCondition').value;
-            const damageDesc = document.getElementById('returnDamageDescription').value.trim();
-            const remarks = document.getElementById('returnRemarks').value.trim();
-
-            if (!condition) {
-                showToast('Please select the condition.', 'error');
-                return;
-            }
-
-            const btn = document.querySelector('.btn-return');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-
+        async function addStudent(data) {
             try {
-                const missingParts = [];
-                document.querySelectorAll('#returnMissingPartsGroup input[type="checkbox"]:checked').forEach(cb => {
-                    missingParts.push(cb.value);
-                });
-
-                const returnedBorrowingIds = selectedBorrowings.map(b => b.id);
-
-                for (const borrowing of selectedBorrowings) {
-                    const { data: borrowData, error: fetchError } = await _supabase
-                        .from('borrowing_transactions')
-                        .select('*, assets:asset_id (id, name, total_quantity, available_quantity, condition)')
-                        .eq('id', borrowing.id)
-                        .single();
-
-                    if (fetchError) throw fetchError;
-
-                    await _supabase
-                        .from('borrowing_transactions')
-                        .update({
-                            status: 'Returned',
-                            actual_return_date: new Date().toISOString()
-                        })
-                        .eq('id', borrowing.id);
-
-                    const asset = borrowData.assets;
-                    if (asset) {
-                        const newAvailable = asset.available_quantity + borrowData.quantity;
-                        await _supabase
-                            .from('assets')
-                            .update({ 
-                                available_quantity: newAvailable,
-                                condition: condition === 'Damaged' || condition === 'Broken' ? 'Damaged' : asset.condition
-                            })
-                            .eq('id', asset.id);
-                    }
-
-                    await _supabase
-                        .from('return_transactions')
-                        .insert([{
-                            borrowing_id: borrowing.id,
-                            return_date: new Date().toISOString(),
-                            quantity_returned: borrowData.quantity,
-                            condition_returned: condition,
-                            damage_description: damageDesc || null,
-                            is_late: new Date(borrowData.expected_return_date) < new Date(),
-                            days_late: Math.max(0, Math.floor((new Date() - new Date(borrowData.expected_return_date)) / (1000 * 60 * 60 * 24))),
-                            staff_id: JSON.parse(localStorage.getItem('edustock_session'))?.user?.id || null,
-                            remarks: remarks || null,
-                            missing_parts: missingParts.length > 0 ? missingParts.join(', ') : null
-                        }]);
-                }
-
-                const cacheKey = selectedBorrower.type === 'student' 
-                    ? `student_${selectedBorrower.id}` 
-                    : `faculty_${selectedBorrower.name}`;
-                delete borrowingsCache[cacheKey];
-
-                showToast(`✅ Return confirmed! ${selectedBorrowings.length} item(s) returned.`, 'success');
-
-                const container = document.getElementById('returnBorrowingList');
-                returnedBorrowingIds.forEach(id => {
-                    const item = container.querySelector(`[data-id="${id}"]`);
-                    if (item) {
-                        item.classList.add('removing');
-                    }
-                });
-
-                setTimeout(() => {
-                    loadBorrowings();
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-check"></i> Confirm Return';
-                }, 500);
-
-            } catch (error) {
-                console.error('Return error:', error);
-                showToast('❌ Error: ' + error.message, 'error');
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-check"></i> Confirm Return';
-            }
-        }
-
-        // ============================================================
-        // CONDITION ASSESSMENT LOGIC
-        // ============================================================
-        document.getElementById('returnCondition').addEventListener('change', function() {
-            const value = this.value;
-            document.getElementById('returnDamageDescriptionGroup').style.display = 'none';
-            document.getElementById('returnMissingPartsGroup').style.display = 'none';
-            document.getElementById('returnRustAssessmentGroup').style.display = 'none';
-
-            const needsDamage = ['Rusty', 'Missing Part', 'Scratch/Dent', 'Loose Parts', 'Damaged', 'Bent', 'Cracked', 'Broken Knob', 'Not Working', 'Broken', 'Beyond Repair'];
-            const needsMissing = ['Missing Part', 'Broken Knob', 'Broken'];
-            const needsRust = ['Rusty'];
-
-            if (needsDamage.includes(value)) {
-                document.getElementById('returnDamageDescriptionGroup').style.display = 'block';
-            }
-            if (needsMissing.includes(value)) {
-                document.getElementById('returnMissingPartsGroup').style.display = 'block';
-            }
-            if (needsRust.includes(value)) {
-                document.getElementById('returnRustAssessmentGroup').style.display = 'block';
-            }
-        });
-
-        // ============================================================
-        // SEARCH FUNCTIONS
-        // ============================================================
-        async function searchReturnStudents() {
-            const query = document.getElementById('returnStudentSearch').value.trim();
-            if (!query) {
-                document.getElementById('returnStudentResults').innerHTML = `
-                    <div class="empty-state"><i class="fas fa-search"></i><p>Search by LRN, Name, or Grade</p></div>
-                `;
-                return;
-            }
-
-            try {
-                const { data, error } = await _supabase
+                const { data: newStudent, error } = await _supabase
                     .from('students')
-                    .select('id, full_name, lrn, grade_level, section')
-                    .ilike('full_name', `%${query}%`)
-                    .order('full_name')
-                    .limit(20);
-
-                let results = data || [];
-                if (results.length === 0) {
-                    const { data: lrnData } = await _supabase.from('students').select('*').ilike('lrn', `%${query}%`).limit(20);
-                    if (lrnData) results = lrnData;
-                }
-                if (results.length === 0) {
-                    const { data: gradeData } = await _supabase.from('students').select('*').ilike('grade_level', `%${query}%`).limit(20);
-                    if (gradeData) results = gradeData;
-                }
-
-                students = results;
-                const container = document.getElementById('returnStudentResults');
-                if (students.length === 0) {
-                    container.innerHTML = `<div class="empty-state"><i class="fas fa-user-slash"></i><p>No students found</p></div>`;
-                    return;
-                }
-                container.innerHTML = students.map(s => `
-                    <div class="result-item" onclick="selectReturnStudent('${s.id}')">
-                        <div class="info">
-                            <div class="name">${s.full_name}</div>
-                            <div class="details">LRN: ${s.lrn} · ${s.grade_level}</div>
-                        </div>
-                        <span class="status-badge">Select</span>
-                    </div>
-                `).join('');
-            } catch (error) {
-                showToast('Error searching students', 'error');
-            }
-        }
-
-        async function searchReturnFaculty() {
-            const query = document.getElementById('returnFacultySearch').value.trim();
-            if (!query) {
-                document.getElementById('returnFacultyResults').innerHTML = `
-                    <div class="empty-state"><i class="fas fa-search"></i><p>Search by Name or Email</p></div>
-                `;
-                return;
-            }
-
-            try {
-                const { data, error } = await _supabase
-                    .from('borrowing_transactions')
-                    .select('faculty_name, faculty_email')
-                    .eq('status', 'Borrowed')
-                    .not('faculty_name', 'is', null)
-                    .ilike('faculty_name', `%${query}%`)
-                    .order('faculty_name');
+                    .insert([{
+                        lrn: data.lrn,
+                        full_name: data.name,
+                        grade_level: data.grade,
+                        section: data.section || null
+                    }])
+                    .select()
+                    .single();
 
                 if (error) throw error;
 
-                const uniqueFaculty = {};
-                data.forEach(item => {
-                    if (item.faculty_name && !uniqueFaculty[item.faculty_name]) {
-                        uniqueFaculty[item.faculty_name] = {
-                            name: item.faculty_name,
-                            email: item.faculty_email || 'N/A'
-                        };
-                    }
-                });
-
-                faculty = Object.values(uniqueFaculty);
-                const container = document.getElementById('returnFacultyResults');
-                if (faculty.length === 0) {
-                    container.innerHTML = `<div class="empty-state"><i class="fas fa-user-slash"></i><p>No faculty found</p></div>`;
-                    return;
-                }
-                container.innerHTML = faculty.map(f => `
-                    <div class="result-item" onclick="selectReturnFaculty('${f.name}', '${f.email}')">
-                        <div class="info">
-                            <div class="name">${f.name}</div>
-                            <div class="details">${f.email !== 'N/A' ? f.email : ''}</div>
-                        </div>
-                        <span class="status-badge">Select</span>
-                    </div>
-                `).join('');
+                showToast('✅ Student added successfully!', 'success');
+                await fetchStudents();
+                return newStudent;
             } catch (error) {
-                showToast('Error searching faculty', 'error');
+                console.error('Add student error:', error);
+                showToast('❌ Error adding student: ' + error.message, 'error');
+                return null;
+            }
+        }
+
+        async function updateStudent(id, data) {
+            try {
+                const { data: updated, error } = await _supabase
+                    .from('students')
+                    .update({
+                        lrn: data.lrn,
+                        full_name: data.name,
+                        grade_level: data.grade,
+                        section: data.section || null
+                    })
+                    .eq('id', id)
+                    .select()
+                    .single();
+
+                if (error) throw error;
+
+                showToast('✅ Student updated successfully!', 'success');
+                await fetchStudents();
+                return updated;
+            } catch (error) {
+                console.error('Update student error:', error);
+                showToast('❌ Error updating student: ' + error.message, 'error');
+                return null;
+            }
+        }
+
+        async function deleteStudent(id) {
+            const student = students.find(s => s.id === id);
+            if (!student) return;
+
+            if (!confirm(`Delete "${student.full_name}"? This action cannot be undone.`)) return;
+
+            try {
+                const { error } = await _supabase
+                    .from('students')
+                    .delete()
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                showToast('🗑️ Student deleted', 'info');
+                await fetchStudents();
+            } catch (error) {
+                console.error('Delete student error:', error);
+                showToast('❌ Error deleting student: ' + error.message, 'error');
+            }
+        }
+
+        // ============================================================
+        // MODAL FUNCTIONS
+        // ============================================================
+        function openAddModal() {
+            document.getElementById('modalTitle').textContent = 'Add Student';
+            document.getElementById('submitBtnText').textContent = 'Add Student';
+            document.getElementById('editId').value = '';
+            document.getElementById('studentForm').reset();
+            document.getElementById('studentModal').classList.add('active');
+        }
+
+        function editStudent(id) {
+            const s = students.find(x => x.id === id);
+            if (!s) return;
+
+            document.getElementById('modalTitle').textContent = 'Edit Student';
+            document.getElementById('submitBtnText').textContent = 'Update Student';
+            document.getElementById('editId').value = s.id;
+            document.getElementById('studentLRN').value = s.lrn;
+            document.getElementById('studentName').value = s.full_name;
+            document.getElementById('studentGrade').value = s.grade_level;
+            document.getElementById('studentSection').value = s.section || '';
+            document.getElementById('studentModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('studentModal').classList.remove('active');
+        }
+
+        // ============================================================
+        // FORM SUBMIT
+        // ============================================================
+        async function saveStudent(e) {
+            e.preventDefault();
+
+            const editId = document.getElementById('editId').value;
+            const data = {
+                lrn: document.getElementById('studentLRN').value.trim(),
+                name: document.getElementById('studentName').value.trim(),
+                grade: document.getElementById('studentGrade').value,
+                section: document.getElementById('studentSection').value.trim()
+            };
+
+            if (!data.lrn || !data.name || !data.grade) {
+                showToast('Please fill in all required fields.', 'error');
+                return;
+            }
+
+            if (data.lrn.length !== 12) {
+                showToast('LRN must be exactly 12 digits.', 'error');
+                return;
+            }
+
+            const submitBtn = document.querySelector('#studentForm .btn-primary');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+            let result;
+            if (editId) {
+                result = await updateStudent(parseInt(editId), data);
+            } else {
+                result = await addStudent(data);
+            }
+
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-save"></i> ' + (editId ? 'Update Student' : 'Add Student');
+
+            if (result) {
+                closeModal();
             }
         }
 
         // ============================================================
         // ENTER KEY SUPPORT
         // ============================================================
-        document.getElementById('returnStudentSearch').addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') searchReturnStudents();
+        document.getElementById('studentSearch').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') searchStudents();
         });
-        document.getElementById('returnFacultySearch').addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') searchReturnFaculty();
-        });
-
-        // ============================================================
-        // OCR FUNCTIONS (Simplified)
-        // ============================================================
-        async function toggleReturnIDScanner() {
-            const container = document.getElementById('returnCameraContainer');
-            if (container.classList.contains('active')) {
-                closeReturnIDScanner();
-            } else {
-                if (document.getElementById('returnStudentScanner').classList.contains('active')) {
-                    toggleReturnStudentScanner();
-                }
-                container.classList.add('active');
-                await startReturnCamera();
-            }
-        }
-
-        async function startReturnCamera() {
-            try {
-                stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: 'environment', width: { ideal: 400 } }
-                });
-                document.getElementById('returnVideo').srcObject = stream;
-                await document.getElementById('returnVideo').play();
-                document.querySelector('#returnCameraContainer .scanner-status').textContent = '📷 Position the student ID card clearly in the frame';
-            } catch (err) {
-                showToast('❌ Unable to access camera.', 'error');
-                closeReturnIDScanner();
-            }
-        }
-
-        function closeReturnIDScanner() {
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
-                stream = null;
-            }
-            document.getElementById('returnVideo').srcObject = null;
-            document.getElementById('returnCameraContainer').classList.remove('active');
-            document.getElementById('returnOcrResult').classList.remove('show');
-            ocrData = null;
-        }
-
-        async function captureReturnID() {
-            const video = document.getElementById('returnVideo');
-            const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth || 400;
-            canvas.height = video.videoHeight || 300;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-            document.getElementById('loadingOverlay').classList.add('active');
-            document.getElementById('loadingText').textContent = '📷 Processing ID card...';
-
-            try {
-                const imageData = canvas.toDataURL('image/jpeg', 0.9);
-                document.getElementById('loadingText').textContent = '🔍 Reading text from ID...';
-
-                const result = await Tesseract.recognize(imageData, 'eng', {
-                    logger: m => {
-                        if (m.status === 'recognizing text') {
-                            document.getElementById('loadingText').textContent =
-                                `🔍 Reading text... ${Math.round(m.progress * 100)}%`;
-                        }
-                    }
-                });
-
-                const text = result.data.text;
-                const parsed = parseReturnIDText(text);
-
-                if (parsed.lrn || parsed.name) {
-                    ocrData = parsed;
-                    document.getElementById('returnOcrName').textContent = parsed.name || 'Not found';
-                    document.getElementById('returnOcrLRN').textContent = parsed.lrn || 'Not found';
-                    document.getElementById('returnOcrGrade').textContent = parsed.grade || 'Not found';
-                    document.getElementById('returnOcrSection').textContent = parsed.section || 'Not found';
-                    document.getElementById('returnOcrResult').classList.add('show');
-                    showToast('✅ ID card processed! Verify the details.', 'success');
-                } else {
-                    showToast('❌ Could not extract information. Try again.', 'error');
-                }
-            } catch (err) {
-                showToast('OCR error', 'error');
-            }
-
-            document.getElementById('loadingOverlay').classList.remove('active');
-        }
-
-        function parseReturnIDText(text) {
-            const result = { name: '', lrn: '', grade: '', section: '' };
-            const lrnMatch = text.match(/\b(\d{12})\b/);
-            if (lrnMatch) result.lrn = lrnMatch[1];
-            const gradeMatch = text.match(/Grade\s*([7-9]|10)/i);
-            if (gradeMatch) result.grade = 'Grade ' + gradeMatch[1];
-            const nameMatch = text.match(/Name:\s*([A-Za-z\s\.]+)/i) || text.match(/Name\s*([A-Za-z\s\.]+)/i);
-            if (nameMatch) result.name = nameMatch[1].trim();
-            return result;
-        }
-
-        function retryReturnOCR() {
-            document.getElementById('returnOcrResult').classList.remove('show');
-            ocrData = null;
-            showToast('Retake photo', 'info');
-        }
-
-        function showReturnManualEntry() {
-            document.getElementById('returnOcrResult').classList.remove('show');
-            document.getElementById('returnManualEntry').classList.add('show');
-            if (ocrData) {
-                document.getElementById('returnManualLRN').value = ocrData.lrn || '';
-                document.getElementById('returnManualName').value = ocrData.name || '';
-                document.getElementById('returnManualGrade').value = ocrData.grade || '';
-                document.getElementById('returnManualSection').value = ocrData.section || '';
-            }
-            closeReturnIDScanner();
-        }
-
-        function hideReturnManualEntry() {
-            document.getElementById('returnManualEntry').classList.remove('show');
-        }
-
-        async function addReturnManualStudent() {
-            const lrn = document.getElementById('returnManualLRN').value.trim();
-            const name = document.getElementById('returnManualName').value.trim();
-            const grade = document.getElementById('returnManualGrade').value;
-            const section = document.getElementById('returnManualSection').value.trim();
-
-            if (!lrn || !name || !grade) {
-                showToast('Fill in all required fields', 'error');
-                return;
-            }
-            if (lrn.length !== 12) {
-                showToast('LRN must be 12 digits', 'error');
-                return;
-            }
-
-            try {
-                const { data: existing } = await _supabase.from('students').select('*').eq('lrn', lrn).limit(1);
-                if (existing && existing.length > 0) {
-                    selectReturnStudentFromData(existing[0]);
-                    showToast(`Student found: ${existing[0].full_name}`, 'success');
-                } else {
-                    const { data: created, error } = await _supabase
-                        .from('students')
-                        .insert([{ lrn, full_name: name, grade_level: grade, section }])
-                        .select()
-                        .single();
-                    if (error) throw error;
-                    selectReturnStudentFromData(created);
-                    showToast(`✅ New student added: ${created.full_name}`, 'success');
-                }
-                hideReturnManualEntry();
-                document.getElementById('returnOcrResult').classList.remove('show');
-            } catch (error) {
-                showToast('Error: ' + error.message, 'error');
-            }
-        }
-
-        async function confirmReturnOCR() {
-            if (!ocrData || !ocrData.lrn) {
-                showToast('No OCR data to confirm', 'error');
-                return;
-            }
-
-            try {
-                const { data: existing } = await _supabase.from('students').select('*').eq('lrn', ocrData.lrn).limit(1);
-                if (existing && existing.length > 0) {
-                    selectReturnStudentFromData(existing[0]);
-                } else {
-                    const { data: created, error } = await _supabase
-                        .from('students')
-                        .insert([{
-                            lrn: ocrData.lrn,
-                            full_name: ocrData.name || 'Unknown',
-                            grade_level: ocrData.grade || 'Not specified',
-                            section: ocrData.section || ''
-                        }])
-                        .select()
-                        .single();
-                    if (error) throw error;
-                    selectReturnStudentFromData(created);
-                    showToast(`✅ New student added: ${created.full_name}`, 'success');
-                }
-                closeReturnIDScanner();
-                document.getElementById('returnOcrResult').classList.remove('show');
-            } catch (error) {
-                showToast('Error: ' + error.message, 'error');
-            }
-        }
-
-        // ============================================================
-        // QR SCANNER
-        // ============================================================
-        function toggleReturnStudentScanner() {
-            const container = document.getElementById('returnStudentScanner');
-            container.classList.toggle('active');
-            if (container.classList.contains('active')) {
-                startReturnStudentScanner();
-            } else {
-                if (returnStudentScanner) { returnStudentScanner.stop(); returnStudentScanner.clear(); }
-            }
-        }
-
-        function startReturnStudentScanner() {
-            if (returnStudentScanner) { returnStudentScanner.clear(); returnStudentScanner = null; }
-            returnStudentScanner = new Html5Qrcode("returnStudentQrReader");
-            returnStudentScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 200, height: 200 } },
-                onReturnStudentScanSuccess, function(err) {}
-            ).then(() => { isStudentScanning = true; })
-            .catch(err => {
-                showToast('❌ Unable to access camera.', 'error');
-                document.getElementById('returnStudentScanner').classList.remove('active');
-            });
-        }
-
-        async function onReturnStudentScanSuccess(decodedText) {
-            try {
-                if (returnStudentScanner) { returnStudentScanner.stop(); returnStudentScanner.clear(); }
-                document.getElementById('returnStudentScanner').classList.remove('active');
-
-                let searchQuery = decodedText;
-                try { const data = JSON.parse(decodedText); searchQuery = data.lrn || data.id || data.student_id || decodedText; }
-                catch (e) { searchQuery = decodedText; }
-
-                const { data: results, error } = await _supabase
-                    .from('students')
-                    .select('*')
-                    .or(`lrn.ilike.%${searchQuery}%,id.eq.${searchQuery}`)
-                    .limit(1);
-
-                if (error) throw error;
-
-                if (results && results.length > 0) {
-                    selectReturnStudentFromData(results[0]);
-                    showToast(`✅ Student found: ${results[0].full_name}`, 'success');
-                } else {
-                    showToast(`❌ No student found. Please try again.`, 'error');
-                    document.getElementById('returnStudentSearch').value = searchQuery;
-                }
-            } catch (error) {
-                showToast('❌ Error processing QR code.', 'error');
-            }
-        }
 
         // ============================================================
         // INIT
         // ============================================================
-        async function initReturn() {
+        async function init() {
             const isAuth = await checkAuth();
             if (!isAuth) return;
 
             loadUserSession();
-            
-            await Promise.all([
-                loadReturnFullStudentList(),
-                loadReturnFullFacultyList()
-            ]);
+            await fetchStudents();
 
-            goToReturnStep(1);
-
-            console.log('📦 iSMART - Return Page Loaded');
-            console.log(`👥 ${allStudents.length} active students, ${allFaculty.length} active faculty`);
+            console.log('📦 iSMART - Students Page Loaded');
+            console.log(`👥 ${students.length} students loaded`);
+            console.log('👤 User Menu: Click avatar for dropdown');
         }
 
-        document.addEventListener('DOMContentLoaded', initReturn);
+        document.addEventListener('DOMContentLoaded', init);
     </script>
 
 </body>
