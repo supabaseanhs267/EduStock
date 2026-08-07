@@ -1564,6 +1564,48 @@
                 font-size: 8px;
             }
         }
+        /* ============================================================
+   CAPTURED PREVIEW
+   ============================================================ */
+.captured-preview {
+    margin-top: 6px;
+    padding: 4px;
+    background: rgba(255,255,255,0.05);
+    border-radius: var(--radius-sm);
+}
+
+.captured-preview img {
+    width: 100%;
+    border-radius: var(--radius-sm);
+    margin-top: 4px;
+    max-height: 150px;
+    object-fit: contain;
+    background: #000;
+}
+
+.captured-preview .preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2px 4px;
+}
+
+.captured-preview .preview-header .status {
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.captured-preview .preview-header .status.loading {
+    color: var(--gray-400);
+}
+
+.captured-preview .preview-header .status.done {
+    color: var(--success);
+}
+
+.captured-preview .preview-header .status.error {
+    color: var(--danger);
+}
     </style>
 </head>
 <body>
@@ -2489,99 +2531,143 @@ function updateAssetList() {
             console.log('📷 Camera closed');
         }
 
-        async function captureID() {
-            const video = document.getElementById('video');
-            const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth || 400;
-            canvas.height = video.videoHeight || 300;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+async function captureID() {
+    const video = document.getElementById('video');
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth || 400;
+    canvas.height = video.videoHeight || 300;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            document.getElementById('loadingOverlay').classList.add('active');
-            document.getElementById('loadingText').textContent = '📷 Processing ID card...';
+    // Display captured image preview
+    const previewContainer = document.getElementById('cameraContainer');
+    const previewImg = document.createElement('img');
+    previewImg.src = canvas.toDataURL('image/jpeg', 0.9);
+    previewImg.style.width = '100%';
+    previewImg.style.borderRadius = 'var(--radius-sm)';
+    previewImg.style.marginTop = '6px';
+    
+    // Remove old preview if exists
+    const oldPreview = previewContainer.querySelector('.captured-preview');
+    if (oldPreview) oldPreview.remove();
+    
+    const previewWrapper = document.createElement('div');
+    previewWrapper.className = 'captured-preview';
+    previewWrapper.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">
+            <span style="color:white;font-size:11px;">📸 Captured ID</span>
+            <span style="color:var(--gray-400);font-size:10px;">Processing...</span>
+        </div>
+    `;
+    previewWrapper.appendChild(previewImg);
+    previewContainer.appendChild(previewWrapper);
 
-            try {
-                const imageData = canvas.toDataURL('image/jpeg', 0.9);
+    document.getElementById('loadingOverlay').classList.add('active');
+    document.getElementById('loadingText').textContent = '📷 Processing ID card...';
 
-                document.getElementById('loadingText').textContent = '🔍 Reading text from ID...';
+    try {
+        const imageData = canvas.toDataURL('image/jpeg', 0.9);
 
-                const result = await Tesseract.recognize(
-                    imageData,
-                    'eng',
-                    {
-                        logger: m => {
-                            if (m.status === 'recognizing text') {
-                                document.getElementById('loadingText').textContent =
-                                    `🔍 Reading text... ${Math.round(m.progress * 100)}%`;
-                            }
-                        }
-                    }
-                );
+        document.getElementById('loadingText').textContent = '🔍 Reading text from ID...';
 
-                const text = result.data.text;
-                console.log('OCR Text:', text);
-
-                const parsed = parseIDText(text);
-
-                if (parsed.lrn || parsed.name) {
-                    ocrData = parsed;
-                    showOCRResults(parsed);
-                    showToast('✅ ID card processed! Verify the extracted information.', 'success');
-                } else {
-                    showToast('❌ Could not extract information. Please try again or enter manually.', 'error');
-                }
-
-            } catch (err) {
-                console.error('OCR Error:', err);
-                showToast('❌ Error processing ID card: ' + err.message, 'error');
-            }
-
-            document.getElementById('loadingOverlay').classList.remove('active');
-        }
-
-        function parseIDText(text) {
-            const result = { name: '', lrn: '', grade: '', section: '' };
-
-            const lrnMatch = text.match(/\b(\d{12})\b/);
-            if (lrnMatch) result.lrn = lrnMatch[1];
-
-            const gradeMatch = text.match(/Grade\s*([7-9]|10)/i);
-            if (gradeMatch) result.grade = 'Grade ' + gradeMatch[1];
-
-            const sectionMatch = text.match(/Section\s*([A-Za-z0-9]+)|Sec\.?\s*([A-Za-z0-9]+)/i);
-            if (sectionMatch) result.section = sectionMatch[1] || sectionMatch[2] || '';
-
-            const namePatterns = [
-                /Name:\s*([A-Za-z\s\.]+)/i,
-                /Name\s*([A-Za-z\s\.]+)/i,
-                /([A-Z][a-z]+\s+[A-Z][a-z]+\s+[A-Z][a-z]+)/,
-                /([A-Z][a-z]+\s+[A-Z][a-z]+)/
-            ];
-
-            for (const pattern of namePatterns) {
-                const match = text.match(pattern);
-                if (match) {
-                    result.name = match[1].trim();
-                    break;
-                }
-            }
-
-            if (!result.name) {
-                const lines = text.split('\n').filter(line => line.trim().length > 0);
-                for (const line of lines) {
-                    const trimmed = line.trim();
-                    if (trimmed.split(' ').length >= 2 && trimmed.split(' ').length <= 4) {
-                        if (!/^[A-Z\s]+$/.test(trimmed) && !/\d/.test(trimmed)) {
-                            result.name = trimmed;
-                            break;
-                        }
+        const result = await Tesseract.recognize(
+            imageData,
+            'eng',
+            {
+                logger: m => {
+                    if (m.status === 'recognizing text') {
+                        document.getElementById('loadingText').textContent =
+                            `🔍 Reading text... ${Math.round(m.progress * 100)}%`;
                     }
                 }
             }
+        );
 
-            if (result.name) result.name = result.name.replace(/[^A-Za-z\s\.]/g, '').trim();
-            return result;
+        const text = result.data.text;
+        console.log('OCR Text:', text);
+
+        const parsed = parseIDText(text);
+
+        // Update preview status
+        if (parsed.lrn || parsed.name) {
+            const statusEl = previewWrapper.querySelector('span:last-child');
+            if (statusEl) {
+                statusEl.textContent = '✅ Done';
+                statusEl.style.color = 'var(--success)';
+            }
         }
+
+        if (parsed.lrn || parsed.name) {
+            ocrData = parsed;
+            showOCRResults(parsed);
+            showToast('✅ ID card processed! Verify the extracted information.', 'success');
+        } else {
+            showToast('❌ Could not extract information. Please try again or enter manually.', 'error');
+        }
+
+    } catch (err) {
+        console.error('OCR Error:', err);
+        showToast('❌ Error processing ID card: ' + err.message, 'error');
+    }
+
+    document.getElementById('loadingOverlay').classList.remove('active');
+}
+
+function parseIDText(text) {
+    const result = { name: '', lrn: '', grade: '', section: '' };
+
+    // Extract LRN (12 digits)
+    const lrnMatch = text.match(/\b(\d{12})\b/);
+    if (lrnMatch) result.lrn = lrnMatch[1];
+
+    // Extract Grade
+    const gradeMatch = text.match(/Grade\s*([7-9]|10)/i);
+    if (gradeMatch) result.grade = 'Grade ' + gradeMatch[1];
+
+    // Extract Section
+    const sectionMatch = text.match(/Section\s*([A-Za-z0-9]+)|Sec\.?\s*([A-Za-z0-9]+)/i);
+    if (sectionMatch) result.section = sectionMatch[1] || sectionMatch[2] || '';
+
+    // IMPROVED: Better name extraction patterns
+    const namePatterns = [
+        /Name:\s*([A-Za-z\.\s]+)/i,
+        /Name\s*([A-Za-z\.\s]+)/i,
+        /([A-Z][a-z]+\.?\s+[A-Z][a-z]+\s+[A-Z][a-z]+)/,  // Ma. Regina Medallada
+        /([A-Z][a-z]+\.?\s+[A-Z][a-z]+\s+[A-Z][a-z]+)/,   // With dot prefix
+        /([A-Z][a-z]+\s+[A-Z][a-z]+\s+[A-Z][a-z]+)/,      // Three words
+        /([A-Z][a-z]+\s+[A-Z][a-z]+)/                      // Two words
+    ];
+
+    for (const pattern of namePatterns) {
+        const match = text.match(pattern);
+        if (match) {
+            let name = match[1].trim();
+            // Clean up the name
+            name = name.replace(/[^A-Za-z\.\s]/g, '').trim();
+            // Keep "Ma." prefix
+            if (name.length > 0) {
+                result.name = name;
+                break;
+            }
+        }
+    }
+
+    // Fallback: try to extract from lines
+    if (!result.name) {
+        const lines = text.split('\n').filter(line => line.trim().length > 0);
+        for (const line of lines) {
+            const trimmed = line.trim();
+            // Look for lines with common name patterns
+            if (trimmed.match(/^[A-Z][a-z]+\.?\s+[A-Z][a-z]+\s+[A-Z][a-z]+/) || 
+                trimmed.match(/^[A-Z][a-z]+\s+[A-Z][a-z]+\s+[A-Z][a-z]+/)) {
+                result.name = trimmed.replace(/[^A-Za-z\.\s]/g, '').trim();
+                break;
+            }
+        }
+    }
+
+    return result;
+}
 
         function showOCRResults(data) {
             document.getElementById('ocrName').textContent = data.name || 'Not found';
@@ -2596,24 +2682,31 @@ function updateAssetList() {
             }
         }
 
-        function retryOCR() {
-            document.getElementById('ocrResult').classList.remove('show');
-            ocrData = null;
-            document.querySelector('.camera-status').textContent = '📷 Position the student ID card clearly in the frame';
-            showToast('🔄 Retake photo of the ID card', 'info');
-        }
+function retryOCR() {
+    document.getElementById('ocrResult').classList.remove('show');
+    ocrData = null;
+    
+    // Remove preview
+    const preview = document.querySelector('.captured-preview');
+    if (preview) preview.remove();
+    
+    document.querySelector('.camera-status').textContent = '📷 Position the student ID card clearly in the frame';
+    showToast('🔄 Retake photo of the ID card', 'info');
+}
 
-        function showManualEntry() {
-            document.getElementById('ocrResult').classList.remove('show');
-            document.getElementById('manualEntry').classList.add('show');
-            if (ocrData) {
-                document.getElementById('manualLRN').value = ocrData.lrn || '';
-                document.getElementById('manualName').value = ocrData.name || '';
-                document.getElementById('manualGrade').value = ocrData.grade || '';
-                document.getElementById('manualSection').value = ocrData.section || '';
-            }
-            closeIDScanner();
-        }
+function showManualEntry() {
+    document.getElementById('ocrResult').classList.remove('show');
+    document.getElementById('manualEntry').classList.add('show');
+    
+    // Preserve the OCR data values, including the full name with "Ma."
+    if (ocrData) {
+        document.getElementById('manualLRN').value = ocrData.lrn || '';
+        document.getElementById('manualName').value = ocrData.name || '';
+        document.getElementById('manualGrade').value = ocrData.grade || '';
+        document.getElementById('manualSection').value = ocrData.section || '';
+    }
+    closeIDScanner();
+}
 
         function hideManualEntry() {
             document.getElementById('manualEntry').classList.remove('show');
@@ -2675,51 +2768,53 @@ function updateAssetList() {
             }
         }
 
-        async function confirmOCR() {
-            if (!ocrData || !ocrData.lrn) {
-                showToast('❌ No OCR data to confirm.', 'error');
-                return;
-            }
+async function confirmOCR() {
+    if (!ocrData || !ocrData.lrn) {
+        showToast('❌ No OCR data to confirm.', 'error');
+        return;
+    }
 
-            try {
-                const { data: existing, error } = await _supabase
-                    .from('students')
-                    .select('*')
-                    .eq('lrn', ocrData.lrn)
-                    .limit(1);
+    try {
+        const { data: existing, error } = await _supabase
+            .from('students')
+            .select('*')
+            .eq('lrn', ocrData.lrn)
+            .limit(1);
 
-                if (error) throw error;
+        if (error) throw error;
 
-                if (existing && existing.length > 0) {
-                    selectStudentFromData(existing[0]);
-                    showToast(`✅ Student found: ${existing[0].full_name}`, 'success');
-                } else {
-                    const newStudent = {
-                        lrn: ocrData.lrn,
-                        full_name: ocrData.name || 'Unknown',
-                        grade_level: ocrData.grade || 'Not specified',
-                        section: ocrData.section || ''
-                    };
+        if (existing && existing.length > 0) {
+            // Use the existing student's full name from database
+            selectStudentFromData(existing[0]);
+            showToast(`✅ Student found: ${existing[0].full_name}`, 'success');
+        } else {
+            // Use the OCR name (which now preserves "Ma." prefix)
+            const newStudent = {
+                lrn: ocrData.lrn,
+                full_name: ocrData.name || 'Unknown',
+                grade_level: ocrData.grade || 'Not specified',
+                section: ocrData.section || ''
+            };
 
-                    const { data: created, error: createError } = await _supabase
-                        .from('students')
-                        .insert([newStudent])
-                        .select()
-                        .single();
+            const { data: created, error: createError } = await _supabase
+                .from('students')
+                .insert([newStudent])
+                .select()
+                .single();
 
-                    if (createError) throw createError;
+            if (createError) throw createError;
 
-                    selectStudentFromData(created);
-                    showToast(`✅ New student added: ${created.full_name}`, 'success');
-                }
-
-                closeIDScanner();
-                document.getElementById('ocrResult').classList.remove('show');
-            } catch (error) {
-                console.error('Error saving student:', error);
-                showToast('❌ Error saving student: ' + error.message, 'error');
-            }
+            selectStudentFromData(created);
+            showToast(`✅ New student added: ${created.full_name}`, 'success');
         }
+
+        closeIDScanner();
+        document.getElementById('ocrResult').classList.remove('show');
+    } catch (error) {
+        console.error('Error saving student:', error);
+        showToast('❌ Error saving student: ' + error.message, 'error');
+    }
+}
 
         // ============================================================
         // QR SCANNER FUNCTIONS
