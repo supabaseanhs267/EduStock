@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>iSMART - Login</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        /* ============================================================
+           RESET & BASE (Mobile-First)
+           ============================================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #4F46E5;
+            --primary-dark: #4338CA;
+            --primary-light: #818CF8;
+            --primary-bg: #EEF2FF;
+            --success: #10B981;
+            --success-bg: #ECFDF5;
+            --warning: #F59E0B;
+            --warning-bg: #FFFBEB;
+            --danger: #EF4444;
+            --danger-bg: #FEF2F2;
+            --gray-50: #F9FAFB;
+            --gray-100: #F3F4F6;
+            --gray-200: #E5E7EB;
+            --gray-300: #D1D5DB;
+            --gray-400: #9CA3AF;
+            --gray-500: #6B7280;
+            --gray-600: #4B5563;
+            --gray-700: #374151;
+            --gray-800: #1F2937;
+            --gray-900: #111827;
+            --radius: 16px;
+            --radius-sm: 10px;
+            --shadow: 0 2px 8px rgba(0,0,0,0.08);
+            --shadow-md: 0 4px 16px rgba(0,0,0,0.12);
+            --shadow-lg: 0 8px 32px rgba(0,0,0,0.16);
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-800);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 400px;
+            background: white;
+            border-radius: var(--radius);
+            padding: 32px 24px 28px;
+            box-shadow: var(--shadow-lg);
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .login-brand {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .login-brand .logo-icon {
+            width: 64px;
+            height: 64px;
+            background: var(--primary);
+            border-radius: var(--radius-sm);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 30px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+        }
+
+        .login-brand h1 {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--gray-900);
+            letter-spacing: -0.5px;
+        }
+
+        .login-brand h1 span {
+            color: var(--primary);
+        }
+
+        .login-brand p {
+            font-size: 13px;
+            color: var(--gray-500);
+            margin-top: 2px;
+            font-weight: 400;
+        }
+
+        .login-brand .school-name {
+            font-size: 12px;
+            color: var(--gray-400);
+            margin-top: 4px;
+            font-weight: 500;
+        }
+
+        .login-form {
+            margin-top: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: 6px;
+        }
+
+        .form-group label .required {
+            color: var(--danger);
+            margin-left: 2px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            background: var(--gray-50);
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            transition: var(--transition);
+        }
+
+        .input-wrapper:focus-within {
+            border-color: var(--primary);
+            background: white;
+            box-shadow: 0 0 0 3px var(--primary-bg);
+        }
+
+        .input-wrapper .input-icon {
+            padding: 0 0 0 14px;
+            color: var(--gray-400);
+            font-size: 16px;
+            transition: var(--transition);
+        }
+
+        .input-wrapper:focus-within .input-icon {
+            color: var(--primary);
+        }
+
+        .input-wrapper input {
+            width: 100%;
+            padding: 14px 12px;
+            border: none;
+            outline: none;
+            background: transparent;
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            color: var(--gray-800);
+        }
+
+        .input-wrapper input::placeholder {
+            color: var(--gray-400);
+            font-size: 14px;
+        }
+
+        .input-wrapper .toggle-password {
+            padding: 0 14px 0 0;
+            background: none;
+            border: none;
+            color: var(--gray-400);
+            cursor: pointer;
+            font-size: 16px;
+            transition: var(--transition);
+        }
+
+        .input-wrapper .toggle-password:hover {
+            color: var(--gray-600);
+        }
+
+        .domain-hint {
+            font-size: 11px;
+            color: var(--gray-400);
+            margin-top: 4px;
+            text-align: left;
+            padding-left: 14px;
+            transition: color 0.3s ease;
+        }
+
+        .domain-hint strong {
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        .domain-hint.success {
+            color: var(--success);
+        }
+
+        .form-options {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--gray-600);
+            font-weight: 500;
+        }
+
+        .remember-me input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary);
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .forgot-link {
+            font-size: 13px;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .forgot-link:hover {
+            text-decoration: underline;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 14px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-family: 'Inter', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            position: relative;
+        }
+
+        .btn-login:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+        }
+
+        .btn-login:active {
+            transform: scale(0.98);
+        }
+
+        .btn-login:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-login .spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .btn-login.loading .spinner {
+            display: block;
+        }
+
+        .btn-login.loading .btn-text {
+            display: none;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .message {
+            padding: 10px 14px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 16px;
+            display: none;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .message.show {
+            display: flex;
+        }
+
+        .message.error {
+            background: var(--danger-bg);
+            color: var(--danger);
+            border: 1px solid #FECACA;
+        }
+
+        .message.success {
+            background: var(--success-bg);
+            color: var(--success);
+            border: 1px solid #A7F3D0;
+        }
+
+        .message i {
+            font-size: 16px;
+        }
+
+        .login-footer {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .login-footer p {
+            font-size: 12px;
+            color: var(--gray-400);
+        }
+
+        .login-footer .version {
+            font-size: 11px;
+            color: var(--gray-300);
+        }
+
+        .quick-tip {
+            background: var(--primary-bg);
+            border-radius: var(--radius-sm);
+            padding: 12px 14px;
+            margin-top: 16px;
+            border: 1px solid var(--primary-light);
+            text-align: center;
+        }
+
+        .quick-tip p {
+            font-size: 12px;
+            color: var(--gray-600);
+            font-weight: 500;
+        }
+
+        /* ============================================================
+           MINIMALIST TOAST MODAL (Same as Dashboard)
+           ============================================================ */
+        .toast-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            animation: fadeInOverlay 0.3s ease;
+        }
+
+        .toast-overlay.active {
+            display: flex;
+        }
+
+        @keyframes fadeInOverlay {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .toast-modal {
+            background: white;
+            border-radius: var(--radius);
+            padding: 24px 24px 20px;
+            max-width: 320px;
+            width: 100%;
+            text-align: center;
+            animation: slideUpModal 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+        }
+
+        @keyframes slideUpModal {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .toast-modal .toast-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            margin: 0 auto 8px;
+        }
+
+        .toast-modal .toast-icon.success {
+            background: var(--success-bg);
+            color: var(--success);
+        }
+
+        .toast-modal .toast-icon.error {
+            background: var(--danger-bg);
+            color: var(--danger);
+        }
+
+        .toast-modal .toast-icon.warning {
+            background: var(--warning-bg);
+            color: var(--warning);
+        }
+
+        .toast-modal .toast-icon.info {
+            background: var(--primary-bg);
+            color: var(--primary);
+        }
+
+        .toast-modal .toast-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 2px;
+        }
+
+        .toast-modal .toast-message {
+            font-size: 13px;
+            color: var(--gray-500);
+            line-height: 1.5;
+            margin-bottom: 16px;
+            white-space: pre-line;
+        }
+
+        .toast-modal .toast-close-btn {
+            background: var(--gray-100);
+            color: var(--gray-700);
+            border: none;
+            padding: 6px 20px;
+            border-radius: var(--radius-sm);
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .toast-modal .toast-close-btn:hover {
+            background: var(--gray-200);
+        }
+
+        .toast-modal .toast-close-btn:active {
+            transform: scale(0.95);
+        }
+
+        @media (max-width: 420px) {
+            .login-container {
+                padding: 24px 16px 20px;
+            }
+            .login-brand h1 {
+                font-size: 20px;
+            }
+            .login-brand .logo-icon {
+                width: 54px;
+                height: 54px;
+                font-size: 24px;
+            }
+            .input-wrapper input {
+                font-size: 14px;
+                padding: 12px 10px;
+            }
+            .btn-login {
+                font-size: 15px;
+                padding: 12px;
+            }
+            .form-options {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            .toast-modal {
+                padding: 20px 16px 16px;
+                max-width: 280px;
+            }
+            .domain-hint {
+                font-size: 10px;
+                padding-left: 10px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .login-container {
+                padding: 16px 12px;
+                border-radius: var(--radius-sm);
+            }
+            .login-brand h1 {
+                font-size: 18px;
+            }
+            .login-brand p {
+                font-size: 12px;
+            }
+            .toast-modal {
+                padding: 16px 14px 14px;
+                max-width: 260px;
+            }
+            .toast-modal .toast-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 18px;
+            }
+            .toast-modal .toast-title {
+                font-size: 14px;
+            }
+            .toast-modal .toast-message {
+                font-size: 12px;
+            }
+            .domain-hint {
+                font-size: 9px;
+                padding-left: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+
+        <div class="login-brand">
+            <div class="logo-icon">
+                <i class="fas fa-box"></i>
+            </div>
+            <h1>i<span>SMART</span></h1>
+            <p>QR-Code and ID Scan ICT Equipment Management</p>
+            <div class="school-name">Alitagtag National High School</div>
+        </div>
+
+        <div class="message error" id="message">
+            <i class="fas fa-exclamation-circle"></i>
+            <span id="messageText">Invalid credentials. Please try again.</span>
+        </div>
+
+        <form class="login-form" id="loginForm" autocomplete="off" novalidate>
+
+            <div class="form-group">
+                <label for="email">Email Address <span class="required">*</span></label>
+                <div class="input-wrapper">
+                    <span class="input-icon"><i class="fas fa-envelope"></i></span>
+                    <input
+                        type="email"
+                        id="email"
+                        placeholder="admin@ismart.com"
+                        required
+                        autocomplete="username"
+                    />
+                </div>
+                <div class="domain-hint" id="domainHint">
+                    Auto-fill <strong>@ismart.com</strong> or just type your full username
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password <span class="required">*</span></label>
+                <div class="input-wrapper">
+                    <span class="input-icon"><i class="fas fa-lock"></i></span>
+                    <input
+                        type="password"
+                        id="password"
+                        placeholder="Enter your password"
+                        required
+                        autocomplete="current-password"
+                    />
+                    <button type="button" class="toggle-password" id="togglePassword" aria-label="Toggle password visibility">
+                        <i class="fas fa-eye" id="eyeIcon"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-options">
+                <label class="remember-me">
+                    <input type="checkbox" id="rememberMe" />
+                    <span>Remember me</span>
+                </label>
+                <span class="forgot-link" id="forgotLink">Forgot password?</span>
+            </div>
+
+            <button type="submit" class="btn-login" id="loginBtn">
+                <span class="spinner"></span>
+                <span class="btn-text"><i class="fas fa-sign-in-alt"></i> Log In</span>
+            </button>
+
+        </form>
+
+        <div class="quick-tip">
+            <p>Contact your system administrator<br />if you need assistance with your account</p>
+        </div>
+
+        <div class="login-footer">
+            <p>&copy; 2026 iSMART | Alitagtag National High School</p>
+            <span class="version">v1.0.0</span>
+        </div>
+
+    </div>
+
+    <!-- ============================================================
+    MINIMALIST TOAST MODAL (Same as Dashboard)
+    ============================================================ -->
+    <div class="toast-overlay" id="toastOverlay">
+        <div class="toast-modal">
+            <div class="toast-icon" id="toastIcon">✅</div>
+            <div class="toast-title" id="toastTitle">Success</div>
+            <div class="toast-message" id="toastMessage">Your action was completed successfully.</div>
+            <button class="toast-close-btn" id="toastCloseBtn">Got it</button>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        // SUPABASE CONFIGURATION
+        // ============================================================
+        const SUPABASE_URL = 'https://zvbbnwawvbmxfygvkyaq.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_LQd5C3G15qa-svzIDMadAw_ErT3Usmd';
+        
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        window.supabase = supabaseClient;
+
+        // ============================================================
+        // DOM REFS
+        // ============================================================
+        const form = document.getElementById('loginForm');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const loginBtn = document.getElementById('loginBtn');
+        const rememberMe = document.getElementById('rememberMe');
+        const togglePassword = document.getElementById('togglePassword');
+        const eyeIcon = document.getElementById('eyeIcon');
+        const message = document.getElementById('message');
+        const messageText = document.getElementById('messageText');
+        const domainHint = document.getElementById('domainHint');
+
+        // Toast elements
+        const toastOverlay = document.getElementById('toastOverlay');
+        const toastIcon = document.getElementById('toastIcon');
+        const toastTitle = document.getElementById('toastTitle');
+        const toastMessageEl = document.getElementById('toastMessage');
+        const toastCloseBtn = document.getElementById('toastCloseBtn');
+
+        // Domain hint reset timer
+        let domainHintTimer = null;
+
+        // ============================================================
+        // MINIMALIST TOAST MODAL (Same as Dashboard)
+        // ============================================================
+        function showToastModal(message, type = 'info', title = '') {
+            const icons = {
+                success: 'fa-check-circle',
+                error: 'fa-exclamation-circle',
+                warning: 'fa-exclamation-triangle',
+                info: 'fa-info-circle'
+            };
+
+            const titles = {
+                success: 'Success',
+                error: 'Error',
+                warning: 'Notice',
+                info: 'Information'
+            };
+
+            toastIcon.innerHTML = `<i class="fas ${icons[type] || icons.info}"></i>`;
+            toastIcon.className = `toast-icon ${type}`;
+            toastTitle.textContent = title || titles[type] || 'Information';
+            toastMessageEl.textContent = message;
+            toastOverlay.classList.add('active');
+
+            clearTimeout(toastOverlay._timeout);
+            
+            // Don't auto-close for notifications
+            const isPersistent = title === 'Notifications' || title === 'Notification';
+            if (!isPersistent) {
+                toastOverlay._timeout = setTimeout(() => {
+                    closeToastModal();
+                }, 4000);
+            }
+        }
+
+        function closeToastModal() {
+            toastOverlay.classList.remove('active');
+            clearTimeout(toastOverlay._timeout);
+        }
+
+        toastCloseBtn.addEventListener('click', closeToastModal);
+
+        toastOverlay.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeToastModal();
+            }
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeToastModal();
+            }
+        });
+
+        // ============================================================
+        // DOMAIN HINT RESET FUNCTION
+        // ============================================================
+        function resetDomainHint() {
+            domainHint.textContent = 'Auto-fill @ismart.com or just type your full username';
+            domainHint.className = 'domain-hint';
+        }
+
+        function setDomainHintSuccess(text) {
+            clearTimeout(domainHintTimer);
+            domainHint.textContent = text;
+            domainHint.className = 'domain-hint success';
+            domainHintTimer = setTimeout(resetDomainHint, 2000);
+        }
+
+        // ============================================================
+        // AUTO-APPEND @ismart.com
+        // ============================================================
+        function appendDomain(email) {
+            email = email.trim();
+            if (!email) return '';
+            if (!email.includes('@')) {
+                return email + '@ismart.com';
+            }
+            return email;
+        }
+
+        emailInput.addEventListener('blur', function() {
+            const value = this.value.trim();
+            if (value && !value.includes('@')) {
+                this.value = value + '@ismart.com';
+                setDomainHintSuccess('@ismart.com added');
+            }
+        });
+
+        emailInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Tab' || e.key === 'Enter') {
+                const value = this.value.trim();
+                if (value && !value.includes('@')) {
+                    this.value = value + '@ismart.com';
+                    setDomainHintSuccess('@ismart.com added');
+                }
+            }
+        });
+
+        emailInput.addEventListener('input', function() {
+            const value = this.value.trim();
+            clearTimeout(domainHintTimer);
+            
+            if (value && value.includes('@')) {
+                domainHint.textContent = 'Email format detected';
+                domainHint.className = 'domain-hint success';
+                domainHintTimer = setTimeout(resetDomainHint, 2000);
+            } else {
+                resetDomainHint();
+            }
+        });
+
+        // ============================================================
+        // MESSAGE FUNCTIONS
+        // ============================================================
+        function showMessage(text, type = 'error') {
+            message.className = `message show ${type}`;
+            messageText.textContent = text;
+        }
+
+        function hideMessage() {
+            message.className = 'message';
+        }
+
+        // ============================================================
+        // PASSWORD TOGGLE
+        // ============================================================
+        togglePassword.addEventListener('click', function() {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            eyeIcon.className = type === 'password' ? 'fas fa-eye' : 'fas fa-eye-slash';
+        });
+
+        // ============================================================
+        // REMEMBER ME
+        // ============================================================
+        function loadRememberedCredentials() {
+            try {
+                const saved = localStorage.getItem('ismart_remembered');
+                if (saved) {
+                    const data = JSON.parse(saved);
+                    if (data.remember) {
+                        emailInput.value = data.email || '';
+                        passwordInput.value = data.password || '';
+                        rememberMe.checked = true;
+                    }
+                }
+            } catch (e) {
+                console.error('Error loading remembered credentials:', e);
+            }
+        }
+
+        function saveRememberedCredentials(email, password) {
+            try {
+                const data = {
+                    email: email,
+                    password: rememberMe.checked ? password : '',
+                    remember: rememberMe.checked
+                };
+                localStorage.setItem('ismart_remembered', JSON.stringify(data));
+            } catch (e) {
+                console.error('Error saving remembered credentials:', e);
+            }
+        }
+
+        // ============================================================
+        // FORGOT PASSWORD
+        // ============================================================
+        document.getElementById('forgotLink').addEventListener('click', function() {
+            showToastModal('Contact your system administrator to reset your password.', 'info', 'Forgot Password');
+        });
+
+        // ============================================================
+        // LOGIN
+        // ============================================================
+        async function loginUser(email, password) {
+            try {
+                console.log('🔐 Attempting login with:', email);
+
+                const { data, error } = await window.supabase.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+
+                if (error) {
+                    console.error('❌ Auth Error:', error);
+                    return { success: false, message: error.message };
+                }
+
+                console.log('✅ Auth Success:', data.user);
+
+                const { data: userData, error: userError } = await window.supabase
+                    .from('users')
+                    .select('full_name, role')
+                    .eq('id', data.user.id)
+                    .single();
+
+                if (userError) {
+                    console.error('❌ User data error:', userError);
+                    return { 
+                        success: false, 
+                        message: 'Account found but no role assigned. Contact admin.' 
+                    };
+                }
+
+                const session = {
+                    user: data.user,
+                    access_token: data.session?.access_token || data.user?.access_token,
+                    refresh_token: data.session?.refresh_token || null,
+                    profile: {
+                        full_name: userData.full_name,
+                        role: userData.role
+                    },
+                    loginTime: new Date().toISOString()
+                };
+
+                localStorage.setItem('ismart_session', JSON.stringify(session));
+
+                return {
+                    success: true,
+                    user: data.user,
+                    profile: {
+                        full_name: userData.full_name,
+                        role: userData.role
+                    },
+                    session: session
+                };
+
+            } catch (error) {
+                console.error('❌ Login error:', error);
+                return { 
+                    success: false, 
+                    message: 'An unexpected error occurred. Please try again.' 
+                };
+            }
+        }
+
+        // ============================================================
+        // FORM SUBMIT
+        // ============================================================
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            let email = emailInput.value.trim();
+            const password = passwordInput.value.trim();
+
+            if (email && !email.includes('@')) {
+                email = email + '@ismart.com';
+                emailInput.value = email;
+            }
+
+            if (!email) {
+                showMessage('Please enter your email address.', 'error');
+                emailInput.focus();
+                return;
+            }
+
+            if (!password) {
+                showMessage('Please enter your password.', 'error');
+                passwordInput.focus();
+                return;
+            }
+
+            hideMessage();
+            loginBtn.classList.add('loading');
+            loginBtn.disabled = true;
+
+            const result = await loginUser(email, password);
+
+            if (result.success) {
+                saveRememberedCredentials(email, password);
+                showToastModal(`Welcome back, ${result.profile.full_name}! Redirecting...`, 'success', 'Welcome!');
+
+                setTimeout(() => {
+                    loginBtn.classList.remove('loading');
+                    loginBtn.disabled = false;
+                    window.location.href = 'dashboard.html';
+                }, 1200);
+
+            } else {
+                loginBtn.classList.remove('loading');
+                loginBtn.disabled = false;
+                showMessage(`❌ ${result.message}`, 'error');
+
+                form.style.animation = 'shake 0.5s ease';
+                setTimeout(() => {
+                    form.style.animation = '';
+                }, 500);
+
+                passwordInput.value = '';
+                passwordInput.focus();
+            }
+        });
+
+        // ============================================================
+        // KEYBOARD SHORTCUTS
+        // ============================================================
+        passwordInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                form.dispatchEvent(new Event('submit'));
+            }
+        });
+
+        emailInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                passwordInput.focus();
+            }
+        });
+
+        // ============================================================
+        // RESET
+        // ============================================================
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.shiftKey && e.key === 'R') {
+                e.preventDefault();
+                localStorage.removeItem('ismart_remembered');
+                localStorage.removeItem('ismart_session');
+                emailInput.value = '';
+                passwordInput.value = '';
+                rememberMe.checked = false;
+                resetDomainHint();
+                showToastModal('Credentials cleared. You can start fresh.', 'info', 'Reset');
+                console.log('🔄 Reset');
+            }
+        });
+
+        // ============================================================
+        // INIT
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', function() {
+            loadRememberedCredentials();
+            console.log('📦 iSMART Login with Supabase');
+            console.log('🔗 Connected to:', SUPABASE_URL);
+            console.log('💡 Email: Auto-fill @ismart.com');
+            console.log('💬 Toast: Minimalist modal style');
+        });
+    </script>
+
+</body>
+</html>
