@@ -1,0 +1,1595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>iSMART - Dashboard</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="nav.css" />
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- QR Scanner Library -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    
+    <style>
+        /* ============================================================
+           RESET & BASE
+           ============================================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #4F46E5;
+            --primary-dark: #4338CA;
+            --primary-light: #818CF8;
+            --primary-bg: #EEF2FF;
+            --success: #10B981;
+            --success-bg: #ECFDF5;
+            --warning: #F59E0B;
+            --warning-bg: #FFFBEB;
+            --danger: #EF4444;
+            --danger-bg: #FEF2F2;
+            --info: #3B82F6;
+            --info-bg: #EFF6FF;
+            --gray-50: #F9FAFB;
+            --gray-100: #F3F4F6;
+            --gray-200: #E5E7EB;
+            --gray-300: #D1D5DB;
+            --gray-400: #9CA3AF;
+            --gray-500: #6B7280;
+            --gray-600: #4B5563;
+            --gray-700: #374151;
+            --gray-800: #1F2937;
+            --gray-900: #111827;
+            --radius: 16px;
+            --radius-sm: 10px;
+            --shadow: 0 2px 8px rgba(0,0,0,0.08);
+            --shadow-md: 0 4px 16px rgba(0,0,0,0.12);
+            --nav-height: 60px;
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-800);
+            padding: 0 0 calc(var(--nav-height) + 16px) 0;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 16px 16px 24px;
+        }
+
+        /* ============================================================
+           iSMART BRAND HEADER
+           ============================================================ */
+        .app-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0 16px;
+            border-bottom: 1px solid var(--gray-200);
+            margin-bottom: 16px;
+            gap: 12px;
+        }
+
+        .brand-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .brand-section .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--primary);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 22px;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+        }
+
+        .brand-text {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .brand-text h1 {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--gray-900);
+            letter-spacing: -0.5px;
+            line-height: 1.2;
+        }
+
+        .brand-text h1 span {
+            color: var(--primary);
+        }
+
+        .brand-text p {
+            font-size: 10px;
+            color: var(--gray-400);
+            font-weight: 400;
+            line-height: 1.3;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* ============================================================
+           USER MENU
+           ============================================================ */
+        .user-menu {
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: transparent;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid var(--gray-300);
+            user-select: none;
+            position: relative;
+        }
+
+        .user-avatar:hover {
+            border-color: var(--primary);
+            background: var(--primary-bg);
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+        }
+
+        .user-avatar:active {
+            transform: scale(0.92);
+        }
+
+        .user-dropdown {
+            display: none;
+            position: absolute;
+            top: 48px;
+            right: 0;
+            background: white;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--gray-200);
+            box-shadow: var(--shadow-md);
+            min-width: 200px;
+            overflow: hidden;
+            z-index: 50;
+            animation: dropdownSlide 0.2s ease;
+        }
+
+        .user-dropdown.show {
+            display: block;
+        }
+
+        @keyframes dropdownSlide {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .user-dropdown .dropdown-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--gray-100);
+            background: var(--gray-50);
+        }
+
+        .user-dropdown .dropdown-header .name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .user-dropdown .dropdown-header .email {
+            font-size: 12px;
+            color: var(--gray-500);
+        }
+
+        .user-dropdown .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--gray-700);
+            font-size: 13px;
+            font-weight: 500;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .user-dropdown .dropdown-item:hover {
+            background: var(--gray-50);
+            color: var(--primary);
+        }
+
+        .user-dropdown .dropdown-item i {
+            width: 18px;
+            font-size: 14px;
+            color: var(--gray-400);
+        }
+
+        .user-dropdown .dropdown-item:hover i {
+            color: var(--primary);
+        }
+
+        .user-dropdown .dropdown-divider {
+            height: 1px;
+            background: var(--gray-100);
+            margin: 4px 0;
+        }
+
+        .user-dropdown .dropdown-item.danger {
+            color: var(--danger);
+        }
+
+        .user-dropdown .dropdown-item.danger:hover {
+            background: var(--danger-bg);
+            color: var(--danger);
+        }
+
+        .user-dropdown .dropdown-item.danger:hover i {
+            color: var(--danger);
+        }
+
+        /* ============================================================
+           STATS CARDS
+           ============================================================ */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 14px 16px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--gray-100);
+            box-shadow: var(--shadow);
+        }
+
+        .stat-card .stat-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .stat-card .stat-top .stat-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .stat-card .stat-top .stat-icon.blue { background: var(--info-bg); color: var(--info); }
+        .stat-card .stat-top .stat-icon.green { background: var(--success-bg); color: var(--success); }
+        .stat-card .stat-top .stat-icon.yellow { background: var(--warning-bg); color: var(--warning); }
+        .stat-card .stat-top .stat-icon.red { background: var(--danger-bg); color: var(--danger); }
+
+        .stat-card .stat-value {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        .stat-card .stat-label {
+            font-size: 11px;
+            color: var(--gray-500);
+            font-weight: 500;
+        }
+
+        /* ============================================================
+           QUICK ACTIONS
+           ============================================================ */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .quick-action {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            padding: 12px 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: var(--gray-700);
+        }
+
+        .quick-action:active {
+            transform: scale(0.95);
+        }
+
+        .quick-action i {
+            font-size: 20px;
+            color: var(--primary);
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .quick-action span {
+            font-size: 10px;
+            font-weight: 500;
+        }
+
+        /* ============================================================
+           RECENT ACTIVITY
+           ============================================================ */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .section-header h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        .section-header a {
+            font-size: 12px;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .activity-list {
+            background: white;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--gray-200);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-item .icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .activity-item .icon.borrow { background: var(--warning-bg); color: var(--warning); }
+        .activity-item .icon.return { background: var(--success-bg); color: var(--success); }
+        .activity-item .icon.add { background: var(--info-bg); color: var(--info); }
+
+        .activity-item .info {
+            flex: 1;
+        }
+
+        .activity-item .info .title {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--gray-800);
+        }
+
+        .activity-item .info .sub {
+            font-size: 11px;
+            color: var(--gray-500);
+        }
+
+        .activity-item .time {
+            font-size: 10px;
+            color: var(--gray-400);
+            white-space: nowrap;
+        }
+
+        /* ============================================================
+           EMPTY STATE
+           ============================================================ */
+        .empty-state {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--gray-500);
+        }
+
+        .empty-state i {
+            font-size: 36px;
+            color: var(--gray-300);
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        /* ============================================================
+           QR SCANNER CONTAINER
+           ============================================================ */
+        .qr-scanner-container {
+            display: none;
+            margin-top: 8px;
+            padding: 10px;
+            background: var(--gray-900);
+            border-radius: var(--radius-sm);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .qr-scanner-container.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .qr-scanner-container #qr-reader {
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .qr-scanner-container .qr-close-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            font-size: 18px;
+            padding: 4px 8px;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .qr-scanner-container .qr-status {
+            color: white;
+            text-align: center;
+            padding: 6px;
+            font-size: 11px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+            margin-top: 4px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ============================================================
+           MINIMALIST TOAST MODAL
+           ============================================================ */
+        .toast-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            animation: fadeInOverlay 0.3s ease;
+        }
+
+        .toast-overlay.active {
+            display: flex;
+        }
+
+        @keyframes fadeInOverlay {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .toast-modal {
+            background: white;
+            border-radius: var(--radius);
+            padding: 24px 24px 20px;
+            max-width: 320px;
+            width: 100%;
+            text-align: center;
+            animation: slideUpModal 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+        }
+
+        @keyframes slideUpModal {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .toast-modal .toast-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            margin: 0 auto 8px;
+        }
+
+        .toast-modal .toast-icon.success {
+            background: var(--success-bg);
+            color: var(--success);
+        }
+
+        .toast-modal .toast-icon.error {
+            background: var(--danger-bg);
+            color: var(--danger);
+        }
+
+        .toast-modal .toast-icon.warning {
+            background: var(--warning-bg);
+            color: var(--warning);
+        }
+
+        .toast-modal .toast-icon.info {
+            background: var(--primary-bg);
+            color: var(--primary);
+        }
+
+        .toast-modal .toast-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 2px;
+        }
+
+        .toast-modal .toast-message {
+            font-size: 13px;
+            color: var(--gray-500);
+            line-height: 1.5;
+            margin-bottom: 16px;
+            white-space: pre-line;
+        }
+
+        .toast-modal .toast-close-btn {
+            background: var(--gray-100);
+            color: var(--gray-700);
+            border: none;
+            padding: 6px 20px;
+            border-radius: var(--radius-sm);
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .toast-modal .toast-close-btn:hover {
+            background: var(--gray-200);
+        }
+
+        .toast-modal .toast-close-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* ============================================================
+           CONFIRMATION MODAL (Minimalist - iSMART Colors)
+           ============================================================ */
+        .confirm-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            animation: fadeInOverlay 0.3s ease;
+        }
+
+        .confirm-overlay.active {
+            display: flex;
+        }
+
+        .confirm-modal {
+            background: white;
+            border-radius: var(--radius);
+            padding: 24px 24px 20px;
+            max-width: 320px;
+            width: 100%;
+            text-align: center;
+            animation: slideUpModal 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+        }
+
+        .confirm-modal .confirm-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            margin: 0 auto 8px;
+            background: var(--primary-bg);
+            color: var(--primary);
+        }
+
+        .confirm-modal .confirm-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 2px;
+        }
+
+        .confirm-modal .confirm-message {
+            font-size: 13px;
+            color: var(--gray-500);
+            line-height: 1.5;
+            margin-bottom: 16px;
+        }
+
+        .confirm-modal .confirm-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .confirm-modal .confirm-actions .btn-cancel {
+            background: var(--gray-100);
+            color: var(--gray-700);
+            border: none;
+            padding: 6px 20px;
+            border-radius: var(--radius-sm);
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+        }
+
+        .confirm-modal .confirm-actions .btn-cancel:hover {
+            background: var(--gray-200);
+        }
+
+        .confirm-modal .confirm-actions .btn-confirm {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 6px 20px;
+            border-radius: var(--radius-sm);
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+        }
+
+        .confirm-modal .confirm-actions .btn-confirm:hover {
+            background: var(--primary-dark);
+        }
+
+        .confirm-modal .confirm-actions button:active {
+            transform: scale(0.95);
+        }
+
+        /* ============================================================
+           BOTTOM NAVIGATION
+           ============================================================ */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 4px 0 calc(4px + var(--safe-bottom, 0px));
+            z-index: 100;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+            max-width: 480px;
+            margin: 0 auto;
+            height: var(--nav-height);
+        }
+
+        .bottom-nav .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1px;
+            padding: 4px 4px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            color: var(--gray-400);
+            font-family: 'Inter', sans-serif;
+            position: relative;
+            min-width: 32px;
+            flex: 1;
+            height: 100%;
+            font-size: 9px;
+            transition: all 0.2s ease;
+        }
+
+        .bottom-nav .nav-item i {
+            font-size: 18px;
+            transition: all 0.2s ease;
+        }
+
+        .bottom-nav .nav-item span {
+            font-weight: 500;
+        }
+
+        .bottom-nav .nav-item.active {
+            color: var(--primary);
+        }
+
+        .bottom-nav .nav-item.active i {
+            transform: translateY(-2px);
+        }
+
+        .bottom-nav .nav-item .nav-badge {
+            position: absolute;
+            top: 1px;
+            right: 4px;
+            background: var(--danger);
+            color: white;
+            font-size: 7px;
+            font-weight: 700;
+            padding: 1px 4px;
+            border-radius: 8px;
+            min-width: 12px;
+            text-align: center;
+        }
+
+        .bottom-nav .nav-item:active {
+            transform: scale(0.92);
+        }
+
+        /* ============================================================
+           RESPONSIVE
+           ============================================================ */
+        @media (max-width: 420px) {
+            .brand-section .logo-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 18px;
+            }
+            
+            .brand-text h1 {
+                font-size: 18px;
+            }
+            
+            .brand-text p {
+                font-size: 9px;
+            }
+            
+            .app-header {
+                padding: 10px 0 12px;
+                gap: 8px;
+            }
+            
+            .stat-card .stat-value {
+                font-size: 18px;
+            }
+            
+            .quick-actions {
+                gap: 6px;
+            }
+            
+            .quick-action {
+                padding: 10px 4px;
+            }
+            
+            .quick-action i {
+                font-size: 18px;
+            }
+            
+            .quick-action span {
+                font-size: 9px;
+            }
+            
+            .bottom-nav {
+                height: 52px;
+            }
+            .bottom-nav .nav-item {
+                padding: 2px 2px;
+                min-width: 28px;
+            }
+            .bottom-nav .nav-item i {
+                font-size: 16px;
+            }
+            .bottom-nav .nav-item span {
+                font-size: 8px;
+            }
+            .toast-modal {
+                padding: 20px 16px 16px;
+                max-width: 280px;
+            }
+            .confirm-modal {
+                padding: 20px 16px 16px;
+                max-width: 280px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .brand-section .logo-icon {
+                width: 34px;
+                height: 34px;
+                font-size: 15px;
+            }
+            
+            .brand-text h1 {
+                font-size: 16px;
+            }
+            
+            .brand-text p {
+                font-size: 8px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 6px;
+            }
+            .stat-card {
+                padding: 10px 12px;
+            }
+            .stat-card .stat-value {
+                font-size: 16px;
+            }
+            
+            .bottom-nav {
+                height: 48px;
+            }
+            .bottom-nav .nav-item i {
+                font-size: 14px;
+            }
+            .bottom-nav .nav-item span {
+                font-size: 7px;
+            }
+            .bottom-nav .nav-item {
+                padding: 2px 2px;
+                min-width: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ============================================================
+    APP CONTAINER
+    ============================================================ -->
+    <div class="app-container">
+
+        <!-- ===== HEADER (iSMART Brand) ===== -->
+        <header class="app-header">
+            <div class="brand-section">
+                <div class="logo-icon">
+                    <i class="fas fa-box"></i>
+                </div>
+                <div class="brand-text">
+                    <h1>i<span>SMART</span></h1>
+                    <p>QR-Code and ID Scan ICT Equipment Management</p>
+                </div>
+            </div>
+            <div class="user-menu">
+                <div class="user-avatar" id="userAvatar" onclick="toggleDropdown()">
+                    <span id="userInitials">AD</span>
+                </div>
+                <div class="user-dropdown" id="userDropdown">
+                    <div class="dropdown-header">
+                        <div class="name" id="dropdownName">Admin</div>
+                        <div class="email" id="dropdownEmail">admin@ismart.com</div>
+                    </div>
+                    <button class="dropdown-item" onclick="showNotifications()">
+                        <i class="fas fa-bell"></i> Notifications
+                        <span style="margin-left:auto;background:var(--danger);color:white;font-size:10px;padding:1px 8px;border-radius:10px;">3</span>
+                    </button>
+                    <button class="dropdown-item" onclick="window.location.href='settings.html'">
+                        <i class="fas fa-cog"></i> Settings
+                    </button>
+                    <div class="dropdown-divider"></div>
+                    <button class="dropdown-item" onclick="handleLogout()">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- ===== STATS ===== -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="stat-top">
+                    <span class="stat-label">Total Assets</span>
+                    <span class="stat-icon blue"><i class="fas fa-boxes"></i></span>
+                </div>
+                <div class="stat-value" id="totalAssets">--</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-top">
+                    <span class="stat-label">Available</span>
+                    <span class="stat-icon green"><i class="fas fa-check-circle"></i></span>
+                </div>
+                <div class="stat-value" id="availableAssets">--</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-top">
+                    <span class="stat-label">Borrowed</span>
+                    <span class="stat-icon yellow"><i class="fas fa-hand-holding"></i></span>
+                </div>
+                <div class="stat-value" id="borrowedAssets">--</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-top">
+                    <span class="stat-label">Maintenance</span>
+                    <span class="stat-icon red"><i class="fas fa-wrench"></i></span>
+                </div>
+                <div class="stat-value" id="maintenanceAssets">--</div>
+            </div>
+        </div>
+
+        <!-- ===== QUICK ACTIONS ===== -->
+        <div class="quick-actions">
+            <button class="quick-action" id="actionBorrow">
+                <i class="fas fa-hand-holding"></i>
+                <span>Borrow</span>
+            </button>
+            <button class="quick-action" id="actionReturn">
+                <i class="fas fa-undo-alt"></i>
+                <span>Return</span>
+            </button>
+            <button class="quick-action" id="actionAdd">
+                <i class="fas fa-plus-circle"></i>
+                <span>Add Asset</span>
+            </button>
+            <button class="quick-action" id="actionScan">
+                <i class="fas fa-qrcode"></i>
+                <span>Scan QR</span>
+            </button>
+        </div>
+
+        <!-- ===== QR SCANNER ===== -->
+        <div class="qr-scanner-container" id="qrScanner">
+            <button class="qr-close-btn" onclick="closeScanner()">&times;</button>
+            <div id="qrReader"></div>
+            <div class="qr-status">Position QR code in the frame</div>
+        </div>
+
+        <!-- ===== RECENT ACTIVITY ===== -->
+        <div class="section-header">
+            <h3><i class="fas fa-clock" style="color:var(--gray-400);margin-right:8px;"></i>Recent Activity</h3>
+            <a id="viewAllActivity">View All</a>
+        </div>
+
+        <div class="activity-list" id="activityList">
+            <!-- Rendered by JavaScript -->
+        </div>
+
+    </div>
+
+    <!-- ============================================================
+    BOTTOM NAVIGATION (6 Tabs)
+    ============================================================ -->
+    <nav class="bottom-nav">
+        <button class="nav-item active" onclick="window.location.href='dashboard.html'">
+            <i class="fas fa-th-large"></i><span>Home</span>
+        </button>
+        <button class="nav-item" onclick="window.location.href='assets.html'">
+            <i class="fas fa-boxes"></i><span>Assets</span>
+            <span class="nav-badge" id="assetBadge">0</span>
+        </button>
+        <button class="nav-item" onclick="window.location.href='borrow.html'">
+            <i class="fas fa-hand-holding"></i><span>Borrow</span>
+        </button>
+        <button class="nav-item" onclick="window.location.href='return.html'">
+            <i class="fas fa-undo-alt"></i><span>Return</span>
+        </button>
+        <button class="nav-item" onclick="window.location.href='students.html'">
+            <i class="fas fa-users"></i><span>Students</span>
+        </button>
+        <button class="nav-item" onclick="window.location.href='activity.html'">
+            <i class="fas fa-history"></i><span>Activity</span>
+        </button>
+    </nav>
+
+    <!-- ============================================================
+    MINIMALIST TOAST MODAL
+    ============================================================ -->
+    <div class="toast-overlay" id="toastOverlay">
+        <div class="toast-modal">
+            <div class="toast-icon" id="toastIcon">✅</div>
+            <div class="toast-title" id="toastTitle">Success</div>
+            <div class="toast-message" id="toastMessage">Your action was completed successfully.</div>
+            <button class="toast-close-btn" id="toastCloseBtn">Got it</button>
+        </div>
+    </div>
+
+    <!-- ============================================================
+    CONFIRMATION MODAL (Logout - iSMART Colors)
+    ============================================================ -->
+    <div class="confirm-overlay" id="confirmOverlay">
+        <div class="confirm-modal">
+            <div class="confirm-icon">🔒</div>
+            <div class="confirm-title">Confirm Logout</div>
+            <div class="confirm-message">Are you sure you want to logout from iSMART?</div>
+            <div class="confirm-actions">
+                <button class="btn-cancel" id="confirmCancel">Cancel</button>
+                <button class="btn-confirm" id="confirmOk">Logout</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        // SUPABASE CONFIGURATION
+        // ============================================================
+        const _SUPABASE_URL = 'https://zvbbnwawvbmxfygvkyaq.supabase.co';
+        const _SUPABASE_ANON_KEY = 'sb_publishable_LQd5C3G15qa-svzIDMadAw_ErT3Usmd';
+        const _supabaseClient = window.supabase.createClient(_SUPABASE_URL, _SUPABASE_ANON_KEY);
+
+        // ============================================================
+        // QR SCANNER
+        // ============================================================
+        let qrScanner = null;
+        let isScanning = false;
+
+        function openScanner() {
+            const container = document.getElementById('qrScanner');
+            container.classList.add('active');
+            startScanner();
+        }
+
+        function closeScanner() {
+            const container = document.getElementById('qrScanner');
+            container.classList.remove('active');
+            stopScanner();
+        }
+
+        function startScanner() {
+            if (qrScanner) {
+                qrScanner.clear();
+                qrScanner = null;
+            }
+
+            qrScanner = new Html5Qrcode("qrReader");
+            const config = {
+                fps: 10,
+                qrbox: { width: 200, height: 200 },
+                aspectRatio: 1.0
+            };
+
+            qrScanner.start({ facingMode: "environment" },
+                config,
+                onScanSuccess,
+                onScanError
+            ).then(() => {
+                isScanning = true;
+                console.log('📷 QR Scanner started');
+            }).catch(err => {
+                console.error('Failed to start scanner:', err);
+                showToastModal('Unable to access camera. Please allow camera permissions.', 'error', 'Camera Error');
+                closeScanner();
+            });
+        }
+
+        function stopScanner() {
+            if (qrScanner && isScanning) {
+                qrScanner.stop().then(() => {
+                    qrScanner.clear();
+                    isScanning = false;
+                    console.log('📷 QR Scanner stopped');
+                }).catch(err => console.error('Error stopping scanner:', err));
+            }
+        }
+
+        function onScanSuccess(decodedText) {
+            stopScanner();
+            closeScanner();
+            showToastModal(`QR Code scanned: ${decodedText}`, 'success', 'QR Scanned');
+            console.log('📷 QR Code:', decodedText);
+        }
+
+        function onScanError(err) {
+            console.debug('Scan error:', err);
+        }
+
+        // ============================================================
+        // DOM REFS
+        // ============================================================
+        const toastOverlay = document.getElementById('toastOverlay');
+        const toastIcon = document.getElementById('toastIcon');
+        const toastTitle = document.getElementById('toastTitle');
+        const toastMessageEl = document.getElementById('toastMessage');
+        const toastCloseBtn = document.getElementById('toastCloseBtn');
+
+        const confirmOverlay = document.getElementById('confirmOverlay');
+        const confirmOk = document.getElementById('confirmOk');
+        const confirmCancel = document.getElementById('confirmCancel');
+
+        // ============================================================
+        // MINIMALIST TOAST MODAL
+        // ============================================================
+        function showToastModal(message, type = 'info', title = '') {
+            const icons = {
+                success: 'fa-check-circle',
+                error: 'fa-exclamation-circle',
+                warning: 'fa-exclamation-triangle',
+                info: 'fa-info-circle'
+            };
+
+            const titles = {
+                success: 'Success',
+                error: 'Error',
+                warning: 'Notice',
+                info: 'Information'
+            };
+
+            toastIcon.innerHTML = `<i class="fas ${icons[type] || icons.info}"></i>`;
+            toastIcon.className = `toast-icon ${type}`;
+            toastTitle.textContent = title || titles[type] || 'Information';
+            toastMessageEl.textContent = message;
+            toastOverlay.classList.add('active');
+
+            clearTimeout(toastOverlay._timeout);
+            
+            // Don't auto-close for notifications
+            const isPersistent = title === 'Notifications' || title === 'Notification';
+            if (!isPersistent) {
+                toastOverlay._timeout = setTimeout(() => {
+                    closeToastModal();
+                }, 4000);
+            }
+        }
+
+        function closeToastModal() {
+            toastOverlay.classList.remove('active');
+            clearTimeout(toastOverlay._timeout);
+        }
+
+        toastCloseBtn.addEventListener('click', closeToastModal);
+
+        toastOverlay.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeToastModal();
+            }
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeToastModal();
+                closeConfirmModal();
+            }
+        });
+
+        // ============================================================
+        // CONFIRMATION MODAL
+        // ============================================================
+        function showConfirmModal(message, title, onConfirm) {
+            document.querySelector('.confirm-modal .confirm-title').textContent = title || 'Confirm';
+            document.querySelector('.confirm-modal .confirm-message').textContent = message || 'Are you sure?';
+            confirmOverlay.classList.add('active');
+            confirmOverlay._onConfirm = onConfirm;
+        }
+
+        function closeConfirmModal() {
+            confirmOverlay.classList.remove('active');
+            confirmOverlay._onConfirm = null;
+        }
+
+        confirmCancel.addEventListener('click', closeConfirmModal);
+
+        confirmOk.addEventListener('click', function() {
+            if (typeof confirmOverlay._onConfirm === 'function') {
+                confirmOverlay._onConfirm();
+            }
+            closeConfirmModal();
+        });
+
+        confirmOverlay.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeConfirmModal();
+            }
+        });
+
+        // ============================================================
+        // USER MENU FUNCTIONS
+        // ============================================================
+        function toggleDropdown() {
+            document.getElementById('userDropdown').classList.toggle('show');
+        }
+
+        document.addEventListener('click', function(e) {
+            const menu = document.querySelector('.user-menu');
+            if (menu && !menu.contains(e.target)) {
+                document.getElementById('userDropdown').classList.remove('show');
+            }
+        });
+
+        function showNotifications() {
+            const prefs = JSON.parse(localStorage.getItem('ismart_notifications') || '{}');
+            let notifications = [];
+            
+            if (prefs.overdue_alerts !== false) {
+                notifications.push('• Overdue Alerts: Check borrowed assets');
+            }
+            if (prefs.low_stock_alerts !== false) {
+                notifications.push('• Low Stock: Some assets are running low');
+            }
+            if (prefs.maintenance_reminders !== false) {
+                notifications.push('• Maintenance: Assets due for maintenance');
+            }
+            
+            if (notifications.length === 0) {
+                notifications.push('• All notifications are disabled');
+            }
+            
+            const message = notifications.join('\n');
+            showToastModal(message, 'info', 'Notifications');
+            document.getElementById('userDropdown').classList.remove('show');
+        }
+
+        function handleLogout() {
+            showConfirmModal(
+                'Are you sure you want to logout from iSMART?',
+                'Confirm Logout',
+                function() {
+                    localStorage.removeItem('ismart_session');
+                    showToastModal('Logged out successfully!', 'success', 'Goodbye');
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 1000);
+                }
+            );
+            document.getElementById('userDropdown').classList.remove('show');
+        }
+
+        // ============================================================
+        // LOAD USER SESSION
+        // ============================================================
+        function loadUserSession() {
+            try {
+                const session = JSON.parse(localStorage.getItem('ismart_session'));
+                if (session && session.profile) {
+                    const name = session.profile.full_name || 'System Administrator';
+                    const role = session.profile.role || 'admin';
+                    const email = session.user?.email || 'admin@ismart.com';
+                    
+                    const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+                    document.getElementById('userInitials').textContent = initials;
+                    document.getElementById('dropdownName').textContent = name;
+                    document.getElementById('dropdownEmail').textContent = email;
+                    
+                    const avatar = document.getElementById('userAvatar');
+                    avatar.className = `user-avatar ${role.toLowerCase()}`;
+                    
+                    console.log('👤 User loaded:', name, '| Initials:', initials);
+                }
+            } catch (e) {
+                console.error('Session error:', e);
+            }
+        }
+
+        // ============================================================
+        // CHECK AUTH
+        // ============================================================
+        async function checkAuth() {
+            const session = JSON.parse(localStorage.getItem('ismart_session'));
+            
+            if (!session) {
+                console.log('🔒 No session found, redirecting to login');
+                window.location.href = 'login.html';
+                return false;
+            }
+
+            try {
+                const { data, error } = await _supabaseClient.auth.getUser();
+                
+                if (error || !data.user) {
+                    console.log('🔒 Invalid session, redirecting to login');
+                    localStorage.removeItem('ismart_session');
+                    window.location.href = 'login.html';
+                    return false;
+                }
+                
+                console.log('✅ Session valid for:', data.user.email);
+                
+                if (session.user?.id !== data.user.id) {
+                    session.user = data.user;
+                    localStorage.setItem('ismart_session', JSON.stringify(session));
+                }
+                
+                return true;
+            } catch (e) {
+                console.error('❌ Auth check error:', e);
+                return false;
+            }
+        }
+
+        // ============================================================
+        // FORMAT TIME AGO
+        // ============================================================
+        function formatTimeAgo(timestamp) {
+            const now = new Date();
+            const then = new Date(timestamp);
+            const diff = Math.floor((now - then) / 1000);
+            
+            if (diff < 60) return diff + 's ago';
+            if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+            if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+            if (diff < 604800) return Math.floor(diff / 86400) + 'd ago';
+            return then.toLocaleDateString();
+        }
+
+        // ============================================================
+        // FETCH DASHBOARD STATS
+        // ============================================================
+        async function fetchDashboardStats() {
+            try {
+                const { data: allAssets, error: allError } = await _supabaseClient
+                    .from('assets')
+                    .select('id, total_quantity, available_quantity, condition');
+                
+                if (allError) throw allError;
+                
+                const total = allAssets ? allAssets.length : 0;
+                const available = allAssets ? allAssets.reduce((sum, a) => {
+                    if (a.condition === 'Good' || a.condition === 'Available') {
+                        return sum + a.available_quantity;
+                    }
+                    return sum;
+                }, 0) : 0;
+                const borrowed = allAssets ? allAssets.reduce((sum, a) => {
+                    return sum + (a.total_quantity - a.available_quantity);
+                }, 0) : 0;
+                const maintenance = allAssets ? allAssets.filter(a => 
+                    a.condition === 'Damaged' || a.condition === 'Under Maintenance'
+                ).length : 0;
+                
+                return { total, available, borrowed, maintenance };
+                
+            } catch (error) {
+                console.error('Error fetching stats:', error);
+                return { total: 0, available: 0, borrowed: 0, maintenance: 0 };
+            }
+        }
+
+        // ============================================================
+        // FETCH RECENT ACTIVITY
+        // ============================================================
+        async function fetchRecentActivity() {
+            try {
+                const { data, error } = await _supabaseClient
+                    .from('borrowing_transactions')
+                    .select(`
+                        id,
+                        borrow_date,
+                        quantity,
+                        status,
+                        students:student_id (full_name, grade_level, section),
+                        assets:asset_id (name)
+                    `)
+                    .order('borrow_date', { ascending: false })
+                    .limit(5);
+                
+                if (error) throw error;
+                
+                if (!data || data.length === 0) {
+                    return [];
+                }
+                
+                return data.map(item => {
+                    const student = item.students || { full_name: 'Unknown', grade_level: '', section: '' };
+                    const asset = item.assets || { name: 'Unknown Asset' };
+                    const status = item.status === 'Returned' ? 'return' : 'borrow';
+                    const title = status === 'return' ? `${asset.name} (Returned)` : asset.name;
+                    const sub = status === 'return' 
+                        ? `Returned by ${student.full_name} · ${student.grade_level} ${student.section}` 
+                        : `Borrowed by ${student.full_name} · ${student.grade_level} ${student.section}`;
+                    return {
+                        action: status,
+                        title: title,
+                        sub: sub,
+                        time: item.borrow_date
+                    };
+                });
+                
+            } catch (error) {
+                console.error('Error fetching activity:', error);
+                return [];
+            }
+        }
+
+        // ============================================================
+        // UPDATE BADGE
+        // ============================================================
+        async function updateBadge() {
+            try {
+                const { count, error } = await _supabaseClient
+                    .from('assets')
+                    .select('*', { count: 'exact', head: true });
+                
+                if (!error) {
+                    document.getElementById('assetBadge').textContent = count || 0;
+                }
+            } catch (e) {
+                console.error('Badge error:', e);
+            }
+        }
+
+        // ============================================================
+        // RENDER STATS
+        // ============================================================
+        function renderStats(stats) {
+            document.getElementById('totalAssets').textContent = stats.total;
+            document.getElementById('availableAssets').textContent = stats.available;
+            document.getElementById('borrowedAssets').textContent = stats.borrowed;
+            document.getElementById('maintenanceAssets').textContent = stats.maintenance;
+        }
+
+        // ============================================================
+        // RENDER ACTIVITY
+        // ============================================================
+        function renderActivity(activities) {
+            const container = document.getElementById('activityList');
+            
+            if (!activities || activities.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-clock"></i>
+                        <h3>No Recent Activity</h3>
+                        <p>Start borrowing and returning assets to see activity here.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = activities.map(a => {
+                const iconMap = {
+                    'borrow': 'fa-arrow-right',
+                    'return': 'fa-arrow-left'
+                };
+                const colorMap = {
+                    'borrow': 'borrow',
+                    'return': 'return'
+                };
+                const icon = iconMap[a.action] || 'fa-circle';
+                const color = colorMap[a.action] || 'info';
+                
+                return `
+                    <div class="activity-item">
+                        <div class="icon ${color}"><i class="fas ${icon}"></i></div>
+                        <div class="info">
+                            <div class="title">${a.title}</div>
+                            <div class="sub">${a.sub}</div>
+                        </div>
+                        <div class="time">${formatTimeAgo(a.time)}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ============================================================
+        // QUICK ACTIONS
+        // ============================================================
+        document.getElementById('actionBorrow').addEventListener('click', function() {
+            window.location.href = 'borrow.html';
+        });
+
+        document.getElementById('actionReturn').addEventListener('click', function() {
+            window.location.href = 'return.html';
+        });
+
+        document.getElementById('actionAdd').addEventListener('click', function() {
+            window.location.href = 'assets.html';
+        });
+
+        document.getElementById('actionScan').addEventListener('click', function() {
+            openScanner();
+        });
+
+        // ============================================================
+        // VIEW ALL ACTIVITY
+        // ============================================================
+        document.getElementById('viewAllActivity').addEventListener('click', function() {
+            window.location.href = 'activity.html';
+        });
+
+        // ============================================================
+        // INIT DASHBOARD
+        // ============================================================
+        async function initDashboard() {
+            const isAuth = await checkAuth();
+            if (!isAuth) return;
+            
+            loadUserSession();
+            
+            document.getElementById('activityList').innerHTML = `
+                <div style="text-align:center;padding:20px;color:var(--gray-400);">
+                    <i class="fas fa-spinner fa-spin"></i> Loading...
+                </div>
+            `;
+            
+            try {
+                const stats = await fetchDashboardStats();
+                renderStats(stats);
+                
+                const activities = await fetchRecentActivity();
+                renderActivity(activities);
+                
+                await updateBadge();
+                
+                console.log('📊 Dashboard loaded successfully');
+                console.log(`📦 Total Assets: ${stats.total}`);
+                console.log(`✅ Available: ${stats.available}`);
+                console.log(`📋 Borrowed: ${stats.borrowed}`);
+                console.log(`🔧 Maintenance: ${stats.maintenance}`);
+            } catch (error) {
+                console.error('Dashboard error:', error);
+                showToastModal('Error loading dashboard data', 'error', 'Error');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', initDashboard);
+    </script>
+
+</body>
+</html>

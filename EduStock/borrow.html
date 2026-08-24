@@ -1,0 +1,3519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>iSMART - Borrow</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="nav.css" />
+    
+    <!-- QR Scanner Library -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <!-- Tesseract.js for OCR -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        /* ============================================================
+           RESET & BASE
+           ============================================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #4F46E5;
+            --primary-dark: #4338CA;
+            --primary-light: #818CF8;
+            --primary-bg: #EEF2FF;
+            --success: #10B981;
+            --success-bg: #ECFDF5;
+            --warning: #F59E0B;
+            --warning-bg: #FFFBEB;
+            --danger: #EF4444;
+            --danger-bg: #FEF2F2;
+            --gray-50: #F9FAFB;
+            --gray-100: #F3F4F6;
+            --gray-200: #E5E7EB;
+            --gray-300: #D1D5DB;
+            --gray-400: #9CA3AF;
+            --gray-500: #6B7280;
+            --gray-600: #4B5563;
+            --gray-700: #374151;
+            --gray-800: #1F2937;
+            --gray-900: #111827;
+            --radius: 16px;
+            --radius-sm: 10px;
+            --shadow: 0 2px 8px rgba(0,0,0,0.08);
+            --shadow-md: 0 4px 16px rgba(0,0,0,0.12);
+            --nav-height: 60px;
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-800);
+            padding: 0 0 calc(var(--nav-height) + 16px) 0;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 16px 16px 24px;
+        }
+
+        /* ============================================================
+           iSMART BRAND HEADER
+           ============================================================ */
+        .app-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0 16px;
+            border-bottom: 1px solid var(--gray-200);
+            margin-bottom: 16px;
+            gap: 12px;
+        }
+
+        .brand-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .brand-section .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--primary);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 22px;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+        }
+
+        .brand-text {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .brand-text h1 {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--gray-900);
+            letter-spacing: -0.5px;
+            line-height: 1.2;
+        }
+
+        .brand-text h1 span {
+            color: var(--primary);
+        }
+
+        .brand-text p {
+            font-size: 10px;
+            color: var(--gray-400);
+            font-weight: 400;
+            line-height: 1.3;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* ============================================================
+           USER MENU
+           ============================================================ */
+        .user-menu {
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: transparent;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid var(--gray-300);
+            user-select: none;
+            position: relative;
+        }
+
+        .user-avatar:hover {
+            border-color: var(--primary);
+            background: var(--primary-bg);
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+        }
+
+        .user-avatar:active {
+            transform: scale(0.92);
+        }
+
+        .user-dropdown {
+            display: none;
+            position: absolute;
+            top: 48px;
+            right: 0;
+            background: white;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--gray-200);
+            box-shadow: var(--shadow-md);
+            min-width: 200px;
+            overflow: hidden;
+            z-index: 50;
+            animation: dropdownSlide 0.2s ease;
+        }
+
+        .user-dropdown.show {
+            display: block;
+        }
+
+        @keyframes dropdownSlide {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .user-dropdown .dropdown-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--gray-100);
+            background: var(--gray-50);
+        }
+
+        .user-dropdown .dropdown-header .name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .user-dropdown .dropdown-header .email {
+            font-size: 12px;
+            color: var(--gray-500);
+        }
+
+        .user-dropdown .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--gray-700);
+            font-size: 13px;
+            font-weight: 500;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .user-dropdown .dropdown-item:hover {
+            background: var(--gray-50);
+            color: var(--primary);
+        }
+
+        .user-dropdown .dropdown-item i {
+            width: 18px;
+            font-size: 14px;
+            color: var(--gray-400);
+        }
+
+        .user-dropdown .dropdown-item:hover i {
+            color: var(--primary);
+        }
+
+        .user-dropdown .dropdown-divider {
+            height: 1px;
+            background: var(--gray-100);
+            margin: 4px 0;
+        }
+
+        .user-dropdown .dropdown-item.danger {
+            color: var(--danger);
+        }
+
+        .user-dropdown .dropdown-item.danger:hover {
+            background: var(--danger-bg);
+            color: var(--danger);
+        }
+
+        .user-dropdown .dropdown-item.danger:hover i {
+            color: var(--danger);
+        }
+
+        /* ============================================================
+           STEP INDICATOR
+           ============================================================ */
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 14px;
+            position: relative;
+            padding: 0 10px;
+        }
+
+        .step-indicator::before {
+            content: '';
+            position: absolute;
+            top: 16px;
+            left: 40px;
+            right: 40px;
+            height: 2px;
+            background: var(--gray-200);
+            z-index: 0;
+        }
+
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 1;
+            flex: 1;
+        }
+
+        .step .step-number {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--gray-200);
+            color: var(--gray-500);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 12px;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .step.active .step-number {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-bg);
+        }
+
+        .step.completed .step-number {
+            background: var(--success);
+            color: white;
+            border-color: var(--success);
+        }
+
+        .step .step-label {
+            font-size: 8px;
+            color: var(--gray-400);
+            margin-top: 3px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .step.active .step-label {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .step.completed .step-label {
+            color: var(--success);
+        }
+
+        /* ============================================================
+           SEARCH SECTION
+           ============================================================ */
+        .search-section {
+            background: white;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--gray-200);
+            padding: 14px;
+            margin-bottom: 12px;
+            box-shadow: var(--shadow);
+        }
+
+        .search-section .section-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .search-section .section-title i {
+            color: var(--primary);
+            font-size: 14px;
+        }
+
+        .search-hint {
+            font-size: 10px;
+            color: var(--gray-400);
+            margin-bottom: 6px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .search-hint span {
+            background: var(--gray-100);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 9px;
+            color: var(--gray-600);
+        }
+
+        .search-input-group {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .search-input-group input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            background: white;
+            min-width: 100px;
+            transition: all 0.3s ease;
+        }
+
+        .search-input-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px var(--primary-bg);
+        }
+
+        .search-input-group input:disabled {
+            background: var(--gray-100);
+            color: var(--gray-500);
+        }
+
+        .search-input-group button {
+            padding: 8px 12px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .search-input-group button:active {
+            transform: scale(0.95);
+        }
+
+        .search-input-group button.secondary {
+            background: var(--gray-100);
+            color: var(--gray-700);
+        }
+
+        .search-input-group button.scan-btn {
+            background: var(--success);
+            color: white;
+        }
+
+        /* ============================================================
+           BORROWER TYPE SELECTOR
+           ============================================================ */
+        .borrower-type {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .borrower-type button {
+            flex: 1;
+            padding: 8px;
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            background: white;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--gray-500);
+        }
+
+        .borrower-type button.active {
+            border-color: var(--primary);
+            background: var(--primary-bg);
+            color: var(--primary);
+        }
+
+        .borrower-type button:active {
+            transform: scale(0.95);
+        }
+
+        /* ============================================================
+           FACULTY MANUAL ENTRY
+           ============================================================ */
+        .faculty-entry {
+            display: none;
+            margin-top: 8px;
+        }
+
+        .faculty-entry.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .faculty-entry input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            margin-bottom: 6px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .faculty-entry input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .faculty-entry .faculty-add-btn {
+            width: 100%;
+            padding: 8px;
+            background: var(--success);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            margin-top: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .faculty-entry .faculty-add-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* ============================================================
+           MANUAL ENTRY FORM
+           ============================================================ */
+        .manual-entry {
+            background: var(--gray-50);
+            border-radius: var(--radius-sm);
+            padding: 10px;
+            margin-top: 8px;
+            border: 1px dashed var(--gray-300);
+            display: none;
+        }
+
+        .manual-entry.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .manual-entry .manual-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: 6px;
+        }
+
+        .manual-entry .manual-title i {
+            color: var(--primary);
+        }
+
+        .manual-entry .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            margin-bottom: 6px;
+        }
+
+        .manual-entry .form-row input,
+        .manual-entry .form-row select {
+            width: 100%;
+            padding: 6px 10px;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            font-family: 'Inter', sans-serif;
+            font-size: 12px;
+            background: white;
+        }
+
+        .manual-entry .form-row input:focus,
+        .manual-entry .form-row select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .manual-entry .manual-actions {
+            display: flex;
+            gap: 6px;
+            margin-top: 6px;
+            justify-content: flex-end;
+        }
+
+        .manual-entry .manual-actions button {
+            padding: 5px 12px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .manual-entry .manual-actions .add-btn {
+            background: var(--success);
+            color: white;
+        }
+
+        .manual-entry .manual-actions .cancel-btn {
+            background: var(--gray-200);
+            color: var(--gray-700);
+        }
+
+        /* ============================================================
+           QR SCANNER CONTAINER
+           ============================================================ */
+        .qr-scanner-container {
+            display: none;
+            margin-top: 8px;
+            padding: 10px;
+            background: var(--gray-900);
+            border-radius: var(--radius-sm);
+            position: relative;
+        }
+
+        .qr-scanner-container.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .qr-scanner-container #qr-reader {
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .qr-scanner-container .qr-close-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            font-size: 18px;
+            padding: 4px 8px;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .qr-scanner-container .qr-status {
+            color: white;
+            text-align: center;
+            padding: 6px;
+            font-size: 11px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+        }
+
+        /* ============================================================
+           CAMERA CONTAINER
+           ============================================================ */
+        .camera-container {
+            display: none;
+            margin-top: 8px;
+            padding: 10px;
+            background: var(--gray-900);
+            border-radius: var(--radius-sm);
+            position: relative;
+            text-align: center;
+        }
+
+        .camera-container.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .camera-container video {
+            width: 100%;
+            border-radius: var(--radius-sm);
+            max-height: 280px;
+            object-fit: cover;
+            background: #000;
+        }
+
+        .camera-container .camera-controls {
+            display: flex;
+            gap: 6px;
+            margin-top: 6px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .camera-container .camera-controls button {
+            padding: 6px 14px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 12px;
+            cursor: pointer;
+            flex: 1;
+            min-width: 80px;
+        }
+
+        .camera-container .camera-controls .capture-btn {
+            background: var(--success);
+            color: white;
+        }
+
+        .camera-container .camera-controls .close-btn {
+            background: var(--danger);
+            color: white;
+        }
+
+        .camera-container .camera-status {
+            color: white;
+            text-align: center;
+            padding: 6px;
+            font-size: 11px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+            margin-top: 6px;
+        }
+
+        /* ============================================================
+           OCR RESULTS
+           ============================================================ */
+        .ocr-result {
+            background: white;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--gray-200);
+            padding: 10px;
+            margin-top: 8px;
+            display: none;
+        }
+
+        .ocr-result.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .ocr-result .ocr-field {
+            display: flex;
+            justify-content: space-between;
+            padding: 3px 0;
+            font-size: 12px;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .ocr-result .ocr-field:last-child {
+            border-bottom: none;
+        }
+
+        .ocr-result .ocr-field .label {
+            color: var(--gray-500);
+        }
+
+        .ocr-result .ocr-field .value {
+            font-weight: 500;
+            color: var(--gray-800);
+        }
+
+        .ocr-result .ocr-actions {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .ocr-result .ocr-actions button {
+            padding: 4px 12px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 11px;
+            cursor: pointer;
+        }
+
+        .ocr-result .ocr-actions .confirm-btn {
+            background: var(--success);
+            color: white;
+        }
+
+        .ocr-result .ocr-actions .retry-btn {
+            background: var(--gray-100);
+            color: var(--gray-700);
+        }
+
+        .ocr-result .ocr-actions .manual-btn {
+            background: var(--warning);
+            color: white;
+        }
+
+        /* ============================================================
+           RESULTS LIST
+           ============================================================ */
+        .results-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-top: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .result-item {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .result-item:active {
+            transform: scale(0.98);
+        }
+
+        .result-item.selected {
+            border-color: var(--primary);
+            background: var(--primary-bg);
+        }
+
+        .result-item .info .name {
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--gray-800);
+        }
+
+        .result-item .info .details {
+            font-size: 11px;
+            color: var(--gray-500);
+        }
+
+        .result-item .status-badge {
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .result-item .status-badge.available {
+            background: var(--success-bg);
+            color: var(--success);
+        }
+
+        .result-item .status-badge.borrowed {
+            background: var(--warning-bg);
+            color: var(--warning);
+        }
+
+        .result-item .status-badge.select {
+            background: var(--primary-bg);
+            color: var(--primary);
+        }
+
+        /* ============================================================
+           SELECTED CARD
+           ============================================================ */
+        .selected-card {
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+            margin-bottom: 12px;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .selected-card.show {
+            display: block;
+        }
+
+        .selected-card .label {
+            font-size: 9px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .selected-card .name {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        .selected-card .details {
+            font-size: 12px;
+            color: var(--gray-500);
+        }
+
+        .selected-card .remove-btn {
+            background: none;
+            border: none;
+            color: var(--gray-400);
+            cursor: pointer;
+            font-size: 13px;
+            float: right;
+            padding: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .selected-card .remove-btn:hover {
+            color: var(--danger);
+        }
+
+        .selected-card.student {
+            background: var(--success-bg);
+            border: 2px solid var(--success);
+        }
+
+        .selected-card.student .label {
+            color: var(--success);
+        }
+
+        .selected-card.faculty {
+            background: var(--primary-bg);
+            border: 2px solid var(--primary);
+        }
+
+        .selected-card.faculty .label {
+            color: var(--primary);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ============================================================
+           SELECTED ASSETS LIST (Step 2)
+           ============================================================ */
+        .asset-list-container {
+            margin-top: 8px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .asset-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 10px;
+            background: var(--gray-50);
+            border-radius: var(--radius-sm);
+            margin-bottom: 4px;
+            border: 1px solid var(--gray-100);
+        }
+
+        .asset-list-item .item-name {
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .asset-list-item .item-brand {
+            font-size: 11px;
+            color: var(--gray-400);
+            margin-left: 6px;
+        }
+
+        .asset-list-item .item-qty {
+            font-size: 12px;
+            color: var(--gray-500);
+        }
+
+        .asset-list-item .remove-asset-btn {
+            background: none;
+            border: none;
+            color: var(--gray-400);
+            cursor: pointer;
+            font-size: 14px;
+            padding: 2px 6px;
+            transition: all 0.3s ease;
+        }
+
+        .asset-list-item .remove-asset-btn:hover {
+            color: var(--danger);
+        }
+
+        /* ============================================================
+           CONFIRM SECTION
+           ============================================================ */
+        .confirm-section {
+            background: white;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--gray-200);
+            padding: 14px;
+            box-shadow: var(--shadow);
+            display: none;
+        }
+
+        .confirm-section.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .confirm-section .confirm-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 10px;
+        }
+
+        .confirm-section .confirm-title i {
+            color: var(--success);
+            margin-right: 6px;
+        }
+
+        .confirm-section .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            font-size: 13px;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .confirm-section .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .confirm-section .info-row .label {
+            color: var(--gray-500);
+        }
+
+        .confirm-section .info-row .value {
+            font-weight: 500;
+            color: var(--gray-800);
+        }
+
+        /* Asset quantity inputs in confirm */
+        .confirm-asset-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .confirm-asset-item:last-child {
+            border-bottom: none;
+        }
+
+        .confirm-asset-item .asset-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--gray-800);
+        }
+
+        .confirm-asset-item .asset-qty-input {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .confirm-asset-item .asset-qty-input label {
+            font-size: 12px;
+            color: var(--gray-500);
+        }
+
+        .confirm-asset-item .asset-qty-input input {
+            width: 60px;
+            padding: 4px 6px;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            text-align: center;
+        }
+
+        .confirm-asset-item .asset-qty-input input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .confirm-asset-item .asset-available {
+            font-size: 11px;
+            color: var(--gray-400);
+        }
+
+        .confirm-section .form-group {
+            margin-top: 10px;
+        }
+
+        .confirm-section .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: 3px;
+        }
+
+        .confirm-section .form-group input,
+        .confirm-section .form-group select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            background: white;
+            transition: all 0.3s ease;
+        }
+
+        .confirm-section .form-group input:focus,
+        .confirm-section .form-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px var(--primary-bg);
+        }
+
+        .confirm-section .btn-confirm {
+            width: 100%;
+            padding: 10px;
+            background: var(--success);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .confirm-section .btn-confirm:active {
+            transform: scale(0.95);
+        }
+
+        .confirm-section .btn-confirm:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* ============================================================
+           DATE/TIME DISPLAY
+           ============================================================ */
+        .datetime-display {
+            font-size: 12px;
+            color: var(--gray-500);
+            padding: 8px 12px;
+            background: var(--gray-50);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--gray-200);
+        }
+
+        .datetime-display strong {
+            color: var(--gray-700);
+        }
+
+        /* ============================================================
+           PURPOSE OTHER INPUT
+           ============================================================ */
+        .purpose-other-input {
+            display: none;
+            margin-top: 6px;
+        }
+
+        .purpose-other-input.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .purpose-other-input input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            background: white;
+            transition: all 0.3s ease;
+        }
+
+        .purpose-other-input input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        /* ============================================================
+           ASSET CONDITION
+           ============================================================ */
+        .asset-condition {
+            font-size: 10px;
+            font-weight: 600;
+            padding: 1px 6px;
+            border-radius: 8px;
+            margin-left: 4px;
+        }
+
+        .asset-condition.good {
+            background: var(--success-bg);
+            color: var(--success);
+        }
+
+        .asset-condition.damaged {
+            background: var(--danger-bg);
+            color: var(--danger);
+        }
+
+        .asset-condition.maintenance {
+            background: var(--warning-bg);
+            color: var(--warning);
+        }
+
+        .asset-condition.lost {
+            background: var(--gray-200);
+            color: var(--gray-600);
+        }
+
+        /* ============================================================
+           BADGES
+           ============================================================ */
+        .badge {
+            font-size: 9px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: auto;
+        }
+
+        .badge-pending {
+            background: var(--gray-100);
+            color: var(--gray-400);
+        }
+
+        .badge-done {
+            background: var(--success-bg);
+            color: var(--success);
+        }
+
+        /* ============================================================
+           EMPTY STATE
+           ============================================================ */
+        .empty-state {
+            text-align: center;
+            padding: 16px;
+            color: var(--gray-500);
+            font-size: 13px;
+        }
+
+        .empty-state i {
+            font-size: 28px;
+            color: var(--gray-300);
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        /* ============================================================
+           FULL LIST
+           ============================================================ */
+        .full-list-container {
+            margin-top: 8px;
+            max-height: 150px;
+            overflow-y: auto;
+            border-top: 1px solid var(--gray-200);
+            padding-top: 8px;
+        }
+
+        .full-list-container .list-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .full-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 10px;
+            border-bottom: 1px solid var(--gray-100);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .full-list-item:active {
+            transform: scale(0.98);
+        }
+
+        .full-list-item .item-name {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--gray-800);
+        }
+
+        .full-list-item .item-details {
+            font-size: 10px;
+            color: var(--gray-500);
+        }
+
+        .full-list-item .item-status {
+            font-size: 9px;
+            font-weight: 600;
+            padding: 1px 6px;
+            border-radius: 8px;
+        }
+
+        .full-list-item .item-status.available {
+            background: var(--success-bg);
+            color: var(--success);
+        }
+
+        .full-list-item .item-status.borrowed {
+            background: var(--warning-bg);
+            color: var(--warning);
+        }
+
+        /* ============================================================
+           TOAST
+           ============================================================ */
+        .toast {
+            position: fixed;
+            bottom: calc(var(--nav-height) + 16px);
+            left: 16px;
+            right: 16px;
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 10px 14px;
+            border-radius: var(--radius-sm);
+            color: white;
+            font-weight: 500;
+            font-size: 12px;
+            box-shadow: var(--shadow-md);
+            z-index: 1000;
+            animation: slideUp 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toast.hidden {
+            display: none;
+        }
+
+        .toast.success {
+            background: var(--success);
+        }
+        .toast.error {
+            background: var(--danger);
+        }
+        .toast.warning {
+            background: var(--warning);
+        }
+        .toast.info {
+            background: var(--primary);
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .toast .close-toast {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            margin-left: auto;
+            opacity: 0.7;
+        }
+
+        .toast .close-toast:hover {
+            opacity: 1;
+        }
+
+        /* ============================================================
+           LOADING OVERLAY
+           ============================================================ */
+        .spinner-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 300;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 12px;
+            color: white;
+        }
+
+        .spinner-overlay.active {
+            display: flex;
+        }
+
+        .spinner-overlay .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .spinner-overlay .spinner-text {
+            font-size: 13px;
+            font-weight: 500;
+            text-align: center;
+            padding: 0 20px;
+        }
+
+        /* ============================================================
+           BOTTOM NAVIGATION
+           ============================================================ */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 4px 0 calc(4px + var(--safe-bottom, 0px));
+            z-index: 100;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+            max-width: 480px;
+            margin: 0 auto;
+            height: var(--nav-height);
+        }
+
+        .bottom-nav .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1px;
+            padding: 4px 6px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            color: var(--gray-400);
+            font-family: 'Inter', sans-serif;
+            position: relative;
+            min-width: 36px;
+            flex: 1;
+            height: 100%;
+            font-size: 9px;
+            transition: all 0.2s ease;
+        }
+
+        .bottom-nav .nav-item i {
+            font-size: 18px;
+            transition: all 0.2s ease;
+        }
+
+        .bottom-nav .nav-item span {
+            font-weight: 500;
+        }
+
+        .bottom-nav .nav-item.active {
+            color: var(--primary);
+        }
+
+        .bottom-nav .nav-item.active i {
+            transform: translateY(-2px);
+        }
+
+        .bottom-nav .nav-item .nav-badge {
+            position: absolute;
+            top: 1px;
+            right: 4px;
+            background: var(--danger);
+            color: white;
+            font-size: 7px;
+            font-weight: 700;
+            padding: 1px 4px;
+            border-radius: 8px;
+            min-width: 12px;
+            text-align: center;
+        }
+
+        .bottom-nav .nav-item:active {
+            transform: scale(0.92);
+        }
+
+        /* ============================================================
+           RESPONSIVE
+           ============================================================ */
+        @media (max-width: 420px) {
+            .bottom-nav {
+                height: 52px;
+            }
+            .bottom-nav .nav-item {
+                padding: 2px 4px;
+                min-width: 32px;
+            }
+            .bottom-nav .nav-item i {
+                font-size: 16px;
+            }
+            .bottom-nav .nav-item span {
+                font-size: 8px;
+            }
+            .search-input-group input {
+                min-width: 70px;
+                font-size: 12px;
+            }
+            .search-input-group button {
+                font-size: 11px;
+                padding: 6px 10px;
+            }
+            .camera-container video {
+                max-height: 200px;
+            }
+            .manual-entry .form-row {
+                grid-template-columns: 1fr;
+            }
+            .borrower-type button {
+                font-size: 12px;
+                padding: 6px;
+            }
+            .confirm-asset-item {
+                flex-wrap: wrap;
+                gap: 4px;
+            }
+            .confirm-asset-item .asset-qty-input input {
+                width: 50px;
+            }
+            .brand-section .logo-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 18px;
+            }
+            .brand-text h1 {
+                font-size: 18px;
+            }
+            .brand-text p {
+                font-size: 9px;
+            }
+            .app-header {
+                padding: 10px 0 12px;
+                gap: 8px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .bottom-nav {
+                height: 48px;
+            }
+            .bottom-nav .nav-item i {
+                font-size: 14px;
+            }
+            .bottom-nav .nav-item span {
+                font-size: 7px;
+            }
+            .bottom-nav .nav-item {
+                padding: 2px 2px;
+                min-width: 28px;
+            }
+            .brand-section .logo-icon {
+                width: 34px;
+                height: 34px;
+                font-size: 15px;
+            }
+            .brand-text h1 {
+                font-size: 16px;
+            }
+            .brand-text p {
+                font-size: 8px;
+            }
+        }
+        /* ============================================================
+   CAPTURED PREVIEW
+   ============================================================ */
+.captured-preview {
+    margin-top: 6px;
+    padding: 4px;
+    background: rgba(255,255,255,0.05);
+    border-radius: var(--radius-sm);
+}
+
+.captured-preview img {
+    width: 100%;
+    border-radius: var(--radius-sm);
+    margin-top: 4px;
+    max-height: 150px;
+    object-fit: contain;
+    background: #000;
+}
+
+.captured-preview .preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2px 4px;
+}
+
+.captured-preview .preview-header .status {
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.captured-preview .preview-header .status.loading {
+    color: var(--gray-400);
+}
+
+.captured-preview .preview-header .status.done {
+    color: var(--success);
+}
+
+.captured-preview .preview-header .status.error {
+    color: var(--danger);
+}
+/* ============================================================
+   CAPTURED PREVIEW IN CAMERA FRAME
+   ============================================================ */
+#capturedPreview {
+    width: 100%;
+    border-radius: var(--radius-sm);
+    max-height: 280px;
+    object-fit: contain;
+    background: #000;
+    display: none;
+}
+    </style>
+</head>
+<body>
+
+    <!-- ============================================================
+    LOADING OVERLAY
+    ============================================================ -->
+    <div class="spinner-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <div class="spinner-text" id="loadingText">Processing...</div>
+    </div>
+
+    <!-- ============================================================
+    APP CONTAINER
+    ============================================================ -->
+    <div class="app-container">
+
+        <!-- ===== HEADER ===== -->
+        <header class="app-header">
+            <div class="brand-section">
+                <div class="logo-icon">
+                    <i class="fas fa-box"></i>
+                </div>
+                <div class="brand-text">
+                    <h1>i<span>SMART</span></h1>
+                    <p>QR-Code and ID Scan ICT Equipment Management</p>
+                </div>
+            </div>
+            <div class="user-menu">
+                <div class="user-avatar" id="userAvatar" onclick="toggleDropdown()">
+                    <span id="userInitials">AD</span>
+                </div>
+                <div class="user-dropdown" id="userDropdown">
+                    <div class="dropdown-header">
+                        <div class="name" id="dropdownName">Admin</div>
+                        <div class="email" id="dropdownEmail">admin@edustock.com</div>
+                    </div>
+                    <button class="dropdown-item" onclick="showNotifications()">
+                        <i class="fas fa-bell"></i> Notifications
+                        <span style="margin-left:auto;background:var(--danger);color:white;font-size:10px;padding:1px 8px;border-radius:10px;">3</span>
+                    </button>
+                    <button class="dropdown-item" onclick="window.location.href='settings.html'">
+                        <i class="fas fa-cog"></i> Settings
+                    </button>
+                    <div class="dropdown-divider"></div>
+                    <button class="dropdown-item danger" onclick="handleLogout()">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- ===== STEP INDICATOR ===== -->
+        <div class="step-indicator">
+            <div class="step active" id="step1">
+                <div class="step-number">1</div>
+                <div class="step-label">Borrower</div>
+            </div>
+            <div class="step" id="step2">
+                <div class="step-number">2</div>
+                <div class="step-label">Assets</div>
+            </div>
+            <div class="step" id="step3">
+                <div class="step-number">3</div>
+                <div class="step-label">Confirm</div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+        STEP 1: FIND BORROWER
+        ============================================================ -->
+        <div id="step1Content">
+
+            <div class="search-section">
+                <div class="borrower-type">
+                    <button class="active" id="borrowerStudent" onclick="setBorrowerType('student')">Student</button>
+                    <button id="borrowerFaculty" onclick="setBorrowerType('faculty')">Faculty</button>
+                </div>
+
+                <!-- Student Search -->
+                <div id="studentSearchSection">
+                    <div class="section-title">
+                        <i class="fas fa-user-graduate"></i> Find Student
+                        <span id="studentBadge" class="badge badge-pending">Pending</span>
+                    </div>
+
+                    <div class="search-input-group">
+                        <input type="text" id="studentSearch" placeholder="Search by LRN, Name, Grade, Section..." />
+                        <button onclick="searchStudents()"><i class="fas fa-search"></i></button>
+                        <button class="scan-btn" onclick="toggleIDScanner()" title="Scan ID Card">
+                            <i class="fas fa-camera"></i>
+                        </button>
+                        <button class="scan-btn" onclick="toggleStudentScanner()" title="Scan QR Code">
+                            <i class="fas fa-qrcode"></i>
+                        </button>
+                    </div>
+
+                    <div class="camera-container" id="cameraContainer">
+                        <video id="video" autoplay playsinline></video>
+                        <div class="camera-controls">
+                            <button class="capture-btn" onclick="captureID()">
+                                <i class="fas fa-camera"></i> Capture
+                            </button>
+                            <button class="close-btn" onclick="closeIDScanner()">
+                                <i class="fas fa-times"></i> Close
+                            </button>
+                        </div>
+                        <div class="camera-status">📷 Position the student ID card clearly in the frame</div>
+                    </div>
+
+                    <div class="qr-scanner-container" id="studentScanner">
+                        <button class="qr-close-btn" onclick="toggleStudentScanner()">&times;</button>
+                        <div id="studentQrReader"></div>
+                        <div class="qr-status">📷 Position the student's ID QR code in the frame</div>
+                    </div>
+
+                    <div class="ocr-result" id="ocrResult">
+                        <div class="ocr-field">
+                            <span class="label">Name</span>
+                            <span class="value" id="ocrName">-</span>
+                        </div>
+                        <div class="ocr-field">
+                            <span class="label">LRN</span>
+                            <span class="value" id="ocrLRN">-</span>
+                        </div>
+                        <div class="ocr-field">
+                            <span class="label">Grade</span>
+                            <span class="value" id="ocrGrade">-</span>
+                        </div>
+                        <div class="ocr-field">
+                            <span class="label">Section</span>
+                            <span class="value" id="ocrSection">-</span>
+                        </div>
+                        <div class="ocr-actions">
+                            <button class="retry-btn" onclick="retryOCR()">Retry</button>
+                            <button class="manual-btn" onclick="showManualEntry()">Manual</button>
+                            <button class="confirm-btn" onclick="confirmOCR()">Confirm</button>
+                        </div>
+                    </div>
+
+                    <div class="manual-entry" id="manualEntry">
+                        <div class="manual-title">
+                            <i class="fas fa-edit"></i> Enter Student Details
+                        </div>
+                        <div class="form-row">
+                            <input type="text" id="manualLRN" placeholder="LRN (12 digits)" maxlength="12" />
+                            <input type="text" id="manualName" placeholder="Full Name" />
+                        </div>
+                        <div class="form-row">
+                            <select id="manualGrade">
+                                <option value="">Select Grade</option>
+                                <option value="Grade 7">Grade 7</option>
+                                <option value="Grade 8">Grade 8</option>
+                                <option value="Grade 9">Grade 9</option>
+                                <option value="Grade 10">Grade 10</option>
+                            </select>
+                            <input type="text" id="manualSection" placeholder="Section" />
+                        </div>
+                        <div class="manual-actions">
+                            <button class="cancel-btn" onclick="hideManualEntry()">Cancel</button>
+                            <button class="add-btn" onclick="addManualStudent()">
+                                <i class="fas fa-plus"></i> Add
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="results-list" id="studentResults">
+                        <div class="empty-state">
+                            <i class="fas fa-search"></i>
+                            <p>Search by LRN, Name, Grade, or Section</p>
+                        </div>
+                    </div>
+
+                    <div class="full-list-container" id="studentFullList">
+                        <div class="list-label">All Students</div>
+                        <div id="studentFullListItems">
+                            <div style="text-align:center;padding:8px;color:var(--gray-400);font-size:12px;">
+                                <i class="fas fa-spinner fa-spin"></i> Loading...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Faculty -->
+                <div id="facultySearchSection" style="display:none;">
+                    <div class="section-title">
+                        <i class="fas fa-chalkboard-teacher"></i> Faculty Details
+                        <span id="facultyBadge" class="badge badge-pending">Pending</span>
+                    </div>
+
+                    <div class="faculty-entry show">
+                        <input type="text" id="facultyName" placeholder="Full Name *" />
+                        <input type="text" id="facultyEmail" placeholder="Email (optional)" />
+                        <button class="faculty-add-btn" onclick="addFaculty()">
+                            <i class="fas fa-user-plus"></i> Add Faculty
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="selected-card student" id="selectedBorrower">
+                <button class="remove-btn" onclick="removeBorrower()"><i class="fas fa-times"></i></button>
+                <div class="label" id="borrowerLabel">Student Selected</div>
+                <div class="name" id="borrowerName">-</div>
+                <div class="details" id="borrowerDetails">LRN: - · Grade: -</div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+        STEP 2: SELECT ASSETS
+        ============================================================ -->
+        <div id="step2Content" style="display:none;">
+            <div class="search-section">
+                <div class="section-title">
+                    <i class="fas fa-boxes"></i> Add Assets
+                    <span id="assetBadge" class="badge badge-pending">Pending</span>
+                </div>
+
+                <div class="search-input-group">
+                    <input type="text" id="assetSearch" placeholder="Search or paste asset name, ID, serial..." />
+                    <button onclick="searchAssets()"><i class="fas fa-search"></i></button>
+                    <button class="scan-btn" onclick="toggleAssetScanner()">
+                        <i class="fas fa-qrcode"></i>
+                    </button>
+                </div>
+
+                <div class="qr-scanner-container" id="assetScanner">
+                    <button class="qr-close-btn" onclick="toggleAssetScanner()">&times;</button>
+                    <div id="assetQrReader"></div>
+                    <div class="qr-status">📷 Position the asset's QR code in the frame</div>
+                </div>
+
+                <div class="results-list" id="assetResults">
+                    <div class="empty-state">
+                        <i class="fas fa-search"></i>
+                        <p>Search by Name, Brand, Model, Serial, or Category</p>
+                    </div>
+                </div>
+
+                <div class="full-list-container" id="assetFullList">
+                    <div class="list-label">Available Assets</div>
+                    <div id="assetFullListItems">
+                        <div style="text-align:center;padding:8px;color:var(--gray-400);font-size:12px;">
+                            <i class="fas fa-spinner fa-spin"></i> Loading...
+                        </div>
+                    </div>
+                </div>
+
+                <div id="selectedAssetsList" style="margin-top:10px;display:none;">
+                    <div style="font-size:12px;font-weight:600;color:var(--gray-700);margin-bottom:4px;">
+                        Selected Assets (<span id="selectedAssetCount">0</span>)
+                    </div>
+                    <div class="asset-list-container" id="borrowAssetList"></div>
+                </div>
+
+                <button onclick="goToStep(3)" style="width:100%;padding:10px;background:var(--primary);color:white;border:none;border-radius:var(--radius-sm);font-weight:600;font-size:14px;cursor:pointer;margin-top:10px;display:none;" id="goToConfirmBtn">
+                    <i class="fas fa-arrow-right"></i> Next: Confirm
+                </button>
+
+                <button onclick="goToStep(1)" style="width:100%;padding:8px;background:var(--gray-100);border:none;border-radius:var(--radius-sm);font-weight:500;cursor:pointer;margin-top:6px;">
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
+            </div>
+        </div>
+
+        <!-- ============================================================
+        STEP 3: CONFIRM BORROWING
+        ============================================================ -->
+        <div id="step3Content" style="display:none;">
+            <div class="confirm-section show">
+                <div class="confirm-title">
+                    <i class="fas fa-check-circle"></i> Confirm Borrowing
+                </div>
+
+                <div class="info-row">
+                    <span class="label">Borrower</span>
+                    <span class="value" id="confirmBorrower">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Type</span>
+                    <span class="value" id="confirmBorrowerType">-</span>
+                </div>
+
+                <div style="margin:8px 0;">
+                    <div style="font-size:12px;font-weight:600;color:var(--gray-700);margin-bottom:6px;">Assets & Quantities:</div>
+                    <div id="confirmAssetsList" style="font-size:13px;color:var(--gray-600);"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>Borrow Date & Time</label>
+                    <div class="datetime-display">
+                        <strong>📅</strong> <span id="borrowDateDisplay">-</span> &nbsp;|&nbsp; <strong>🕐</strong> <span id="borrowTimeDisplay">-</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Expected Return Date <span style="color:var(--danger);">*</span></label>
+                    <input type="date" id="borrowReturnDate" />
+                </div>
+
+                <div class="form-group">
+                    <label>Purpose</label>
+                    <select id="borrowPurpose">
+                        <option value="Class Activity">Class Activity</option>
+                        <option value="Project">Project</option>
+                        <option value="Laboratory">Laboratory</option>
+                        <option value="Research">Research</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+
+                <div class="purpose-other-input" id="purposeOtherInput">
+                    <input type="text" id="purposeOtherText" placeholder="Specify purpose..." />
+                </div>
+
+                <div class="form-group">
+                    <label>Remarks</label>
+                    <input type="text" id="borrowRemarks" placeholder="Optional remarks" />
+                </div>
+
+                <button class="btn-confirm" onclick="confirmBorrow()">
+                    <i class="fas fa-check"></i> Confirm Borrow
+                </button>
+
+                <button onclick="goToStep(2)" style="width:100%;padding:8px;background:var(--gray-100);border:none;border-radius:var(--radius-sm);font-weight:500;cursor:pointer;margin-top:6px;">
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ============================================================
+    BOTTOM NAVIGATION
+    ============================================================ -->
+    <nav class="bottom-nav">
+        <button class="nav-item" onclick="window.location.href='dashboard.html'">
+            <i class="fas fa-th-large"></i><span>Home</span>
+        </button>
+        <button class="nav-item" onclick="window.location.href='assets.html'">
+            <i class="fas fa-boxes"></i><span>Assets</span>
+            <span class="nav-badge" id="assetBadge">0</span>
+        </button>
+        <button class="nav-item  active" onclick="window.location.href='borrow.html'">
+            <i class="fas fa-hand-holding"></i><span>Borrow</span>
+        </button>
+        <button class="nav-item" onclick="window.location.href='return.html'">
+            <i class="fas fa-undo-alt"></i><span>Return</span>
+        </button>
+        <button class="nav-item" onclick="window.location.href='students.html'">
+            <i class="fas fa-users"></i><span>Students</span>
+        </button>
+        <button class="nav-item" onclick="window.location.href='activity.html'">
+            <i class="fas fa-history"></i><span>Activity</span>
+        </button>
+    </nav>
+
+    <!-- ============================================================
+    SCRIPTS
+    ============================================================ -->
+    <script>
+        // ============================================================
+        // SUPABASE CONFIGURATION
+        // ============================================================
+        const _SUPABASE_URL = 'https://zvbbnwawvbmxfygvkyaq.supabase.co';
+        const _SUPABASE_ANON_KEY = 'sb_publishable_LQd5C3G15qa-svzIDMadAw_ErT3Usmd';
+        const _supabase = window.supabase.createClient(_SUPABASE_URL, _SUPABASE_ANON_KEY);
+
+        // ============================================================
+        // STATE
+        // ============================================================
+        let borrowerType = 'student';
+        let selectedBorrower = null;
+        let selectedAssets = [];
+        let allStudents = [];
+        let allAssets = [];
+        let students = [];
+        let assets = [];
+        let studentScanner = null;
+        let assetScanner = null;
+        let isStudentScanning = false;
+        let isAssetScanning = false;
+        let stream = null;
+        let ocrData = null;
+
+        // ============================================================
+        // TOAST FUNCTION
+        // ============================================================
+        function showToast(text, type = 'info') {
+            let toast = document.getElementById('globalToast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'globalToast';
+                toast.className = 'toast hidden';
+                toast.innerHTML = `
+                    <i class="fas fa-info-circle"></i>
+                    <span id="toastMessage">Toast message</span>
+                    <button class="close-toast">&times;</button>
+                `;
+                document.body.appendChild(toast);
+
+                toast.querySelector('.close-toast').addEventListener('click', function() {
+                    toast.classList.add('hidden');
+                    clearTimeout(toast._timeout);
+                });
+            }
+
+            const messageEl = document.getElementById('toastMessage');
+            const icon = toast.querySelector('i');
+            const icons = {
+                success: 'fa-check-circle',
+                error: 'fa-exclamation-circle',
+                warning: 'fa-exclamation-triangle',
+                info: 'fa-info-circle'
+            };
+
+            toast.className = `toast ${type}`;
+            messageEl.textContent = text;
+            icon.className = `fas ${icons[type] || icons.info}`;
+
+            clearTimeout(toast._timeout);
+            toast._timeout = setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 4000);
+        }
+
+        // ============================================================
+        // LOAD USER SESSION (Updated for iSMART header)
+        // ============================================================
+function loadUserSession() {
+    try {
+        const session = JSON.parse(localStorage.getItem('ismart_session'));
+        if (session && session.profile) {
+            const name = session.profile.full_name || 'System Administrator';
+            const role = session.profile.role || 'admin';
+            const email = session.user?.email || 'admin@ismart.com';
+            
+            // Update avatar initials - Use the actual user's name
+            const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+            document.getElementById('userInitials').textContent = initials;
+            
+            // Update dropdown
+            document.getElementById('dropdownName').textContent = name;
+            document.getElementById('dropdownEmail').textContent = email;
+            
+            // Add role class to avatar
+            const avatar = document.getElementById('userAvatar');
+            avatar.className = `user-avatar ${role.toLowerCase()}`;
+            
+            console.log('👤 User loaded:', name, '| Initials:', initials);
+        } else {
+            console.warn('⚠️ No session found, using defaults');
+        }
+    } catch (e) {
+        console.error('Session error:', e);
+    }
+}
+
+        // ============================================================
+        // TOGGLE DROPDOWN
+        // ============================================================
+        function toggleDropdown() {
+            document.getElementById('userDropdown').classList.toggle('show');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            const menu = document.querySelector('.user-menu');
+            if (menu && !menu.contains(e.target)) {
+                document.getElementById('userDropdown').classList.remove('show');
+            }
+        });
+
+        // ============================================================
+        // NOTIFICATIONS
+        // ============================================================
+        function showNotifications() {
+            showToast('🔔 You have 3 unread notifications', 'warning');
+            document.getElementById('userDropdown').classList.remove('show');
+        }
+
+        // ============================================================
+        // LOGOUT
+        // ============================================================
+function handleLogout() {
+    if (confirm('Are you sure you want to logout?')) {
+        localStorage.removeItem('ismart_session');
+        showToast('👋 Logged out successfully!', 'success');
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 1000);
+    }
+    document.getElementById('userDropdown').classList.remove('show');
+}
+
+        // ============================================================
+        // CHECK AUTH
+        // ============================================================
+async function checkAuth() {
+    const session = JSON.parse(localStorage.getItem('ismart_session'));
+    
+    if (!session) {
+        console.log('🔒 No session found, redirecting to login');
+        window.location.href = 'index.html';
+        return false;
+    }
+
+    try {
+        const { data, error } = await _supabase.auth.getUser();
+        
+        if (error || !data.user) {
+            console.log('🔒 Invalid session, redirecting to login');
+            localStorage.removeItem('ismart_session');
+            window.location.href = 'index.html';
+            return false;
+        }
+        
+        console.log('✅ Session valid for:', data.user.email);
+        return true;
+    } catch (e) {
+        console.error('❌ Auth check error:', e);
+        return false;
+    }
+}
+
+        // ============================================================
+        // BORROWER TYPE
+        // ============================================================
+        function setBorrowerType(type) {
+            borrowerType = type;
+            document.getElementById('borrowerStudent').classList.toggle('active', type === 'student');
+            document.getElementById('borrowerFaculty').classList.toggle('active', type === 'faculty');
+            document.getElementById('studentSearchSection').style.display = type === 'student' ? 'block' : 'none';
+            document.getElementById('facultySearchSection').style.display = type === 'faculty' ? 'block' : 'none';
+
+            if (type === 'faculty') {
+                document.getElementById('studentBadge').className = 'badge badge-pending';
+                document.getElementById('studentBadge').textContent = 'Pending';
+            }
+        }
+
+        // ============================================================
+        // ADD FACULTY
+        // ============================================================
+        function addFaculty() {
+            const name = document.getElementById('facultyName').value.trim();
+            const email = document.getElementById('facultyEmail').value.trim();
+
+            if (!name) {
+                showToast('Please enter faculty name.', 'error');
+                return;
+            }
+
+            selectedBorrower = {
+                id: 'faculty_' + Date.now(),
+                name: name,
+                type: 'faculty',
+                email: email || 'N/A'
+            };
+
+            document.getElementById('borrowerLabel').textContent = 'Faculty Selected';
+            document.getElementById('borrowerName').textContent = name;
+            document.getElementById('borrowerDetails').textContent =
+                email ? `Email: ${email}` : '';
+            document.getElementById('selectedBorrower').className = 'selected-card faculty show';
+            document.getElementById('facultyBadge').className = 'badge badge-done';
+            document.getElementById('facultyBadge').textContent = '✅ Done';
+
+            showToast(`✅ Faculty added: ${name}`, 'success');
+            goToStep(2);
+        }
+
+        // ============================================================
+        // REMOVE BORROWER
+        // ============================================================
+        function removeBorrower() {
+            selectedBorrower = null;
+            document.getElementById('selectedBorrower').classList.remove('show');
+            document.getElementById('studentBadge').className = 'badge badge-pending';
+            document.getElementById('studentBadge').textContent = 'Pending';
+            document.getElementById('facultyBadge').className = 'badge badge-pending';
+            document.getElementById('facultyBadge').textContent = 'Pending';
+            document.getElementById('studentSearch').disabled = false;
+            document.getElementById('studentSearch').value = '';
+            document.getElementById('studentResults').innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-search"></i>
+                    <p>Search by LRN, Name, Grade, or Section</p>
+                </div>
+            `;
+            showToast('🔄 Borrower removed. Select a new borrower.', 'info');
+            goToStep(1);
+        }
+
+        // ============================================================
+        // STEP NAVIGATION
+        // ============================================================
+        function goToStep(step) {
+            document.getElementById('step1Content').style.display = step === 1 ? 'block' : 'none';
+            document.getElementById('step2Content').style.display = step === 2 ? 'block' : 'none';
+            document.getElementById('step3Content').style.display = step === 3 ? 'block' : 'none';
+
+            document.querySelectorAll('.step').forEach(el => {
+                el.classList.remove('active', 'completed');
+            });
+
+            for (let i = 1; i <= 3; i++) {
+                const el = document.getElementById('step' + i);
+                if (i < step) el.classList.add('completed');
+                if (i === step) el.classList.add('active');
+            }
+
+            const confirmBtn = document.getElementById('goToConfirmBtn');
+            if (selectedAssets.length > 0 && selectedBorrower && step === 2) {
+                confirmBtn.style.display = 'block';
+            } else {
+                confirmBtn.style.display = 'none';
+            }
+
+            if (step === 3) {
+                renderConfirmAssets();
+                document.getElementById('confirmBorrower').textContent = selectedBorrower.name;
+                document.getElementById('confirmBorrowerType').textContent =
+                    selectedBorrower.type === 'student' ? 'Student' : 'Faculty';
+            }
+        }
+
+        // ============================================================
+        // LOAD FULL LISTS
+        // ============================================================
+async function loadFullStudentList() {
+    try {
+        const { data, error } = await _supabase
+            .from('students')
+            .select('*')
+            .order('full_name')
+            .limit(50);
+
+        if (error) throw error;
+
+        allStudents = data || [];
+        console.log('📚 Loaded students:', allStudents.length);
+        renderFullStudentList();
+    } catch (error) {
+        console.error('Error loading students:', error);
+        document.getElementById('studentFullListItems').innerHTML = `
+            <div style="text-align:center;padding:8px;color:var(--gray-400);font-size:12px;">
+                <i class="fas fa-exclamation-circle"></i> Error loading students
+            </div>
+        `;
+    }
+}
+
+function renderFullStudentList() {
+    const container = document.getElementById('studentFullListItems');
+
+    if (!allStudents || allStudents.length === 0) {
+        container.innerHTML = `
+            <div style="text-align:center;padding:8px;color:var(--gray-400);font-size:12px;">
+                No students found. Add students to get started.
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = allStudents.map(s => `
+        <div class="full-list-item" onclick="selectStudent('${s.id}')">
+            <div>
+                <div class="item-name">${s.full_name || 'Unknown'}</div>
+                <div class="item-details">LRN: ${s.lrn || 'N/A'} · ${s.grade_level || 'N/A'}</div>
+            </div>
+            <span class="item-status available">Select</span>
+        </div>
+    `).join('');
+}
+
+async function loadFullAssetList() {
+    try {
+        const { data, error } = await _supabase
+            .from('assets')
+            .select(`
+                *,
+                categories!inner(name),
+                brands!inner(name),
+                locations!inner(name)
+            `)
+            .order('name')
+            .limit(50);
+
+        if (error) throw error;
+
+        allAssets = data || [];
+        console.log('📦 Loaded assets:', allAssets.length);
+        renderFullAssetList();
+    } catch (error) {
+        console.error('Error loading assets:', error);
+        document.getElementById('assetFullListItems').innerHTML = `
+            <div style="text-align:center;padding:8px;color:var(--gray-400);font-size:12px;">
+                <i class="fas fa-exclamation-circle"></i> Error loading assets
+            </div>
+        `;
+    }
+}
+
+function renderFullAssetList() {
+    const container = document.getElementById('assetFullListItems');
+
+    if (!allAssets || allAssets.length === 0) {
+        container.innerHTML = `
+            <div style="text-align:center;padding:8px;color:var(--gray-400);font-size:12px;">
+                No assets found. Add assets to get started.
+            </div>
+        `;
+        return;
+    }
+
+    const availableAssets = allAssets.filter(a => a.available_quantity > 0);
+
+    if (availableAssets.length === 0) {
+        container.innerHTML = `
+            <div style="text-align:center;padding:8px;color:var(--gray-400);font-size:12px;">
+                No available assets. All assets are currently borrowed.
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = availableAssets.map(a => {
+        const statusClass = a.condition === 'Good' ? 'available' :
+            a.condition === 'Damaged' ? 'damaged' : 'borrowed';
+        return `
+            <div class="full-list-item" onclick="addAssetToBorrow('${a.id}')">
+                <div>
+                    <div class="item-name">${a.name || 'Unknown'}</div>
+                    <div class="item-details">
+                        ${a.brands?.name || 'N/A'} · 
+                        <span class="asset-condition ${(a.condition || 'good').toLowerCase()}">${a.condition || 'Good'}</span>
+                    </div>
+                </div>
+                <span class="item-status ${statusClass}">${a.available_quantity || 0} avail</span>
+            </div>
+        `;
+    }).join('');
+}
+
+// ============================================================
+// SELECT STUDENT (Fixed)
+// ============================================================
+function selectStudent(id) {
+    console.log('🔍 Selecting student with ID:', id);
+    
+    // Try to find in allStudents first, then in students
+    let student = allStudents.find(s => String(s.id) === String(id));
+    if (!student) {
+        student = students.find(s => String(s.id) === String(id));
+    }
+    
+    if (!student) {
+        console.error('❌ Student not found with ID:', id);
+        console.log('Available students:', allStudents);
+        showToast('❌ Student not found. Please try searching again.', 'error');
+        return;
+    }
+    
+    selectStudentFromData(student);
+}
+
+function selectStudentFromData(student) {
+    console.log('✅ Student found:', student);
+    
+    selectedBorrower = {
+        id: student.id,
+        name: student.full_name,
+        type: 'student',
+        lrn: student.lrn,
+        grade: student.grade_level,
+        section: student.section || ''
+    };
+
+    document.getElementById('borrowerLabel').textContent = 'Student Selected';
+    document.getElementById('borrowerName').textContent = student.full_name;
+    document.getElementById('borrowerDetails').textContent =
+        `LRN: ${student.lrn} · ${student.grade_level} ${student.section || ''}`;
+    document.getElementById('selectedBorrower').className = 'selected-card student show';
+    document.getElementById('studentBadge').className = 'badge badge-done';
+    document.getElementById('studentBadge').textContent = '✅ Done';
+    document.getElementById('studentSearch').disabled = true;
+
+    document.getElementById('studentResults').innerHTML = `
+        <div class="empty-state">
+            <i class="fas fa-check-circle" style="color:var(--success);"></i>
+            <p>Student selected! Proceeding to asset selection...</p>
+        </div>
+    `;
+
+    showToast(`✅ Student selected: ${student.full_name}`, 'success');
+
+    setTimeout(() => {
+        goToStep(2);
+        document.getElementById('assetSearch').focus();
+    }, 800);
+}
+
+// ============================================================
+// ADD ASSET TO BORROW LIST (Fixed)
+// ============================================================
+function addAssetToBorrow(id) {
+    console.log('🔍 Selecting asset with ID:', id);
+    
+    // Try to find in allAssets first, then in assets
+    let asset = allAssets.find(a => String(a.id) === String(id));
+    if (!asset) {
+        asset = assets.find(a => String(a.id) === String(id));
+    }
+    
+    if (!asset) {
+        console.error('❌ Asset not found with ID:', id);
+        console.log('Available assets:', allAssets);
+        showToast('❌ Asset not found. Please try searching again.', 'error');
+        return;
+    }
+
+    console.log('✅ Asset found:', asset);
+
+    if (asset.available_quantity <= 0) {
+        showToast('❌ This asset is currently not available.', 'error');
+        return;
+    }
+
+    // Check if already added
+    if (selectedAssets.find(a => String(a.id) === String(id))) {
+        showToast('⚠️ Asset already added.', 'warning');
+        return;
+    }
+
+    selectedAssets.push({
+        id: asset.id,
+        name: asset.name || 'Unknown Asset',
+        quantity: 1,
+        available: asset.available_quantity || 0,
+        condition: asset.condition || 'Good',
+        brand: asset.brands?.name || 'N/A',
+        category: asset.categories?.name || 'N/A'
+    });
+
+    updateAssetList();
+    showToast(`✅ Added: ${asset.name}`, 'success');
+
+    if (selectedAssets.length > 0 && selectedBorrower) {
+        document.getElementById('goToConfirmBtn').style.display = 'block';
+    }
+}
+
+function removeAssetFromBorrow(index) {
+    selectedAssets.splice(index, 1);
+    updateAssetList();
+    if (selectedAssets.length === 0) {
+        document.getElementById('goToConfirmBtn').style.display = 'none';
+    }
+    showToast('🗑️ Asset removed', 'info');
+}
+
+function updateAssetList() {
+    const container = document.getElementById('borrowAssetList');
+    const count = document.getElementById('selectedAssetCount');
+    const wrapper = document.getElementById('selectedAssetsList');
+
+    count.textContent = selectedAssets.length;
+
+    if (selectedAssets.length === 0) {
+        wrapper.style.display = 'none';
+        return;
+    }
+
+    wrapper.style.display = 'block';
+    container.innerHTML = selectedAssets.map((a, i) => `
+        <div class="asset-list-item">
+            <div>
+                <span class="item-name">${a.name}</span>
+                <span class="item-brand">${a.brand}</span>
+            </div>
+            <div>
+                <span class="item-qty">Qty: ${a.quantity}</span>
+                <button class="remove-asset-btn" onclick="removeAssetFromBorrow(${i})">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+        // ============================================================
+        // ID SCANNER (Camera + OCR)
+        // ============================================================
+        async function toggleIDScanner() {
+            const container = document.getElementById('cameraContainer');
+            if (container.classList.contains('active')) {
+                closeIDScanner();
+            } else {
+                if (document.getElementById('studentScanner').classList.contains('active')) {
+                    toggleStudentScanner();
+                }
+                container.classList.add('active');
+                await startCamera();
+            }
+        }
+
+async function startCamera() {
+    try {
+        // Remove any existing preview
+        const preview = document.getElementById('capturedPreview');
+        if (preview) {
+            preview.remove();
+        }
+        document.getElementById('video').style.display = 'block';
+        
+        stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'environment', width: { ideal: 400 } }
+        });
+        document.getElementById('video').srcObject = stream;
+        await document.getElementById('video').play();
+        document.querySelector('.camera-status').textContent = '📷 Position the student ID card clearly in the frame';
+        console.log('📷 Camera started');
+    } catch (err) {
+        console.error('Camera error:', err);
+        showToast('❌ Unable to access camera. Please allow camera permissions.', 'error');
+        closeIDScanner();
+    }
+}
+
+function closeIDScanner() {
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+    }
+    document.getElementById('video').srcObject = null;
+    document.getElementById('video').style.display = 'block';
+    
+    // Remove captured preview
+    const preview = document.getElementById('capturedPreview');
+    if (preview) {
+        preview.remove();
+    }
+    
+    document.getElementById('cameraContainer').classList.remove('active');
+    document.getElementById('ocrResult').classList.remove('show');
+    ocrData = null;
+    console.log('📷 Camera closed');
+}
+
+async function captureID() {
+    const video = document.getElementById('video');
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth || 400;
+    canvas.height = video.videoHeight || 300;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    // Get the captured image data
+    const imageData = canvas.toDataURL('image/jpeg', 0.9);
+    
+    // Stop the camera stream
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+    }
+    
+    // Hide video, show captured image in the same container
+    const videoEl = document.getElementById('video');
+    videoEl.style.display = 'none';
+    
+    // Create or update preview image in the camera container
+    let previewImg = document.getElementById('capturedPreview');
+    if (!previewImg) {
+        previewImg = document.createElement('img');
+        previewImg.id = 'capturedPreview';
+        previewImg.style.width = '100%';
+        previewImg.style.borderRadius = 'var(--radius-sm)';
+        previewImg.style.maxHeight = '280px';
+        previewImg.style.objectFit = 'contain';
+        previewImg.style.background = '#000';
+        // Insert after video
+        videoEl.parentNode.insertBefore(previewImg, videoEl.nextSibling);
+    }
+    previewImg.src = imageData;
+    previewImg.style.display = 'block';
+
+    document.getElementById('loadingOverlay').classList.add('active');
+    document.getElementById('loadingText').textContent = '📷 Processing ID card...';
+
+    try {
+        document.getElementById('loadingText').textContent = '🔍 Reading text from ID...';
+
+        const result = await Tesseract.recognize(
+            imageData,
+            'eng',
+            {
+                logger: m => {
+                    if (m.status === 'recognizing text') {
+                        document.getElementById('loadingText').textContent =
+                            `🔍 Reading text... ${Math.round(m.progress * 100)}%`;
+                    }
+                }
+            }
+        );
+
+        const text = result.data.text;
+        console.log('OCR Text:', text);
+
+        const parsed = parseIDText(text);
+
+        if (parsed.lrn || parsed.name) {
+            ocrData = parsed;
+            showOCRResults(parsed);
+            showToast('✅ ID card processed! Verify the extracted information.', 'success');
+        } else {
+            showToast('❌ Could not extract information. Please try again or enter manually.', 'error');
+        }
+
+    } catch (err) {
+        console.error('OCR Error:', err);
+        showToast('❌ Error processing ID card: ' + err.message, 'error');
+    }
+
+    document.getElementById('loadingOverlay').classList.remove('active');
+}
+
+function parseIDText(text) {
+    const result = { name: '', lrn: '', grade: '', section: '' };
+
+    // Extract LRN (12 digits)
+    const lrnMatch = text.match(/\b(\d{12})\b/);
+    if (lrnMatch) result.lrn = lrnMatch[1];
+
+    // Extract Grade
+    const gradeMatch = text.match(/Grade\s*([7-9]|10)/i);
+    if (gradeMatch) result.grade = 'Grade ' + gradeMatch[1];
+
+    // Extract Section
+    const sectionMatch = text.match(/Section\s*([A-Za-z0-9]+)|Sec\.?\s*([A-Za-z0-9]+)/i);
+    if (sectionMatch) result.section = sectionMatch[1] || sectionMatch[2] || '';
+
+    // IMPROVED: Better name extraction patterns
+    const namePatterns = [
+        /Name:\s*([A-Za-z\.\s]+)/i,
+        /Name\s*([A-Za-z\.\s]+)/i,
+        /([A-Z][a-z]+\.?\s+[A-Z][a-z]+\s+[A-Z][a-z]+)/,  // Ma. Regina Medallada
+        /([A-Z][a-z]+\.?\s+[A-Z][a-z]+\s+[A-Z][a-z]+)/,   // With dot prefix
+        /([A-Z][a-z]+\s+[A-Z][a-z]+\s+[A-Z][a-z]+)/,      // Three words
+        /([A-Z][a-z]+\s+[A-Z][a-z]+)/                      // Two words
+    ];
+
+    for (const pattern of namePatterns) {
+        const match = text.match(pattern);
+        if (match) {
+            let name = match[1].trim();
+            // Clean up the name
+            name = name.replace(/[^A-Za-z\.\s]/g, '').trim();
+            // Keep "Ma." prefix
+            if (name.length > 0) {
+                result.name = name;
+                break;
+            }
+        }
+    }
+
+    // Fallback: try to extract from lines
+    if (!result.name) {
+        const lines = text.split('\n').filter(line => line.trim().length > 0);
+        for (const line of lines) {
+            const trimmed = line.trim();
+            // Look for lines with common name patterns
+            if (trimmed.match(/^[A-Z][a-z]+\.?\s+[A-Z][a-z]+\s+[A-Z][a-z]+/) || 
+                trimmed.match(/^[A-Z][a-z]+\s+[A-Z][a-z]+\s+[A-Z][a-z]+/)) {
+                result.name = trimmed.replace(/[^A-Za-z\.\s]/g, '').trim();
+                break;
+            }
+        }
+    }
+
+    return result;
+}
+
+        function showOCRResults(data) {
+            document.getElementById('ocrName').textContent = data.name || 'Not found';
+            document.getElementById('ocrLRN').textContent = data.lrn || 'Not found';
+            document.getElementById('ocrGrade').textContent = data.grade || 'Not found';
+            document.getElementById('ocrSection').textContent = data.section || 'Not found';
+            document.getElementById('ocrResult').classList.add('show');
+
+            if (data.lrn) {
+                document.getElementById('studentSearch').value = data.lrn;
+                searchStudents();
+            }
+        }
+
+function retryOCR() {
+    document.getElementById('ocrResult').classList.remove('show');
+    ocrData = null;
+    
+    // Remove preview and show video again
+    const preview = document.getElementById('capturedPreview');
+    if (preview) {
+        preview.remove();
+    }
+    document.getElementById('video').style.display = 'block';
+    
+    // Restart camera
+    startCamera();
+    
+    document.querySelector('.camera-status').textContent = '📷 Position the student ID card clearly in the frame';
+    showToast('🔄 Retake photo of the ID card', 'info');
+}
+
+function showManualEntry() {
+    document.getElementById('ocrResult').classList.remove('show');
+    document.getElementById('manualEntry').classList.add('show');
+    
+    // Preserve the OCR data values, including the full name with "Ma."
+    if (ocrData) {
+        document.getElementById('manualLRN').value = ocrData.lrn || '';
+        document.getElementById('manualName').value = ocrData.name || '';
+        document.getElementById('manualGrade').value = ocrData.grade || '';
+        document.getElementById('manualSection').value = ocrData.section || '';
+    }
+    closeIDScanner();
+}
+
+        function hideManualEntry() {
+            document.getElementById('manualEntry').classList.remove('show');
+        }
+
+        async function addManualStudent() {
+            const lrn = document.getElementById('manualLRN').value.trim();
+            const name = document.getElementById('manualName').value.trim();
+            const grade = document.getElementById('manualGrade').value;
+            const section = document.getElementById('manualSection').value.trim();
+
+            if (!lrn || !name || !grade) {
+                showToast('❌ Please fill in LRN, Name, and Grade.', 'error');
+                return;
+            }
+
+            if (lrn.length !== 12) {
+                showToast('❌ LRN must be exactly 12 digits.', 'error');
+                return;
+            }
+
+            try {
+                const { data: existing, error } = await _supabase
+                    .from('students')
+                    .select('*')
+                    .eq('lrn', lrn)
+                    .limit(1);
+
+                if (error) throw error;
+
+                if (existing && existing.length > 0) {
+                    selectStudentFromData(existing[0]);
+                    showToast(`✅ Student found: ${existing[0].full_name}`, 'success');
+                } else {
+                    const newStudent = {
+                        lrn: lrn,
+                        full_name: name,
+                        grade_level: grade,
+                        section: section
+                    };
+
+                    const { data: created, error: createError } = await _supabase
+                        .from('students')
+                        .insert([newStudent])
+                        .select()
+                        .single();
+
+                    if (createError) throw createError;
+
+                    selectStudentFromData(created);
+                    showToast(`✅ New student added: ${created.full_name}`, 'success');
+                }
+
+                hideManualEntry();
+                document.getElementById('ocrResult').classList.remove('show');
+            } catch (error) {
+                console.error('Error saving student:', error);
+                showToast('❌ Error saving student: ' + error.message, 'error');
+            }
+        }
+
+async function confirmOCR() {
+    if (!ocrData || !ocrData.lrn) {
+        showToast('❌ No OCR data to confirm.', 'error');
+        return;
+    }
+
+    try {
+        const { data: existing, error } = await _supabase
+            .from('students')
+            .select('*')
+            .eq('lrn', ocrData.lrn)
+            .limit(1);
+
+        if (error) throw error;
+
+        if (existing && existing.length > 0) {
+            // Use the existing student's full name from database
+            selectStudentFromData(existing[0]);
+            showToast(`✅ Student found: ${existing[0].full_name}`, 'success');
+        } else {
+            // Use the OCR name (which now preserves "Ma." prefix)
+            const newStudent = {
+                lrn: ocrData.lrn,
+                full_name: ocrData.name || 'Unknown',
+                grade_level: ocrData.grade || 'Not specified',
+                section: ocrData.section || ''
+            };
+
+            const { data: created, error: createError } = await _supabase
+                .from('students')
+                .insert([newStudent])
+                .select()
+                .single();
+
+            if (createError) throw createError;
+
+            selectStudentFromData(created);
+            showToast(`✅ New student added: ${created.full_name}`, 'success');
+        }
+
+        closeIDScanner();
+        document.getElementById('ocrResult').classList.remove('show');
+    } catch (error) {
+        console.error('Error saving student:', error);
+        showToast('❌ Error saving student: ' + error.message, 'error');
+    }
+}
+
+        // ============================================================
+        // QR SCANNER FUNCTIONS
+        // ============================================================
+        function toggleStudentScanner() {
+            const container = document.getElementById('studentScanner');
+            if (container.classList.contains('active')) {
+                stopStudentScanner();
+                container.classList.remove('active');
+            } else {
+                if (document.getElementById('cameraContainer').classList.contains('active')) {
+                    closeIDScanner();
+                }
+                container.classList.add('active');
+                startStudentScanner();
+            }
+        }
+
+        function toggleAssetScanner() {
+            const container = document.getElementById('assetScanner');
+            if (container.classList.contains('active')) {
+                stopAssetScanner();
+                container.classList.remove('active');
+            } else {
+                container.classList.add('active');
+                startAssetScanner();
+            }
+        }
+
+        function startStudentScanner() {
+            if (studentScanner) {
+                studentScanner.clear();
+                studentScanner = null;
+            }
+
+            studentScanner = new Html5Qrcode("studentQrReader");
+            const config = {
+                fps: 10,
+                qrbox: { width: 200, height: 200 },
+                aspectRatio: 1.0
+            };
+
+            studentScanner.start({ facingMode: "environment" },
+                config,
+                onStudentScanSuccess,
+                onScanError
+            ).then(() => {
+                isStudentScanning = true;
+                console.log('📷 Student QR Scanner started');
+            }).catch(err => {
+                console.error('Failed to start student scanner:', err);
+                showToast('❌ Unable to access camera. Please allow camera permissions.', 'error');
+                document.getElementById('studentScanner').classList.remove('active');
+            });
+        }
+
+        function startAssetScanner() {
+            if (assetScanner) {
+                assetScanner.clear();
+                assetScanner = null;
+            }
+
+            assetScanner = new Html5Qrcode("assetQrReader");
+            const config = {
+                fps: 10,
+                qrbox: { width: 200, height: 200 },
+                aspectRatio: 1.0
+            };
+
+            assetScanner.start({ facingMode: "environment" },
+                config,
+                onAssetScanSuccess,
+                onScanError
+            ).then(() => {
+                isAssetScanning = true;
+                console.log('📷 Asset QR Scanner started');
+            }).catch(err => {
+                console.error('Failed to start asset scanner:', err);
+                showToast('❌ Unable to access camera. Please allow camera permissions.', 'error');
+                document.getElementById('assetScanner').classList.remove('active');
+            });
+        }
+
+        function stopStudentScanner() {
+            if (studentScanner && isStudentScanning) {
+                studentScanner.stop().then(() => {
+                    studentScanner.clear();
+                    isStudentScanning = false;
+                    console.log('📷 Student QR Scanner stopped');
+                }).catch(err => console.error('Error stopping student scanner:', err));
+            }
+        }
+
+        function stopAssetScanner() {
+            if (assetScanner && isAssetScanning) {
+                assetScanner.stop().then(() => {
+                    assetScanner.clear();
+                    isAssetScanning = false;
+                    console.log('📷 Asset QR Scanner stopped');
+                }).catch(err => console.error('Error stopping asset scanner:', err));
+            }
+        }
+
+        function onScanError(err) {
+            console.debug('Scan error:', err);
+        }
+
+        // ============================================================
+        // QR SCAN SUCCESS - STUDENT
+        // ============================================================
+        async function onStudentScanSuccess(decodedText) {
+            try {
+                stopStudentScanner();
+                document.getElementById('studentScanner').classList.remove('active');
+
+                showToast('📷 QR code scanned! Looking up student...', 'info');
+
+                let searchQuery = decodedText;
+                try {
+                    const data = JSON.parse(decodedText);
+                    searchQuery = data.lrn || data.id || data.student_id || decodedText;
+                } catch (e) {
+                    searchQuery = decodedText;
+                }
+
+                const { data: results, error } = await _supabase
+                    .from('students')
+                    .select('*')
+                    .or(`lrn.ilike.%${searchQuery}%,id.eq.${searchQuery}`)
+                    .limit(1);
+
+                if (error) throw error;
+
+                if (results && results.length > 0) {
+                    selectStudentFromData(results[0]);
+                    showToast(`✅ Student found: ${results[0].full_name}`, 'success');
+                } else {
+                    showToast(`❌ No student found. Please try again or add manually.`, 'error');
+                    document.getElementById('studentSearch').value = searchQuery;
+                }
+
+            } catch (error) {
+                console.error('Student scan error:', error);
+                showToast('❌ Error processing QR code: ' + error.message, 'error');
+            }
+        }
+
+        // ============================================================
+        // QR SCAN SUCCESS - ASSET
+        // ============================================================
+async function onAssetScanSuccess(decodedText) {
+    try {
+        stopAssetScanner();
+        document.getElementById('assetScanner').classList.remove('active');
+
+        showToast('📷 QR code scanned! Looking up asset...', 'info');
+
+        let searchQuery = decodedText;
+        try {
+            const data = JSON.parse(decodedText);
+            searchQuery = data.id || data.asset_id || data.name || decodedText;
+        } catch (e) {
+            searchQuery = decodedText;
+        }
+
+        const { data: results, error } = await _supabase
+            .from('assets')
+            .select(`
+                *,
+                categories!inner(name),
+                brands!inner(name),
+                locations!inner(name)
+            `)
+            .or(`asset_id.ilike.%${searchQuery}%,name.ilike.%${searchQuery}%,id.eq.${searchQuery}`)
+            .limit(1);
+
+        if (error) throw error;
+
+        if (results && results.length > 0) {
+            const asset = results[0];
+
+            if (asset.available_quantity <= 0) {
+                showToast('❌ This asset is currently not available.', 'error');
+                return;
+            }
+
+            // Use the fixed addAssetToBorrow with the asset ID
+            addAssetToBorrow(asset.id);
+            showToast(`✅ Asset found: ${asset.name}`, 'success');
+        } else {
+            showToast(`❌ No asset found. Please try again or add manually.`, 'error');
+            document.getElementById('assetSearch').value = searchQuery;
+        }
+
+    } catch (error) {
+        console.error('Asset scan error:', error);
+        showToast('❌ Error processing QR code: ' + error.message, 'error');
+    }
+}
+
+        // ============================================================
+        // SEARCH STUDENTS
+        // ============================================================
+        async function searchStudents() {
+            const query = document.getElementById('studentSearch').value.trim();
+
+            if (!query) {
+                document.getElementById('studentResults').innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-search"></i>
+                        <p>Search by LRN, Name, Grade, or Section</p>
+                    </div>
+                `;
+                return;
+            }
+
+            try {
+                console.log('🔍 Searching students for:', query);
+
+                const { data, error } = await _supabase
+                    .from('students')
+                    .select('*')
+                    .ilike('full_name', `%${query}%`)
+                    .order('full_name')
+                    .limit(20);
+
+                let results = data || [];
+
+                if (results.length === 0) {
+                    const { data: lrnData, error: lrnError } = await _supabase
+                        .from('students')
+                        .select('*')
+                        .ilike('lrn', `%${query}%`)
+                        .order('full_name')
+                        .limit(20);
+
+                    if (!lrnError && lrnData) results = lrnData;
+                }
+
+                if (results.length === 0) {
+                    const { data: gradeData, error: gradeError } = await _supabase
+                        .from('students')
+                        .select('*')
+                        .ilike('grade_level', `%${query}%`)
+                        .order('full_name')
+                        .limit(20);
+
+                    if (!gradeError && gradeData) results = gradeData;
+                }
+
+                if (results.length === 0) {
+                    const { data: sectionData, error: sectionError } = await _supabase
+                        .from('students')
+                        .select('*')
+                        .ilike('section', `%${query}%`)
+                        .order('full_name')
+                        .limit(20);
+
+                    if (!sectionError && sectionData) results = sectionData;
+                }
+
+                students = results;
+                console.log('✅ Found', students.length, 'students');
+
+                const container = document.getElementById('studentResults');
+
+                if (students.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-user-slash"></i>
+                            <p>No students found. Try a different search.</p>
+                            <p style="font-size:12px;color:var(--gray-400);margin-top:4px;">💡 Search by LRN, Name, Grade, or Section</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = students.map(s => `
+                    <div class="result-item" onclick="selectStudent('${s.id}')">
+                        <div class="info">
+                            <div class="name">${s.full_name}</div>
+                            <div class="details">LRN: ${s.lrn} · ${s.grade_level} ${s.section || ''}</div>
+                        </div>
+                        <span class="status-badge select">Select</span>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error('❌ Search students error:', error);
+                showToast('Error searching students', 'error');
+            }
+        }
+
+        // ============================================================
+        // SEARCH ASSETS
+        // ============================================================
+        async function searchAssets() {
+            const query = document.getElementById('assetSearch').value.trim();
+
+            if (!query) {
+                document.getElementById('assetResults').innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-search"></i>
+                        <p>Search by Name, Brand, Model, Serial, or Category</p>
+                    </div>
+                `;
+                return;
+            }
+
+            try {
+                console.log('🔍 Searching assets for:', query);
+
+                const { data, error } = await _supabase
+                    .from('assets')
+                    .select(`
+                        *,
+                        categories!inner(name),
+                        brands!inner(name),
+                        locations!inner(name)
+                    `)
+                    .ilike('name', `%${query}%`)
+                    .order('name')
+                    .limit(20);
+
+                let results = data || [];
+
+                if (results.length === 0) {
+                    const { data: brandData, error: brandError } = await _supabase
+                        .from('assets')
+                        .select(`
+                            *,
+                            categories!inner(name),
+                            brands!inner(name),
+                            locations!inner(name)
+                        `)
+                        .ilike('brands.name', `%${query}%`)
+                        .order('name')
+                        .limit(20);
+
+                    if (!brandError && brandData) results = brandData;
+                }
+
+                if (results.length === 0) {
+                    const { data: modelData, error: modelError } = await _supabase
+                        .from('assets')
+                        .select(`
+                            *,
+                            categories!inner(name),
+                            brands!inner(name),
+                            locations!inner(name)
+                        `)
+                        .ilike('model', `%${query}%`)
+                        .order('name')
+                        .limit(20);
+
+                    if (!modelError && modelData) results = modelData;
+                }
+
+                if (results.length === 0) {
+                    const { data: serialData, error: serialError } = await _supabase
+                        .from('assets')
+                        .select(`
+                            *,
+                            categories!inner(name),
+                            brands!inner(name),
+                            locations!inner(name)
+                        `)
+                        .ilike('serial_number', `%${query}%`)
+                        .order('name')
+                        .limit(20);
+
+                    if (!serialError && serialData) results = serialData;
+                }
+
+                assets = results;
+                console.log('✅ Found', assets.length, 'assets');
+
+                const container = document.getElementById('assetResults');
+
+                if (assets.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-box-open"></i>
+                            <p>No assets found. Try a different search.</p>
+                            <p style="font-size:12px;color:var(--gray-400);margin-top:4px;">💡 Search by Name, Brand, Model, Serial, or Category</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+container.innerHTML = assets.map(a => {
+    const status = a.available_quantity > 0 ? 'available' : 'borrowed';
+    const statusText = a.available_quantity > 0 ? `${a.available_quantity} available` : 'All borrowed';
+    return `
+        <div class="result-item" onclick="addAssetToBorrow('${a.id}')">
+            <div class="info">
+                <div class="name">${a.name || 'Unknown'}</div>
+                <div class="details">${a.brands?.name || 'N/A'} · ${a.categories?.name || 'N/A'} · ${a.locations?.name || 'N/A'}</div>
+            </div>
+            <span class="status-badge ${status}">${statusText}</span>
+        </div>
+    `;
+}).join('');
+
+            } catch (error) {
+                console.error('❌ Search assets error:', error);
+                showToast('Error searching assets', 'error');
+            }
+        }
+
+        // ============================================================
+        // UPDATE DATE & TIME (Auto-fill)
+        // ============================================================
+        function updateDateTime() {
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('en-PH', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            const timeStr = now.toLocaleTimeString('en-PH', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true
+            });
+            document.getElementById('borrowDateDisplay').textContent = dateStr;
+            document.getElementById('borrowTimeDisplay').textContent = timeStr;
+        }
+
+        // ============================================================
+        // PURPOSE "OTHER" HANDLING
+        // ============================================================
+        document.getElementById('borrowPurpose').addEventListener('change', function() {
+            const otherInput = document.getElementById('purposeOtherInput');
+            if (this.value === 'Other') {
+                otherInput.classList.add('show');
+            } else {
+                otherInput.classList.remove('show');
+            }
+        });
+
+        // ============================================================
+        // UPDATE CONFIRM ASSETS WITH QUANTITY INPUTS
+        // ============================================================
+        function renderConfirmAssets() {
+            const container = document.getElementById('confirmAssetsList');
+
+            if (selectedAssets.length === 0) {
+                container.innerHTML = '<span style="color:var(--gray-400);">No assets selected.</span>';
+                return;
+            }
+
+            let html = '';
+            selectedAssets.forEach((asset, index) => {
+                html += `
+                    <div class="confirm-asset-item">
+                        <span class="asset-name">${asset.name}</span>
+                        <div class="asset-qty-input">
+                            <span class="asset-available">(${asset.available} avail)</span>
+                            <label>Qty:</label>
+                            <input type="number" id="assetQty_${index}" value="${asset.quantity}" min="1" max="${asset.available}" />
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // ============================================================
+        // CONFIRM BORROW
+        // ============================================================
+        async function confirmBorrow() {
+            if (!selectedBorrower) {
+                showToast('❌ Please select a borrower.', 'error');
+                return;
+            }
+
+            if (selectedAssets.length === 0) {
+                showToast('❌ Please add at least one asset.', 'error');
+                return;
+            }
+
+            let hasError = false;
+            selectedAssets.forEach((asset, index) => {
+                const qtyInput = document.getElementById(`assetQty_${index}`);
+                if (qtyInput) {
+                    const qty = parseInt(qtyInput.value);
+                    if (isNaN(qty) || qty < 1) {
+                        showToast(`❌ Invalid quantity for ${asset.name}.`, 'error');
+                        hasError = true;
+                        return;
+                    }
+                    if (qty > asset.available) {
+                        showToast(`❌ Only ${asset.available} available for ${asset.name}.`, 'error');
+                        hasError = true;
+                        return;
+                    }
+                    asset.quantity = qty;
+                }
+            });
+
+            if (hasError) return;
+
+            const returnDate = document.getElementById('borrowReturnDate').value;
+            let purpose = document.getElementById('borrowPurpose').value;
+            const remarks = document.getElementById('borrowRemarks').value.trim();
+
+            if (purpose === 'Other') {
+                const otherText = document.getElementById('purposeOtherText').value.trim();
+                if (!otherText) {
+                    showToast('❌ Please specify the purpose.', 'error');
+                    return;
+                }
+                purpose = otherText;
+            }
+
+            if (!returnDate) {
+                showToast('❌ Please select a return date.', 'error');
+                return;
+            }
+
+            const session = JSON.parse(localStorage.getItem('edustock_session'));
+            const staffId = session?.user?.id || null;
+
+            const today = new Date();
+            const dateStr = today.toISOString().split('T')[0];
+            const transId = `BR-${dateStr}-${String(Date.now()).slice(-4)}`;
+
+            const btn = document.querySelector('.btn-confirm');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+            try {
+                for (const asset of selectedAssets) {
+                    let insertData = {
+                        transaction_id: transId + '-' + asset.id,
+                        asset_id: asset.id,
+                        quantity: asset.quantity,
+                        expected_return_date: returnDate,
+                        purpose: purpose,
+                        status: 'Borrowed',
+                        staff_id: staffId,
+                        remarks: remarks
+                    };
+
+                    if (selectedBorrower.type === 'student') {
+                        insertData.student_id = selectedBorrower.id;
+                    } else {
+                        insertData.faculty_name = selectedBorrower.name;
+                        insertData.faculty_email = selectedBorrower.email || null;
+                    }
+
+                    console.log('📝 Inserting borrowing record:', insertData);
+
+                    const { data, error: transError } = await _supabase
+                        .from('borrowing_transactions')
+                        .insert([insertData])
+                        .select();
+
+                    if (transError) {
+                        console.error('❌ Insert error:', transError);
+                        throw transError;
+                    }
+
+                    console.log('✅ Insert successful:', data);
+
+                    const newAvailable = asset.available - asset.quantity;
+                    const { error: updateError } = await _supabase
+                        .from('assets')
+                        .update({ available_quantity: newAvailable })
+                        .eq('id', asset.id);
+
+                    if (updateError) throw updateError;
+                }
+
+                showToast(`✅ Borrowing confirmed! ${selectedAssets.length} asset(s) borrowed.`, 'success');
+
+                setTimeout(() => {
+                    selectedBorrower = null;
+                    selectedAssets = [];
+                    document.getElementById('selectedBorrower').classList.remove('show');
+                    document.getElementById('studentBadge').className = 'badge badge-pending';
+                    document.getElementById('studentBadge').textContent = 'Pending';
+                    document.getElementById('facultyBadge').className = 'badge badge-pending';
+                    document.getElementById('facultyBadge').textContent = 'Pending';
+                    document.getElementById('studentSearch').disabled = false;
+                    document.getElementById('studentSearch').value = '';
+                    document.getElementById('assetSearch').value = '';
+                    document.getElementById('ocrResult').classList.remove('show');
+                    document.getElementById('manualEntry').classList.remove('show');
+                    document.getElementById('purposeOtherInput').classList.remove('show');
+                    document.getElementById('selectedAssetsList').style.display = 'none';
+                    document.getElementById('borrowAssetList').innerHTML = '';
+                    document.getElementById('goToConfirmBtn').style.display = 'none';
+
+                    document.getElementById('studentResults').innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-search"></i>
+                            <p>Search by LRN, Name, Grade, or Section</p>
+                        </div>
+                    `;
+                    document.getElementById('assetResults').innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-search"></i>
+                            <p>Search by Name, Brand, Model, Serial, or Category</p>
+                        </div>
+                    `;
+
+                    loadFullStudentList();
+                    loadFullAssetList();
+                    goToStep(1);
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-check"></i> Confirm Borrow';
+                }, 2000);
+
+            } catch (error) {
+                console.error('Borrow error:', error);
+                showToast('❌ Error: ' + error.message, 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-check"></i> Confirm Borrow';
+            }
+        }
+
+        // ============================================================
+        // ENTER KEY SUPPORT
+        // ============================================================
+        document.getElementById('studentSearch').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') searchStudents();
+        });
+
+        document.getElementById('assetSearch').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') searchAssets();
+        });
+
+        // ============================================================
+        // INIT
+        // ============================================================
+        async function init() {
+            const isAuth = await checkAuth();
+            if (!isAuth) return;
+
+            loadUserSession();
+
+            const date = new Date();
+            date.setDate(date.getDate() + 7);
+            document.getElementById('borrowReturnDate').value = date.toISOString().split('T')[0];
+
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+
+            await loadFullStudentList();
+            await loadFullAssetList();
+
+            console.log('📦 iSMART - Borrow Page Loaded');
+            console.log('📋 Features: Student/Faculty, Multiple Assets, Quantity per asset');
+            console.log('📱 Minimal design, full lists always visible');
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+
+</body>
+</html>
