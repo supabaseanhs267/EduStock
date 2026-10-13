@@ -1461,6 +1461,7 @@
             transform: translateY(-2px);
         }
 
+
         .bottom-nav .nav-item .nav-badge {
             position: absolute;
             top: 1px;
@@ -3494,6 +3495,13 @@ container.innerHTML = assets.map(a => {
 
             await loadFullStudentList();
             await loadFullAssetList();
+
+            // Opened from a scanned asset label (dashboard "Borrow" button): add that asset to the list
+            const scannedAssetId = new URLSearchParams(window.location.search).get('asset');
+            if (scannedAssetId) {
+                addAssetToBorrow(scannedAssetId);
+                history.replaceState(null, '', window.location.pathname);
+            }
 
             console.log('📦 iSMART - Borrow Page Loaded');
             console.log('📋 Features: Student/Faculty, Multiple Assets, Quantity per asset');
