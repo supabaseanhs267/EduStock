@@ -787,6 +787,7 @@
             transform: translateY(-2px);
         }
 
+
         .bottom-nav .nav-item .nav-badge {
             position: absolute;
             top: 1px;
@@ -1078,6 +1079,21 @@
         </div>
     </div>
 
+    <!-- ============================================================
+    SCAN RESULT (shown after scanning an asset label)
+    ============================================================ -->
+    <div class="confirm-overlay" id="scanResultOverlay">
+        <div class="confirm-modal">
+            <div class="confirm-icon" id="scanResultIcon"><i class="fas fa-box"></i></div>
+            <div class="confirm-title" id="scanResultTitle"></div>
+            <div class="confirm-message" id="scanResultBody" style="white-space:pre-line;"></div>
+            <div class="confirm-actions">
+                <button class="btn-cancel" id="scanResultAgain">Scan again</button>
+                <button class="btn-confirm" id="scanResultBorrow">Borrow</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Escape text before it goes into HTML (names, emails, search text, etc.)
         const esc = v => String(v ?? '').replace(/[&<>"']/g, ch =>
@@ -1095,22 +1111,23 @@
         // ============================================================
         let qrScanner = null;
         let isScanning = false;
+        let handlingScan = false;
+        let scanResultAssetId = null;
 
         function openScanner() {
-            const container = document.getElementById('qrScanner');
-            container.classList.add('active');
+            document.getElementById('qrScanner').classList.add('active');
+            handlingScan = false;
             startScanner();
         }
 
         function closeScanner() {
-            const container = document.getElementById('qrScanner');
-            container.classList.remove('active');
-            stopScanner();
+            document.getElementById('qrScanner').classList.remove('active');
+            return stopScanner();
         }
 
         function startScanner() {
             if (qrScanner) {
-                qrScanner.clear();
+                try { qrScanner.clear(); } catch (e) {}
                 qrScanner = null;
             }
 
@@ -1127,30 +1144,124 @@
                 onScanError
             ).then(() => {
                 isScanning = true;
-                console.log('📷 QR Scanner started');
             }).catch(err => {
                 console.error('Failed to start scanner:', err);
-                showToastModal('Unable to access camera. Please allow camera permissions.', 'error', 'Camera Error');
-                closeScanner();
+                showToastModal('Unable to access the camera. Please allow camera permission.', 'error', 'Camera Error');
+                document.getElementById('qrScanner').classList.remove('active');
             });
         }
 
-        function stopScanner() {
-            if (qrScanner && isScanning) {
-                qrScanner.stop().then(() => {
-                    qrScanner.clear();
-                    isScanning = false;
-                    console.log('📷 QR Scanner stopped');
-                }).catch(err => console.error('Error stopping scanner:', err));
+        // Stops the camera once and waits until it has really stopped
+        async function stopScanner() {
+            if (!qrScanner || !isScanning) return;
+            isScanning = false;
+            try {
+                await qrScanner.stop();
+                qrScanner.clear();
+            } catch (e) {
+                console.debug('Stop scanner:', e);
             }
         }
 
-        function onScanSuccess(decodedText) {
-            stopScanner();
-            closeScanner();
-            showToastModal(`QR Code scanned: ${decodedText}`, 'success', 'QR Scanned');
-            console.log('📷 QR Code:', decodedText);
+        // A scan: find the asset and show what it is, instead of just closing
+        async function onScanSuccess(decodedText) {
+            if (handlingScan) return;      // the library can report the same code several times
+            handlingScan = true;
+            await closeScanner();
+
+            const text = String(decodedText).trim();
+            const match = /^ismart:asset:(\d+)$/i.exec(text);
+            if (!match) {
+                showScanResult({
+                    ok: false,
+                    title: 'Not an iSMART label',
+                    body: 'This QR code is not an asset label made by iSMART.\n\nScanned: ' + text.slice(0, 80)
+                });
+                return;
+            }
+
+            try {
+                const { data: a, error } = await _supabaseClient
+                    .from('assets')
+                    .select('id, name, model, total_quantity, available_quantity, damaged_quantity, maintenance_quantity, brands(name), categories(name), locations(name)')
+                    .eq('id', match[1])
+                    .maybeSingle();
+                if (error) throw error;
+
+                if (!a) {
+                    showScanResult({ ok: false, title: 'Asset not found', body: 'No asset matches this label. It may have been deleted.' });
+                    return;
+                }
+                showScanResult({ ok: true, asset: a });
+            } catch (e) {
+                console.error('Asset lookup error:', e);
+                showScanResult({ ok: false, title: 'Could not look up the asset', body: e.message || 'Please try again.' });
+            }
         }
+
+        function showScanResult(r) {
+            const icon = document.getElementById('scanResultIcon');
+            const borrowBtn = document.getElementById('scanResultBorrow');
+            scanResultAssetId = null;
+
+            if (r.ok) {
+                const a = r.asset;
+                const total = a.total_quantity || 0, avail = a.available_quantity || 0;
+                const damaged = a.damaged_quantity || 0, maint = a.maintenance_quantity || 0;
+                const borrowed = Math.max(0, total - avail - damaged - maint);
+
+                const counts = [avail + ' of ' + total + ' available'];
+                if (borrowed) counts.push(borrowed + ' borrowed');
+                if (damaged) counts.push(damaged + ' damaged');
+                if (maint) counts.push(maint + ' in maintenance');
+
+                const about = [a.brands && a.brands.name, a.model, a.categories && a.categories.name].filter(Boolean).join(' · ');
+                const lines = [about, a.locations && a.locations.name ? 'Location: ' + a.locations.name : '', counts.join(' · ')].filter(Boolean);
+
+                icon.innerHTML = '<i class="fas fa-box"></i>';
+                icon.style.background = '';
+                icon.style.color = '';
+                document.getElementById('scanResultTitle').textContent = a.name;
+                document.getElementById('scanResultBody').textContent = lines.join('\n');
+
+                scanResultAssetId = a.id;
+                borrowBtn.style.display = '';
+                borrowBtn.disabled = avail <= 0;
+                borrowBtn.style.opacity = avail <= 0 ? '0.5' : '1';
+                borrowBtn.textContent = avail <= 0 ? 'None available' : 'Borrow';
+            } else {
+                icon.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+                icon.style.background = 'var(--warning-bg)';
+                icon.style.color = 'var(--warning)';
+                document.getElementById('scanResultTitle').textContent = r.title;
+                document.getElementById('scanResultBody').textContent = r.body;
+                borrowBtn.style.display = 'none';
+            }
+            document.getElementById('scanResultOverlay').classList.add('active');
+        }
+
+        function closeScanResult() {
+            document.getElementById('scanResultOverlay').classList.remove('active');
+        }
+
+        document.getElementById('scanResultAgain').addEventListener('click', function() {
+            closeScanResult();
+            openScanner();
+        });
+
+        document.getElementById('scanResultBorrow').addEventListener('click', function() {
+            if (scanResultAssetId !== null) {
+                window.location.href = 'borrow.html?asset=' + encodeURIComponent(scanResultAssetId);
+            }
+        });
+
+        document.getElementById('scanResultOverlay').addEventListener('click', function(e) {
+            if (e.target === this) closeScanResult();
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeScanResult();
+        });
 
         function onScanError(err) {
             console.debug('Scan error:', err);
@@ -1194,7 +1305,7 @@
             toastOverlay.classList.add('active');
 
             clearTimeout(toastOverlay._timeout);
-            
+    
             // Don't auto-close for notifications
             const isPersistent = title === 'Notifications' || title === 'Notification';
             if (!isPersistent) {
@@ -1295,15 +1406,15 @@
                     const name = session.profile.full_name || 'System Administrator';
                     const role = session.profile.role || 'admin';
                     const email = session.user?.email || 'admin@ismart.com';
-                    
+            
                     const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
                     document.getElementById('userInitials').textContent = initials;
                     document.getElementById('dropdownName').textContent = name;
                     document.getElementById('dropdownEmail').textContent = email;
-                    
+            
                     const avatar = document.getElementById('userAvatar');
                     avatar.className = `user-avatar ${role.toLowerCase()}`;
-                    
+            
                     console.log('👤 User loaded:', name, '| Initials:', initials);
                 }
             } catch (e) {
@@ -1316,7 +1427,7 @@
         // ============================================================
         async function checkAuth() {
             const session = JSON.parse(localStorage.getItem('ismart_session'));
-            
+    
             if (!session) {
                 console.log('🔒 No session found, redirecting to login');
                 window.location.href = 'index.html';
@@ -1325,21 +1436,21 @@
 
             try {
                 const { data, error } = await _supabaseClient.auth.getUser();
-                
+        
                 if (error || !data.user) {
                     console.log('🔒 Invalid session, redirecting to login');
                     localStorage.removeItem('ismart_session');
                     window.location.href = 'index.html';
                     return false;
                 }
-                
+        
                 console.log('✅ Session valid for:', data.user.email);
-                
+        
                 if (session.user?.id !== data.user.id) {
                     session.user = data.user;
                     localStorage.setItem('ismart_session', JSON.stringify(session));
                 }
-                
+        
                 return true;
             } catch (e) {
                 console.error('❌ Auth check error:', e);
@@ -1354,7 +1465,7 @@
             const now = new Date();
             const then = new Date(timestamp);
             const diff = Math.floor((now - then) / 1000);
-            
+    
             if (diff < 60) return diff + 's ago';
             if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
             if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
@@ -1370,9 +1481,9 @@
                 const { data: allAssets, error: allError } = await _supabaseClient
                     .from('assets')
                     .select('id, total_quantity, available_quantity, damaged_quantity, maintenance_quantity');
-                
+        
                 if (allError) throw allError;
-                
+        
                 let total = 0, available = 0, borrowed = 0, maintenance = 0;
                 (allAssets || []).forEach(a => {
                     const t = a.total_quantity || 0;
@@ -1384,9 +1495,9 @@
                     maintenance += dm + mt;
                     borrowed += Math.max(0, t - av - dm - mt);
                 });
-                
+        
                 return { total, available, borrowed, maintenance };
-                
+        
             } catch (error) {
                 console.error('Error fetching stats:', error);
                 return { total: 0, available: 0, borrowed: 0, maintenance: 0 };
@@ -1410,13 +1521,13 @@
                     `)
                     .order('borrow_date', { ascending: false })
                     .limit(5);
-                
+        
                 if (error) throw error;
-                
+        
                 if (!data || data.length === 0) {
                     return [];
                 }
-                
+        
                 return data.map(item => {
                     const student = item.students || { full_name: 'Unknown', grade_level: '', section: '' };
                     const asset = item.assets || { name: 'Unknown Asset' };
@@ -1432,12 +1543,13 @@
                         time: item.borrow_date
                     };
                 });
-                
+        
             } catch (error) {
                 console.error('Error fetching activity:', error);
                 return [];
             }
         }
+
 
         // ============================================================
         // UPDATE BADGE
@@ -1447,7 +1559,7 @@
                 const { count, error } = await _supabaseClient
                     .from('assets')
                     .select('*', { count: 'exact', head: true });
-                
+        
                 if (!error) {
                     document.getElementById('assetBadge').textContent = count || 0;
                 }
@@ -1471,7 +1583,7 @@
         // ============================================================
         function renderActivity(activities) {
             const container = document.getElementById('activityList');
-            
+    
             if (!activities || activities.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
@@ -1482,7 +1594,7 @@
                 `;
                 return;
             }
-            
+    
             container.innerHTML = activities.map(a => {
                 const iconMap = {
                     'borrow': 'fa-arrow-right',
@@ -1494,7 +1606,7 @@
                 };
                 const icon = iconMap[a.action] || 'fa-circle';
                 const color = colorMap[a.action] || 'info';
-                
+        
                 return `
                     <div class="activity-item">
                         <div class="icon ${esc(color)}"><i class="fas ${esc(icon)}"></i></div>
@@ -1540,24 +1652,25 @@
         async function initDashboard() {
             const isAuth = await checkAuth();
             if (!isAuth) return;
-            
+    
             loadUserSession();
-            
+    
             document.getElementById('activityList').innerHTML = `
                 <div style="text-align:center;padding:20px;color:var(--gray-400);">
                     <i class="fas fa-spinner fa-spin"></i> Loading...
                 </div>
             `;
-            
+    
             try {
                 const stats = await fetchDashboardStats();
                 renderStats(stats);
-                
+        
                 const activities = await fetchRecentActivity();
                 renderActivity(activities);
-                
+        
                 await updateBadge();
-                
+        
+        
                 console.log('📊 Dashboard loaded successfully');
                 console.log(`📦 Total Assets: ${stats.total}`);
                 console.log(`✅ Available: ${stats.available}`);
