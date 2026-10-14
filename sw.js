@@ -3,10 +3,10 @@
  *   falling back to the saved copy when there is no connection.
  * - Supabase and CDN requests are never touched.
  * Bump VERSION when you add or rename files. */
-const VERSION = 'ismart-v1';
+const VERSION = 'ismart-v2';
 const SHELL = [
   './', 'index.html', 'dashboard.html', 'assets.html', 'borrow.html', 'return.html',
-  'students.html', 'activity.html', 'settings.html', 'nav.css', 'notifications.js', 'pwa.js',
+  'students.html', 'activity.html', 'settings.html', 'nav.css', 'notifications.js', 'pwa.js', 'camera.js',
   'manifest.webmanifest', 'offline.html',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png'
 ];
