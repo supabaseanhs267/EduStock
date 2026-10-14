@@ -4,6 +4,13 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>iSMART - Login</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#4F46E5" />
+    <link rel="icon" type="image/png" href="icons/icon-192.png" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="iSMART" />
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -670,6 +677,18 @@
 
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+        // Already signed in? Skip the login screen, so reopening the app goes straight to the dashboard.
+        // (Logging out clears both the Supabase session and ismart_session, so this never loops.)
+        (async () => {
+            try {
+                if (!localStorage.getItem('ismart_session')) return;
+                const { data } = await supabaseClient.auth.getSession();
+                if (data && data.session) window.location.replace('dashboard.html');
+            } catch (e) {
+                console.error('Session check failed:', e);
+            }
+        })();
+
         // ============================================================
         // DOM REFS
         // ============================================================
@@ -1021,5 +1040,6 @@
         });
     </script>
 
+    <script src="pwa.js"></script>
 </body>
 </html>
