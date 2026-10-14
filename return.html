@@ -1478,6 +1478,42 @@
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.3); }
         }
+    
+        /* Scan the item being returned */
+        .scan-item-btn {
+            width: 100%; padding: 12px; background: var(--primary); color: #fff; border: none;
+            border-radius: var(--radius-sm); font-family: 'Inter', sans-serif; font-weight: 600; font-size: 14px;
+            display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;
+        }
+        .scan-item-btn:active { transform: scale(0.98); }
+        .scan-or { text-align: center; font-size: 11px; color: var(--gray-400); margin-top: 10px; }
+
+        .ret-pick-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.4); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+            z-index: 1000; display: none; align-items: center; justify-content: center; padding: 20px;
+        }
+        .ret-pick-overlay.active { display: flex; }
+        .ret-pick-modal {
+            background: #fff; border-radius: var(--radius); width: 100%; max-width: 340px; max-height: 80vh;
+            display: flex; flex-direction: column; padding: 20px 18px 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        }
+        .ret-pick-title { font-size: 16px; font-weight: 700; color: var(--gray-900); text-align: center; word-break: break-word; }
+        .ret-pick-msg { font-size: 13px; color: var(--gray-500); text-align: center; margin: 4px 0 12px; line-height: 1.5; }
+        .ret-pick-list { overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+        .ret-pick-row {
+            text-align: left; border: 1px solid var(--gray-200); background: #fff; border-radius: var(--radius-sm);
+            padding: 10px 12px; cursor: pointer; font-family: 'Inter', sans-serif;
+        }
+        .ret-pick-row:active { background: var(--gray-50); }
+        .ret-pick-row .n { font-size: 13px; font-weight: 600; color: var(--gray-900); }
+        .ret-pick-row .d { font-size: 11px; color: var(--gray-500); margin-top: 2px; }
+        .ret-pick-row .d.late { color: var(--danger); font-weight: 600; }
+        .ret-pick-actions { display: flex; gap: 8px; margin-top: 14px; }
+        .ret-pick-btn {
+            flex: 1; padding: 9px; border: none; border-radius: var(--radius-sm); background: var(--gray-100);
+            color: var(--gray-700); font-weight: 600; font-size: 13px; cursor: pointer; font-family: 'Inter', sans-serif;
+        }
+        .ret-pick-btn.primary { background: var(--primary); color: #fff; }
     </style>
 </head>
 <body>
@@ -1550,6 +1586,19 @@
         STEP 1: FIND BORROWER
         ============================================================ -->
         <div id="step1Content">
+
+            <!-- Scan the item being returned -->
+            <div class="search-section">
+                <button type="button" class="scan-item-btn" onclick="toggleReturnAssetScanner()">
+                    <i class="fas fa-qrcode"></i> Scan item to return
+                </button>
+                <div class="scanner-container" id="returnAssetScanner">
+                    <button class="close-scanner" onclick="toggleReturnAssetScanner()">&times;</button>
+                    <div id="returnAssetQrReader"></div>
+                    <div class="scanner-status">📷 Point the camera at the item's QR label</div>
+                </div>
+                <div class="scan-or">or find the borrower below</div>
+            </div>
 
             <!-- Borrower Type Selector -->
             <div class="search-section">
@@ -1848,6 +1897,19 @@
     <!-- ============================================================
     SCRIPTS
     ============================================================ -->
+    <!-- Who has this item? (shown after scanning an item label) -->
+    <div class="ret-pick-overlay" id="retPickOverlay">
+        <div class="ret-pick-modal">
+            <div class="ret-pick-title" id="retPickTitle"></div>
+            <div class="ret-pick-msg" id="retPickMsg"></div>
+            <div class="ret-pick-list" id="retPickList"></div>
+            <div class="ret-pick-actions">
+                <button type="button" class="ret-pick-btn" id="retPickAgain">Scan again</button>
+                <button type="button" class="ret-pick-btn primary" id="retPickClose">Close</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Escape text before it goes into HTML (names, emails, search text, etc.)
         const esc = v => String(v ?? '').replace(/[&<>"']/g, ch =>
@@ -1902,34 +1964,34 @@
         // ============================================================
         // LOAD USER SESSION
         // ============================================================
-function loadUserSession() {
-    try {
+        function loadUserSession() {
+            try {
         const session = JSON.parse(localStorage.getItem('ismart_session'));
         if (session && session.profile) {
             const name = session.profile.full_name || 'System Administrator';
             const role = session.profile.role || 'admin';
             const email = session.user?.email || 'admin@ismart.com';
-            
+    
             // Update avatar initials - Use the actual user's name
             const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
             document.getElementById('userInitials').textContent = initials;
-            
+    
             // Update dropdown
             document.getElementById('dropdownName').textContent = name;
             document.getElementById('dropdownEmail').textContent = email;
-            
+    
             // Add role class to avatar
             const avatar = document.getElementById('userAvatar');
             avatar.className = `user-avatar ${role.toLowerCase()}`;
-            
+    
             console.log('👤 User loaded:', name, '| Initials:', initials);
         } else {
             console.warn('⚠️ No session found, using defaults');
         }
-    } catch (e) {
+            } catch (e) {
         console.error('Session error:', e);
-    }
-}
+            }
+        }
 
         // ============================================================
         // TOGGLE DROPDOWN
@@ -1946,28 +2008,28 @@ function loadUserSession() {
         });
 
 
-async function handleLogout() {
-    if (confirm('Are you sure you want to logout?')) {
+        async function handleLogout() {
+            if (confirm('Are you sure you want to logout?')) {
         try { await _supabase.auth.signOut(); } catch (e) { console.error('Sign out error:', e); }
         localStorage.removeItem('ismart_session');
         showToast('👋 Logged out successfully!', 'success');
         setTimeout(() => {
             window.location.href = 'index.html';
         }, 1000);
-    }
-    document.getElementById('userDropdown').classList.remove('show');
-}
+            }
+            document.getElementById('userDropdown').classList.remove('show');
+        }
 
         // ============================================================
         // CHECK AUTH
         // ============================================================
-async function checkAuth() {
-    const session = JSON.parse(localStorage.getItem('ismart_session'));
-    if (!session) {
+        async function checkAuth() {
+            const session = JSON.parse(localStorage.getItem('ismart_session'));
+            if (!session) {
         window.location.href = 'index.html';
         return false;
-    }
-    try {
+            }
+            try {
         const { data, error } = await _supabase.auth.getUser();
         if (error || !data.user) {
             localStorage.removeItem('ismart_session');
@@ -1975,11 +2037,11 @@ async function checkAuth() {
             return false;
         }
         return true;
-    } catch (e) {
+            } catch (e) {
         console.error('❌ Auth check error:', e);
         return false;
-    }
-}
+            }
+        }
 
         // ============================================================
         // BORROWER TYPE
@@ -1990,7 +2052,7 @@ async function checkAuth() {
             document.getElementById('returnBorrowerFaculty').classList.toggle('active', type === 'faculty');
             document.getElementById('returnStudentSearchSection').style.display = type === 'student' ? 'block' : 'none';
             document.getElementById('returnFacultySearchSection').style.display = type === 'faculty' ? 'block' : 'none';
-            
+    
             if (type === 'student') {
                 loadReturnFullStudentList();
             } else {
@@ -2012,7 +2074,7 @@ async function checkAuth() {
                 if (error) throw error;
 
                 const activeStudentIds = activeStudents.map(s => s.student_id).filter(id => id !== null);
-                
+        
                 if (activeStudentIds.length === 0) {
                     allStudents = [];
                     renderReturnFullStudentList();
@@ -2206,7 +2268,7 @@ async function checkAuth() {
             allFaculty.push(newFaculty);
             renderReturnFullFacultyList();
             selectReturnFaculty(name, email);
-            
+    
             document.getElementById('returnFacultyName').value = '';
             document.getElementById('returnFacultyEmail').value = '';
         }
@@ -2330,8 +2392,10 @@ async function checkAuth() {
         }
 
         function renderBorrowings(data) {
+            const preselectIds = pendingPreselectIds.map(String);
+            pendingPreselectIds = [];
             const container = document.getElementById('returnBorrowingList');
-            
+    
             if (!data || data.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
@@ -2350,7 +2414,7 @@ async function checkAuth() {
                 const isOverdue = new Date(item.expected_return_date) < new Date();
                 const statusClass = isOverdue ? 'overdue' : 'on-time';
                 const statusText = isOverdue ? '⚠️ Overdue' : '✅ On Time';
-                
+        
                 return `
                     <div class="borrowing-item" data-id="${esc(item.id)}" onclick="toggleBorrowingSelect(this, ${esc(JSON.stringify(item.id))}, ${esc(JSON.stringify(asset.name))})">
                         <div class="info">
@@ -2369,6 +2433,17 @@ async function checkAuth() {
 
             document.getElementById('returnSelectBadge').className = 'badge badge-pending';
             document.getElementById('returnSelectBadge').textContent = 'Pending';
+
+            // Opened from a scanned item: tick the borrowing that was scanned
+            if (preselectIds.length) {
+                container.querySelectorAll('.borrowing-item').forEach(el => {
+                    if (preselectIds.includes(el.dataset.id)) {
+                        const row = data.find(d => String(d.id) === el.dataset.id);
+                        toggleBorrowingSelect(el, row.id, (row.assets && row.assets.name) || 'Item');
+                    }
+                });
+            }
+
             goToReturnStep(2);
         }
 
@@ -2380,11 +2455,11 @@ async function checkAuth() {
 
             const card = document.getElementById('returnSelectedBorrower');
             card.classList.add('removing');
-            
+    
             setTimeout(() => {
                 selectedBorrower = null;
                 selectedBorrowings = [];
-                
+        
                 document.getElementById('returnSelectedBorrower').classList.remove('show', 'removing');
                 document.getElementById('returnStudentBadge').className = 'badge badge-pending';
                 document.getElementById('returnStudentBadge').textContent = 'Pending';
@@ -2413,10 +2488,10 @@ async function checkAuth() {
                 document.getElementById('returnDamageDescriptionGroup').style.display = 'none';
                 document.getElementById('returnMissingPartsGroup').style.display = 'none';
                 document.getElementById('returnRustAssessmentGroup').style.display = 'none';
-                
+        
                 showToast('✅ All items returned! Borrower removed from list.', 'success');
                 goToReturnStep(1);
-                
+        
                 loadReturnFullStudentList();
                 loadReturnFullFacultyList();
             }, 400);
@@ -2926,6 +3001,186 @@ async function checkAuth() {
         }
 
         // ============================================================
+        // SCAN AN ITEM TO RETURN
+        // Scan the item's QR label, find who has it out, and go straight to returning it.
+        // ============================================================
+        let returnAssetScanner = null;
+        let isAssetScanning = false;
+        let handlingAssetScan = false;
+        let pendingPreselectIds = [];
+        let retPickRows = [];
+        let retPickAsset = null;
+
+        function retLocalDate(d) {
+            const pad = n => String(n).padStart(2, '0');
+            return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+        }
+
+        function retDaysBetween(fromStr, toStr) {
+            const [y1, m1, d1] = fromStr.split('-').map(Number);
+            const [y2, m2, d2] = toStr.split('-').map(Number);
+            return Math.round((Date.UTC(y2, m2 - 1, d2) - Date.UTC(y1, m1 - 1, d1)) / 86400000);
+        }
+
+        function toggleReturnAssetScanner() {
+            const box = document.getElementById('returnAssetScanner');
+            if (box.classList.contains('active')) {
+                closeReturnAssetScanner();
+                return;
+            }
+            box.classList.add('active');
+            handlingAssetScan = false;
+            startReturnAssetScanner();
+        }
+
+        async function closeReturnAssetScanner() {
+            document.getElementById('returnAssetScanner').classList.remove('active');
+            if (returnAssetScanner && isAssetScanning) {
+                isAssetScanning = false;
+                try {
+                    await returnAssetScanner.stop();
+                    returnAssetScanner.clear();
+                } catch (e) {
+                    console.debug('Stop scanner:', e);
+                }
+            }
+        }
+
+        function startReturnAssetScanner() {
+            if (returnAssetScanner) {
+                try { returnAssetScanner.clear(); } catch (e) {}
+                returnAssetScanner = null;
+            }
+            returnAssetScanner = new Html5Qrcode('returnAssetQrReader');
+            returnAssetScanner.start(
+                { facingMode: 'environment' },
+                { fps: 10, qrbox: { width: 200, height: 200 } },
+                onReturnAssetScan,
+                function () {}
+            ).then(() => {
+                isAssetScanning = true;
+            }).catch(err => {
+                console.error('Failed to start scanner:', err);
+                showToast('❌ Unable to access camera.', 'error');
+                document.getElementById('returnAssetScanner').classList.remove('active');
+            });
+        }
+
+        async function onReturnAssetScan(decodedText) {
+            if (handlingAssetScan) return;      // the library can report the same code several times
+            handlingAssetScan = true;
+            await closeReturnAssetScanner();
+
+            const match = /^ismart:asset:(\d+)$/i.exec(String(decodedText).trim());
+            if (!match) {
+                showReturnPick({ title: 'Not an iSMART label', message: 'This QR code is not an item label made by iSMART.' });
+                return;
+            }
+
+            try {
+                const { data: asset, error: assetError } = await _supabase
+                    .from('assets').select('id, name').eq('id', match[1]).maybeSingle();
+                if (assetError) throw assetError;
+                if (!asset) {
+                    showReturnPick({ title: 'Item not found', message: 'No item matches this label. It may have been deleted.' });
+                    return;
+                }
+
+                const { data, error } = await _supabase
+                    .from('borrowing_transactions')
+                    .select('id, quantity, expected_return_date, faculty_name, students:student_id(id, full_name, lrn, grade_level, section)')
+                    .eq('asset_id', asset.id)
+                    .eq('status', 'Borrowed')
+                    .order('expected_return_date', { ascending: true });
+                if (error) throw error;
+
+                const rows = data || [];
+                if (rows.length === 0) {
+                    showReturnPick({ title: asset.name, message: 'Nobody has this item borrowed right now.' });
+                } else if (rows.length === 1) {
+                    pickReturnBorrowing(rows[0]);          // only one borrower: go straight to it
+                } else {
+                    showReturnPick({ title: asset.name, message: rows.length + ' borrowings are open. Who is returning it?', rows: rows });
+                }
+            } catch (e) {
+                console.error('Item scan error:', e);
+                showReturnPick({ title: 'Could not look up the item', message: e.message || 'Please try again.' });
+            }
+        }
+
+        function showReturnPick(o) {
+            retPickRows = o.rows || [];
+            document.getElementById('retPickTitle').textContent = o.title;
+            document.getElementById('retPickMsg').textContent = o.message;
+
+            const today = retLocalDate(new Date());
+            document.getElementById('retPickList').innerHTML = retPickRows.map((r, i) => {
+                const who = r.students ? r.students.full_name : (r.faculty_name || 'Unknown borrower');
+                const sub = r.students ? [r.students.grade_level, r.students.section].filter(Boolean).join(' ') : 'Faculty';
+                const due = r.expected_return_date ? String(r.expected_return_date).slice(0, 10) : null;
+                const late = due && due < today ? retDaysBetween(due, today) : 0;
+                const dueText = !due ? 'No due date'
+                    : late ? late + ' day' + (late === 1 ? '' : 's') + ' overdue'
+                    : due === today ? 'Due today'
+                    : 'Due ' + new Date(due + 'T00:00:00').toLocaleDateString();
+                return `<button type="button" class="ret-pick-row" data-idx="${i}">
+                            <div class="n">${esc(who)}</div>
+                            <div class="d${late ? ' late' : ''}">${esc(sub)} · ×${esc(r.quantity || 1)} · ${esc(dueText)}</div>
+                        </button>`;
+            }).join('');
+            document.getElementById('retPickOverlay').classList.add('active');
+        }
+
+        function closeReturnPick() {
+            document.getElementById('retPickOverlay').classList.remove('active');
+        }
+
+        // Show the right Student/Faculty tab without reloading the lists
+        function showReturnBorrowerTab(type) {
+            borrowerType = type;
+            document.getElementById('returnBorrowerStudent').classList.toggle('active', type === 'student');
+            document.getElementById('returnBorrowerFaculty').classList.toggle('active', type === 'faculty');
+            document.getElementById('returnStudentSearchSection').style.display = type === 'student' ? 'block' : 'none';
+            document.getElementById('returnFacultySearchSection').style.display = type === 'faculty' ? 'block' : 'none';
+        }
+
+        // Select the borrower of a scanned borrowing and tick that borrowing
+        function pickReturnBorrowing(row) {
+            closeReturnPick();
+            if (!row) return;
+
+            if (row.students) {
+                delete borrowingsCache['student_' + row.students.id];     // read the borrower's list fresh
+                pendingPreselectIds = [row.id];
+                showReturnBorrowerTab('student');
+                selectReturnStudentFromData(row.students);
+            } else if (row.faculty_name) {
+                delete borrowingsCache['faculty_' + row.faculty_name];
+                pendingPreselectIds = [row.id];
+                showReturnBorrowerTab('faculty');
+                selectReturnFaculty(row.faculty_name, '');
+            } else {
+                showToast('❌ This borrowing has no borrower on record.', 'error');
+            }
+        }
+
+        document.getElementById('retPickList').addEventListener('click', function (e) {
+            const btn = e.target.closest('.ret-pick-row');
+            if (btn) pickReturnBorrowing(retPickRows[Number(btn.dataset.idx)]);
+        });
+        document.getElementById('retPickAgain').addEventListener('click', function () {
+            closeReturnPick();
+            toggleReturnAssetScanner();
+        });
+        document.getElementById('retPickClose').addEventListener('click', closeReturnPick);
+        document.getElementById('retPickOverlay').addEventListener('click', function (e) {
+            if (e.target === this) closeReturnPick();
+        });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') closeReturnPick();
+        });
+
+        // ============================================================
         // INIT
         // ============================================================
         async function initReturn() {
@@ -2933,7 +3188,7 @@ async function checkAuth() {
             if (!isAuth) return;
 
             loadUserSession();
-            
+    
             await Promise.all([
                 loadReturnFullStudentList(),
                 loadReturnFullFacultyList()
