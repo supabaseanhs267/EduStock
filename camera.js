@@ -23,25 +23,33 @@
     return async function (constraints) {
       if (!constraints || !constraints.video) return d.original(constraints);   // microphone etc.: leave alone
 
-      const state = await d.queryState();
-      if (state === 'denied') {
-        d.showBlocked();
-        throw notAllowed('Camera permission is blocked');
-      }
+      for (let attempt = 0; ; attempt++) {
+        const state = await d.queryState();
 
-      // Explain once, then let the browser's own prompt take over
-      if (state !== 'granted' && !d.storage.get(SEEN_KEY)) {
-        const ok = await d.askFirst();
-        if (!ok) throw notAllowed('Camera access was not allowed');
-        d.storage.set(SEEN_KEY, '1');
-      }
+        if (state === 'denied') {
+          // Blocked in Chrome. They can fix it in settings and tap "Try again": we re-check and carry on.
+          const retry = await d.showBlocked(attempt > 0);
+          if (!retry) throw notAllowed('Camera permission is blocked');
+          continue;
+        }
 
-      try {
-        return await d.original(constraints);
-      } catch (err) {
-        // Only explain "blocked" when the browser really remembers a block (not a dismissed prompt)
-        if (err && err.name === 'NotAllowedError' && (await d.queryState()) === 'denied') d.showBlocked();
-        throw err;
+        // Explain once, then let the browser's own prompt take over
+        if (state !== 'granted' && !d.storage.get(SEEN_KEY)) {
+          const ok = await d.askFirst();
+          if (!ok) throw notAllowed('Camera access was not allowed');
+          d.storage.set(SEEN_KEY, '1');
+        }
+
+        try {
+          return await d.original(constraints);
+        } catch (err) {
+          // Only explain "blocked" when the browser really remembers a block (not a dismissed prompt)
+          if (err && err.name === 'NotAllowedError' && (await d.queryState()) === 'denied') {
+            const retry = await d.showBlocked(false);
+            if (retry) continue;
+          }
+          throw err;
+        }
       }
     };
   }
@@ -76,7 +84,8 @@
       '.ismart-cam-icon.warn{background:#FFFBEB;color:#F59E0B}' +
       '.ismart-cam-title{font-size:17px;font-weight:700;color:#111827;margin-bottom:6px}' +
       '.ismart-cam-text{font-size:13px;color:#4B5563;line-height:1.5}' +
-      '.ismart-cam-note{font-size:12px;color:#6B7280;line-height:1.5;margin-top:10px}' +
+      '.ismart-cam-note{font-size:12px;color:#6B7280;line-height:1.6;margin-top:10px;white-space:pre-line}' +
+      '.ismart-cam-note.steps{text-align:left;background:#F9FAFB;border-radius:10px;padding:10px 12px}' +
       '.ismart-cam-actions{display:flex;gap:8px;margin-top:18px}' +
       ".ismart-cam-actions button{flex:1;padding:10px;border:none;border-radius:10px;background:#F3F4F6;color:#374151;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;cursor:pointer}" +
       '.ismart-cam-actions button.primary{background:#4F46E5;color:#fff}';
@@ -100,6 +109,7 @@
     q('.ismart-cam-title').textContent = opts.title;
     q('.ismart-cam-text').textContent = opts.text;
     q('.ismart-cam-note').textContent = opts.note || '';
+    q('.ismart-cam-note').className = 'ismart-cam-note' + (opts.steps ? ' steps' : '');
     const actions = q('.ismart-cam-actions');
     actions.innerHTML = '';
 
@@ -129,14 +139,22 @@
     });
   }
 
-  function showBlocked() {
+  function showBlocked(stillBlocked) {
+    const site = (window.location && window.location.hostname) || 'this site';
     return show({
       title: 'Camera is blocked',
-      text: "iSMART can't scan because camera access is turned off.",
-      note: 'Turn it on in your browser or phone settings: Site settings (or App permissions), then Camera, then Allow. Come back and try again.',
+      text: stillBlocked
+        ? 'It is still blocked. Check the steps below, then tap Try again.'
+        : 'Chrome is blocking the camera for this app, so scanning cannot start.',
+      note: 'To fix it:\n' +
+            '1. Open Chrome, then \u22EE > Settings > Site settings > Camera\n' +
+            '2. Find ' + site + ' and choose Allow\n' +
+            '3. Come back here and tap Try again\n\n' +
+            'Still blocked? Phone Settings > Apps > Chrome > Permissions > Camera > Allow.',
       warn: true,
-      buttons: [{ label: 'OK', value: true, primary: true }],
-      dismissValue: true
+      steps: true,
+      buttons: [{ label: 'Close', value: false }, { label: 'Try again', value: true, primary: true }],
+      dismissValue: false
     });
   }
 
